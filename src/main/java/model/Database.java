@@ -23,11 +23,13 @@ public class Database {
         } catch (SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-
-
-
-
     }
+
+
+    public Connection getConnection() {
+        return connection;
+    }
+
 
 
 
