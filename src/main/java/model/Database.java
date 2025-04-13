@@ -1,0 +1,156 @@
+package model;
+
+import java.sql.*;
+import java.util.ArrayList;
+
+public class Database {
+
+
+    private static String DATABASE_LINK = "jdbc:sqlite:/home/carmine/Scaricati/RomeBusDatabase";
+    private static Connection connection;
+
+    public Database() {
+
+    }
+
+
+    public void connect(){
+        try {
+            Class.forName("org.sqlite.JDBC");
+            connection = DriverManager.getConnection(DATABASE_LINK);
+            System.out.println("Connection to SQLite has been established.");
+
+        } catch (SQLException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+
+
+
+    }
+
+
+
+
+    public void addBus(Bus bus) throws SQLException {
+        String sql = "INSERT INTO Bus (ID, LABEL, LICENSE_PLATE) VALUES (?, ?, ?)";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, bus.getIdBus());
+        pstmt.setString(2,bus.getLabelBus());
+        pstmt.setString(3,bus.getLicensePlate());
+
+        pstmt.executeUpdate();
+        pstmt.close();
+    }
+
+
+    public void addStop(Stop stop) throws SQLException {
+        String sql = "INSERT INTO Fermata (ID, CODICE, NOME) VALUES (?, ?, ?)";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, stop.getId());
+        pstmt.setString(2, stop.getCode());
+        pstmt.setString(3, stop.getName());
+
+        pstmt.executeUpdate();
+        pstmt.close();
+
+    }
+
+
+
+
+    public void addRoute(Route route) throws SQLException {
+        String sql = "INSERT INTO Percorso (ID, AGENZIA_ID, NOME_BREVE, NOME_COMPLETO, TIPO) VALUES (?, ?, ?, ?, ?)";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, route.getId());
+        pstmt.setString(2, route.getAgencyCode());
+        pstmt.setString(3, route.getShortName());
+        pstmt.setString(4, route.getLongName());
+        pstmt.setString(5, route.getType());
+        pstmt.executeUpdate();
+        pstmt.close();
+    }
+
+
+    public void addTrip(Trip trip) throws SQLException {
+        String sql = "INSERT INTO Viaggio (ID, PERCORSO_ID, SERVIZIO_ID, TESTO_DESTINAZIONE, NOME_BREVE, DIREZIONE, ACCESSIBILE_DIVERSAMENTE_ABILI) VALUES (?, ?, ?, ?, ?,?,?)";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, trip.getId());
+        pstmt.setString(2, trip.getRouteId());
+        pstmt.setString(3, trip.getServiceId());
+        pstmt.setString(4, trip.getTripHeadsign());
+        pstmt.setString(5, trip.getTripShortName());
+        pstmt.setInt(6, trip.getDirection());
+        pstmt.setInt(7, trip.getWheelchair_accessible());
+        pstmt.executeUpdate();
+        pstmt.close();
+    }
+
+
+    public void addStopTime(StopTime stopTime) throws SQLException {
+        String sql = "INSERT INTO FERMATA_ORARIO (FERMATA_ID, VIAGGIO_ID, ORARIO_PARTENZA, ORARIO_ARRIVO, FERMATA_SEQUENZA, TESTO_FERMATA, SHAPE_DIST_TRAVELED) VALUES (?, ?, ?, ?, ?, ? ,?)";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1,stopTime.getStopID());
+        pstmt.setString(2,stopTime.getTripID());
+        pstmt.setString(3,stopTime.getDepartureTime());
+        pstmt.setString(4,stopTime.getArrivalTime());
+        pstmt.setInt(5,stopTime.getStopSequence());
+        pstmt.setString(6, stopTime.getStopHeadsign());
+        pstmt.setInt(7, stopTime.getShapeDistTraveled());
+        pstmt.executeUpdate();
+        pstmt.close();
+    }
+
+
+
+
+
+
+    public ArrayList<Stop> getStops() throws SQLException {
+        ArrayList<Stop> stops = new ArrayList<>();
+        String sql = "SELECT * FROM Fermata";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery();
+        while (rs.next()) {
+            stops.add(new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME")));
+        }
+        rs.close();
+        pstmt.close();
+        return stops;
+    }
+
+
+
+    public ArrayList<Bus> getBusList() throws SQLException {
+        ArrayList<Bus> busList = new ArrayList<>();
+        String sql = "SELECT * FROM Bus ORDER BY ID";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery();
+        while (rs.next()) {
+            busList.add(new Bus(rs.getString("ID"), rs.getString("LABEL"), rs.getString("LICENSE_PLATE")));
+        }
+
+        rs.close();
+        pstmt.close();
+        return busList;
+
+    }
+
+    public ArrayList<String> getIdBusList() throws SQLException {
+        ArrayList<String> idList = new ArrayList<>();
+        String sql = "SELECT ID FROM Bus ORDER BY ID";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery();
+        while (rs.next()) {
+            idList.add(rs.getString("ID"));
+        }
+        rs.close();
+        pstmt.close();
+        return idList;
+
+    }
+
+
+
+
+}
