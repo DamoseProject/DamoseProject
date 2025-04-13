@@ -6,7 +6,7 @@ import java.util.ArrayList;
 public class Database {
 
 
-    private static String DATABASE_LINK = "jdbc:sqlite:/home/carmine/Scaricati/RomeBusDatabase";
+    private static String DATABASE_LINK = "jdbc:sqlite:RomeBusDatabase";
     private static Connection connection;
 
     public Database() {
@@ -23,11 +23,13 @@ public class Database {
         } catch (SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-
-
-
-
     }
+
+
+    public Connection getConnection() {
+        return connection;
+    }
+
 
 
 

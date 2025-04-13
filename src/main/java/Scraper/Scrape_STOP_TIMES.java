@@ -7,6 +7,7 @@ import model.Trip;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,16 +26,30 @@ public class Scrape_STOP_TIMES {
 
     private static String filePath = "/home/carmine/Scaricati/rome_static_gtfs/stop_times.txt";
 
-    public static void scrape() throws IOException, SQLException {
+
+
+
+
+
+    public static void scrapeAndAddToDatabase() throws IOException, SQLException {
         Database db = new Database();
         db.connect();
+        db.getConnection().setAutoCommit(false);
+
+        int BatchSize = 1000;
+        int count = 0;
+
 
         String contentFile = Files.readString(Path.of(filePath));
         String[] lines = contentFile.split(System.lineSeparator());
 
+        String sql = "INSERT INTO FERMATA_ORARIO (FERMATA_ID, VIAGGIO_ID, ORARIO_PARTENZA, ORARIO_ARRIVO, FERMATA_SEQUENZA, TESTO_FERMATA, SHAPE_DIST_TRAVELED) VALUES (?, ?, ?, ?, ?, ? ,?)";
+        PreparedStatement pstmt = db.getConnection().prepareStatement(sql);
 
+        int counterRow = 0;
         for (String line : lines) {
-            if (line.contains("trip_id")) {
+            if (counterRow <= 1248455) {
+                counterRow++;
                 continue;
             }
             String[] words = line.split(",");
@@ -46,25 +61,43 @@ public class Scrape_STOP_TIMES {
             String stopHeadsign = words[indexStopHeadsign];
             String shapeDistTraveled = words[indexShapeDistTraveled];
 
-
-            StopTime stopTime;
-            try{
-                stopTime = new StopTime(arrivalTime,departureTime,tripID,stopID,Integer.parseInt(stopSequence),stopHeadsign, Integer.parseInt(shapeDistTraveled));
+            try {
+                pstmt.setString(1, stopID);
+                pstmt.setString(2, tripID);
+                pstmt.setString(3, departureTime);
+                pstmt.setString(4, arrivalTime);
+                pstmt.setInt(5, Integer.parseInt(stopSequence));
+                pstmt.setString(6, stopHeadsign);
+                pstmt.setInt(7, Integer.parseInt(shapeDistTraveled));
+            } catch (Exception e) {
+                pstmt.setString(1, stopID);
+                pstmt.setString(2, tripID);
+                pstmt.setString(3, departureTime);
+                pstmt.setString(4, arrivalTime);
+                pstmt.setInt(5, -1);
+                pstmt.setString(6, stopHeadsign);
+                pstmt.setInt(7, -1);
             }
-            catch(Exception e){
+            pstmt.addBatch();
+            count++;
+            counterRow++;
+            System.out.println(counterRow);
 
-                /// /// CONTROLLARE ECCEZIONI
-
-                stopTime = new StopTime(arrivalTime,departureTime,tripID,stopID,-1,stopHeadsign, -1);
+            if (count % BatchSize == 0) {
+                pstmt.executeBatch();
+                db.getConnection().commit();
             }
-            db.addStopTime(stopTime);
+
         }
+        pstmt.executeBatch();
+        db.getConnection().commit();
+        pstmt.close();
 
 
     }
 
     public static void main(String[] args) throws IOException, SQLException {
-        scrape();
+        scrapeAndAddToDatabase();
     }
 
 
