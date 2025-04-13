@@ -1,14 +1,14 @@
 package model;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.List;
 
-import com.google.transit.realtime.GtfsRealtime.VehicleDescriptor;
+import com.google.transit.realtime.GtfsRealtime;
+import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.FeedEntity;
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
+import util.TimeManager;
 
 public class GtfsRealtimeExample {
 
@@ -22,14 +22,32 @@ public class GtfsRealtimeExample {
 
 
 
+
+    public static void printUpdate(TripUpdate.StopTimeUpdate stopTimeUpdate) throws SQLException {
+
+        long oraArrivo  = stopTimeUpdate.getArrival().getTime();
+        int delay = stopTimeUpdate.getArrival().getDelay();
+        int uncertainty = stopTimeUpdate.getArrival().getUncertainty();
+
+        String oraArrivoStr = TimeManager.getDate(oraArrivo, "hh:mm");
+        String stopID = stopTimeUpdate.getStopId();
+        TripUpdate.StopTimeUpdate.ScheduleRelationship schedule = stopTimeUpdate.getScheduleRelationship();
+        System.out.println(oraArrivoStr + " Fermata: " + db.getStop(stopID).getName());
+
+
+    }
+
+
+
+
     public static void main(String[] args) throws Exception {
 
         db = new Database();
         db.connect();
-
-        ArrayList<Bus> busList = db.getBusList();
-        ArrayList<String> busIds = db.getIdBusList();
-        ArrayList<Stop> stopsList = db.getStops();
+//
+//        ArrayList<Bus> busList = db.getBusList();
+//        ArrayList<String> busIds = db.getIdBusList();
+//        ArrayList<Stop> stopsList = db.getStops();
 
 
         URL url = new URL(LINK);
@@ -37,23 +55,30 @@ public class GtfsRealtimeExample {
 
         for (FeedEntity entity : feed.getEntityList()) {
             if (entity.hasTripUpdate()) {
-                System.out.println(entity.getAllFields());
-                System.exit(0);
-                VehicleDescriptor vehicle = entity.getTripUpdate().getVehicle();
+                TripUpdate entityData = entity.getTripUpdate();
+                String tripID = entityData.getTrip().getTripId();
+                String routeID = entityData.getTrip().getRouteId();
+                String startTime = entityData.getTrip().getStartDate();
+                String startDate = entityData.getTrip().getStartDate();
+                int directionID = entityData.getTrip().getDirectionId();
 
-                if(entity.getTripUpdate().hasVehicle() && !busIds.contains(vehicle.getId())) {
-                    busIds.add(vehicle.getId());
-                    Bus bus = new Bus(vehicle.getId(), vehicle.getLabel(), vehicle.getLicensePlate());
-                    busList.add(bus);
-                    db.addBus(bus);
-                    //System.out.println(vehicle.getId() + " " + vehicle.getLabel() + " " + vehicle.getLicensePlate());
-                }
+                //List<TripUpdate.StopTimeUpdate> stopTimeUpdates = entityData.getStopTimeUpdateList();
+
+
+                System.out.println("AUTOBUS " + db.getRoute(routeID).getShortName());
+
+                TripUpdate.StopTimeUpdate lastUpdate = entityData.getStopTimeUpdate(entityData.getStopTimeUpdateCount() - 1);
+                printUpdate(lastUpdate);
+                System.out.println(tripID + " " + lastUpdate.getStopId());
+
+
+                System.out.println("\n\n\n\n");
+                //System.out.println(entity.getAllFields());
+                System.exit(0);
 
             }
 
         }
-
-        System.out.println(busList.size());
 
 
     }

@@ -122,6 +122,31 @@ public class Database {
     }
 
 
+    public Stop getStop(String id) throws SQLException {
+        String sql = "SELECT * FROM Fermata WHERE ID = ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, id);
+        ResultSet rs = pstmt.executeQuery();
+        if (rs.next()) {
+            return new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME"));
+        }
+        return null;
+    }
+
+    public Route getRoute(String id) throws SQLException {
+        String sql = "SELECT * FROM Percorso WHERE ID = ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, id);
+        ResultSet rs = pstmt.executeQuery();
+        if (rs.next()) {
+            return new Route(rs.getString("ID"), rs.getString("AGENZIA_ID"), rs.getString("NOME_BREVE"), rs.getString("NOME_COMPLETO"), rs.getString("TIPO"));
+        }
+        return null;
+    }
+
+
+
+
 
     public ArrayList<Bus> getBusList() throws SQLException {
         ArrayList<Bus> busList = new ArrayList<>();
