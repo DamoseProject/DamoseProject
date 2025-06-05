@@ -16,6 +16,8 @@ public class Scrape_STOP {
     final private static int indexStopID = titles.indexOf("stop_id") ;
     final private static int indexStopCode = titles.indexOf("stop_code") ;
     final private static int indexStopName = titles.indexOf("stop_name") ;
+    final private static int indexStoplat = titles.indexOf("stop_lat") ;
+    final private static int indexLon = titles.indexOf("stop_lon") ;
 
 
     private static String filePath = "/home/carmine/Scaricati/rome_static_gtfs/stops.txt";
@@ -31,8 +33,10 @@ public class Scrape_STOP {
             String stop_id = words[indexStopID];
             String stop_code = words[indexStopCode];
             String stop_name = words[indexStopName];
+            String stop_lat = words[indexStoplat];
+            String stop_lon = words[indexLon];
 
-            Stop fermata = new Stop(stop_id, stop_code, stop_name);
+            Stop fermata = new Stop(stop_id, stop_code, stop_name, stop_lat, stop_lon);
             db.addStop(fermata);
 
         }

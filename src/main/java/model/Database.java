@@ -144,9 +144,36 @@ public class Database {
         return null;
     }
 
+    public Trip getTrip(String id) throws SQLException {
+        String sql = "SELECT * FROM Viaggio WHERE ID = ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, id);
+        ResultSet rs = pstmt.executeQuery();
+        if (rs.next()) {
+            return new Trip(rs.getString("ID"), rs.getString("PERCORSO_ID"), rs.getString("SERVIZIO_ID"), rs.getString("TESTO_DESTINAZIONE"), rs.getString("NOME_BREVE"), rs.getInt("DIREZIONE"), rs.getInt("ACCESSIBILE_DIVERSAMENTE_ABILI"));
+        }
+        return null;
+    }
 
 
 
+
+    /// ///////// AGGIUNGERE AGENZIA, FERMATA_ORARIO, BUS? /////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /// //////////////////////
 
     public ArrayList<Bus> getBusList() throws SQLException {
         ArrayList<Bus> busList = new ArrayList<>();

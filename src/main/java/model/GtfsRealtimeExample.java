@@ -69,11 +69,12 @@ public class GtfsRealtimeExample {
 
                 TripUpdate.StopTimeUpdate lastUpdate = entityData.getStopTimeUpdate(entityData.getStopTimeUpdateCount() - 1);
                 printUpdate(lastUpdate);
-                System.out.println(tripID + " " + lastUpdate.getStopId());
 
 
-                System.out.println("\n\n\n\n");
+                System.out.println("\n\n");
+
                 //System.out.println(entity.getAllFields());
+                System.out.println(tripID);
                 System.exit(0);
 
             }
