@@ -114,7 +114,7 @@ public class Database {
         PreparedStatement pstmt = connection.prepareStatement(sql);
         ResultSet rs = pstmt.executeQuery();
         while (rs.next()) {
-            stops.add(new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME")));
+            stops.add(new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME"), rs.getString("LATITUDINE"), rs.getString("LONGITUDINE")));
         }
         rs.close();
         pstmt.close();
@@ -128,7 +128,7 @@ public class Database {
         pstmt.setString(1, id);
         ResultSet rs = pstmt.executeQuery();
         if (rs.next()) {
-            return new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME"));
+            return new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME"), rs.getString("LATITUDINE"), rs.getString("LONGITUDINE"));
         }
         return null;
     }

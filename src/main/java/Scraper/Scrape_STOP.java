@@ -46,4 +46,9 @@ public class Scrape_STOP {
     }
 
 
+    public static void main(String[] args) throws IOException, SQLException {
+        scrape();
+    }
+
+
 }
