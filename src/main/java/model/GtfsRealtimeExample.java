@@ -8,6 +8,7 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.FeedEntity;
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
+import com.sun.source.tree.YieldTree;
 import util.TimeManager;
 
 public class GtfsRealtimeExample {
@@ -49,6 +50,9 @@ public class GtfsRealtimeExample {
 //        ArrayList<String> busIds = db.getIdBusList();
 //        ArrayList<Stop> stopsList = db.getStops();
 
+
+        System.out.println(db.addUser(new User("Carmine", "Fontanarosa" ,"Carmine0660", "mickolsverde06@outlook.it", "ElonMusk28")));
+        System.out.println();
 
         URL url = new URL(LINK);
         FeedMessage feed = FeedMessage.parseFrom(url.openStream());
