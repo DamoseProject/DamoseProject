@@ -47,11 +47,13 @@ public class Database {
 
 
     public void addStop(Stop stop) throws SQLException {
-        String sql = "INSERT INTO Fermata (ID, CODICE, NOME) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO Fermata (ID, CODICE, NOME, LATITUDINE, LONGITUDINE) VALUES (?, ?, ?, ?, ? )";
         PreparedStatement pstmt = connection.prepareStatement(sql);
         pstmt.setString(1, stop.getId());
         pstmt.setString(2, stop.getCode());
         pstmt.setString(3, stop.getName());
+        pstmt.setFloat(4, stop.getLatitude());
+        pstmt.setFloat(5, stop.getLongitude());
 
         pstmt.executeUpdate();
         pstmt.close();
@@ -114,7 +116,7 @@ public class Database {
         PreparedStatement pstmt = connection.prepareStatement(sql);
         ResultSet rs = pstmt.executeQuery();
         while (rs.next()) {
-            stops.add(new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME"), rs.getString("LATITUDINE"), rs.getString("LONGITUDINE")));
+            stops.add(new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME"), rs.getFloat("LATITUDINE"), rs.getFloat("LONGITUDINE")));
         }
         rs.close();
         pstmt.close();
@@ -128,7 +130,7 @@ public class Database {
         pstmt.setString(1, id);
         ResultSet rs = pstmt.executeQuery();
         if (rs.next()) {
-            return new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME"), rs.getString("LATITUDINE"), rs.getString("LONGITUDINE"));
+            return new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME"), rs.getFloat("LATITUDINE"), rs.getFloat("LONGITUDINE"));
         }
         return null;
     }

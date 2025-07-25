@@ -6,10 +6,10 @@ public class Stop {
     private String id;
     private String code;
     private String name;
-    private String latitude;
-    private String longitude;
+    private float latitude;
+    private float longitude;
 
-    public Stop(String id, String code, String name, String latitude, String longitude) {
+    public Stop(String id, String code, String name, float latitude, float longitude) {
         this.id = id;
         this.code = code;
         this.name = name;
@@ -34,7 +34,7 @@ public class Stop {
         return stopCounter;
     }
 
-    public String getLatitude() {return latitude;}
+    public float getLatitude() {return latitude;}
 
-    public String getLongitude() {return longitude;}
+    public float getLongitude() {return longitude;}
 }
