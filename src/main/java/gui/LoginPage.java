@@ -6,13 +6,13 @@ import java.awt.*;
 
 
 public class LoginPage implements ViewPanel {
-    private JPanel panel;
+    private JPanel loginPanel;
     private JTextField emailField;
     private JPasswordField passwordField;
 
     public LoginPage(MainFrame frame) {
-        panel = new JPanel();
-        panel.setLayout(new BorderLayout());
+        loginPanel = new JPanel();
+        loginPanel.setLayout(new BorderLayout());
 
         // Pannello in alto
         JPanel topPanel = new JPanel(new BorderLayout());
@@ -24,7 +24,7 @@ public class LoginPage implements ViewPanel {
         //Aggiungo un pannello vuoto a destra per centrare la scritta Login!
         topPanel.add(Box.createHorizontalStrut(helpButton.getPreferredSize().width), BorderLayout.EAST);
 
-        panel.add(topPanel, BorderLayout.NORTH);
+        loginPanel.add(topPanel, BorderLayout.NORTH);
 
         //Pannello centrale
         JPanel centerPanel = new JPanel();
@@ -66,18 +66,19 @@ public class LoginPage implements ViewPanel {
         centerPanel.add(accediButton);
         centerPanel.add(Box.createVerticalGlue());
 
-        panel.add(centerPanel, BorderLayout.CENTER);
+        loginPanel.add(centerPanel, BorderLayout.CENTER);
 
         // Bottom panel
         JPanel bottomPanel = new JPanel(new BorderLayout());
 
         JButton guestButton = new JButton("Entra come Ospite");
         JButton registerButton = new JButton("Registrati!");
+        registerButton.addActionListener(e -> frame.setView(new RegistrationPage(frame)));
 
         bottomPanel.add(guestButton, BorderLayout.WEST);
         bottomPanel.add(registerButton, BorderLayout.EAST);
 
-        panel.add(bottomPanel, BorderLayout.SOUTH);
+        loginPanel.add(bottomPanel, BorderLayout.SOUTH);
 
     }
 
@@ -85,7 +86,7 @@ public class LoginPage implements ViewPanel {
 
     @Override
     public JPanel getPanel() {
-        return panel;
+        return loginPanel;
     }
 
     public String getEmail() {
