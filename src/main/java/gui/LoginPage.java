@@ -3,8 +3,12 @@ package gui;
 import javax.swing.*;
 import java.awt.*;
 
+
+
 public class LoginPage implements ViewPanel {
     private JPanel panel;
+    private JTextField emailField;
+    private JPasswordField passwordField;
 
     public LoginPage(MainFrame frame) {
         panel = new JPanel();
@@ -83,4 +87,14 @@ public class LoginPage implements ViewPanel {
     public JPanel getPanel() {
         return panel;
     }
+
+    public String getEmail() {
+        return emailField.getText().trim();
+    }
+
+    public char[] getPassword() {
+        return passwordField.getPassword();
+    }
+
+
 }
