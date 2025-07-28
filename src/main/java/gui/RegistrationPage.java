@@ -5,6 +5,10 @@ import java.awt.*;
 
 public class RegistrationPage implements ViewPanel {
     private JPanel registrationPanel;
+    private final JTextField emailField;
+    private final JPasswordField passwordField;
+    private final JPasswordField confirmPasswordField;
+
 
     public RegistrationPage(MainFrame frame) {
         registrationPanel = new JPanel();
@@ -48,7 +52,7 @@ public class RegistrationPage implements ViewPanel {
 
         //Email
         JLabel email = new JLabel("Email :");
-        JTextField emailField = new JTextField(20);
+        emailField = new JTextField(20);
         JPanel emailPanel = new JPanel();
         emailPanel.setLayout(new BoxLayout(emailPanel, BoxLayout.Y_AXIS));
         email.setAlignmentX(JLabel.CENTER_ALIGNMENT);
@@ -59,7 +63,7 @@ public class RegistrationPage implements ViewPanel {
 
         //Password
         JLabel password = new JLabel("Password :");
-        JPasswordField passwordField = new JPasswordField(20);
+        passwordField = new JPasswordField(20);
         JPanel passwordPanel = new JPanel();
         passwordPanel.setLayout(new BoxLayout(passwordPanel, BoxLayout.Y_AXIS));
         password.setAlignmentX(JLabel.CENTER_ALIGNMENT);
@@ -70,7 +74,7 @@ public class RegistrationPage implements ViewPanel {
 
         //Confirm Password
         JLabel confirmPassword = new JLabel("Conferma Password :");
-        JPasswordField confirmPasswordField = new JPasswordField(20);
+        confirmPasswordField = new JPasswordField(20);
         JPanel confirmPasswordPanel = new JPanel();
         confirmPasswordPanel.setLayout(new BoxLayout(confirmPasswordPanel, BoxLayout.Y_AXIS));
         confirmPassword.setAlignmentX(JLabel.CENTER_ALIGNMENT);
@@ -112,5 +116,15 @@ public class RegistrationPage implements ViewPanel {
     @Override
     public JPanel getPanel() {
         return registrationPanel;
+    }
+
+    public String getEmailField() {
+        return emailField.getText();
+    }
+    public char[] getPasswordField() {
+        return passwordField.getPassword();
+    }
+    public char[] getConfirmPasswordField() {
+        return confirmPasswordField.getPassword();
     }
 }
