@@ -2,6 +2,8 @@ package gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class RegistrationPage implements ViewPanel {
     private JPanel registrationPanel;
@@ -86,7 +88,16 @@ public class RegistrationPage implements ViewPanel {
         //Register Button
         JButton registerButton = new JButton("Registrati!");
         registerButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
-        registerButton.addActionListener(e -> frame.setView(new LoginPage(frame)));
+        registerButton.addActionListener(e -> {
+            Authentication auth = new Authentication(this);
+            if(auth.validate()) {
+                JOptionPane.showMessageDialog(null,"La registrazione è avvenuta in modo corretto");
+                frame.setView(new LoginPage(frame));
+            } else {
+                JOptionPane.showMessageDialog(null, "Le credenziali sono errate");
+            }
+        });
+
 
         //Add all to the centerPanel
         centerPanel.add(Box.createVerticalGlue());
