@@ -12,7 +12,7 @@ public class MainFrame extends JFrame {
         setVisible(true);
     }
 
-    public void setView(ViewPanel view) {
+    public void setView(GeneralPanel view) {
         setContentPane(view.getPanel());
         revalidate();
         repaint();

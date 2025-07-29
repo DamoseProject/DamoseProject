@@ -3,18 +3,24 @@ package gui;
 import java.util.Arrays;
 
 public class Authentication {
+    private String username;
     private char[]  password;
     private char[] confirmPassword;
 
     public Authentication(RegistrationPage registrationPage) {
+        this.username = registrationPage.getUsernameField();
         this.password = registrationPage.getPasswordField();
         this.confirmPassword = registrationPage.getConfirmPasswordField();
     }
 
+    public boolean validateUsername() {
+        return username != null && !username.isEmpty() && username.length() <= 12;
+    }
+
     public boolean validatePasswordMatch() {
-            return password != null
-                    && confirmPassword != null
-                    && Arrays.equals(password, confirmPassword);
+            return password != null && confirmPassword != null &&
+                    password.length > 0 && confirmPassword.length > 0 &&
+                    Arrays.equals(password, confirmPassword);
     }
 
     public boolean validatePasswordStrength() {
@@ -41,6 +47,6 @@ public class Authentication {
     }
 
     public boolean validate() {
-        return validatePasswordMatch() && validatePasswordStrength();
+        return validateUsername() && validatePasswordMatch() && validatePasswordStrength();
     }
 }

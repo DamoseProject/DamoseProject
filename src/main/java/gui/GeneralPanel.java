@@ -2,6 +2,6 @@ package gui;
 
 import javax.swing.*;
 
-public interface ViewPanel {
+public interface GeneralPanel {
     JPanel getPanel();
 }

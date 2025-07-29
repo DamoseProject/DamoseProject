@@ -5,7 +5,7 @@ import java.awt.*;
 
 
 
-public class LoginPage implements ViewPanel {
+public class LoginPage implements GeneralPanel {
     private JPanel loginPanel;
     private JTextField emailField;
     private JPasswordField passwordField;

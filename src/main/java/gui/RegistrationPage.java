@@ -5,8 +5,29 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class RegistrationPage implements ViewPanel {
+public class RegistrationPage implements GeneralPanel {
     private JPanel registrationPanel;
+    private JLabel registrationLabel;
+
+    private JPanel topPanel;
+
+    private JPanel centerPanel;
+
+    private JLabel username;
+    private JPanel usernamePanel;
+
+    private JLabel email;
+    private JPanel emailPanel;
+
+    private JLabel password;
+    private JPanel passwordPanel;
+
+    private JLabel confirmPassword;
+    private JPanel confirmPasswordPanel;
+
+    private JLabel errorLabel;
+
+    private final JTextField usernameField;
     private final JTextField emailField;
     private final JPasswordField passwordField;
     private final JPasswordField confirmPasswordField;
@@ -18,8 +39,8 @@ public class RegistrationPage implements ViewPanel {
 
 
         //Top Panel
-        JLabel registrationLabel = new JLabel("Registrati!");
-        JPanel topPanel = new JPanel();
+        registrationLabel = new JLabel("Registrati!");
+        topPanel = new JPanel();
         topPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         topPanel.add(registrationLabel);
 
@@ -27,35 +48,26 @@ public class RegistrationPage implements ViewPanel {
 
 
         //Center Panel
-        JPanel centerPanel = new JPanel();
+        centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
-        //Name
-        JLabel name = new JLabel("Nome :");
-        JTextField nameField = new JTextField(20);
-        JPanel namePanel = new JPanel();
-        namePanel.setLayout(new BoxLayout(namePanel, BoxLayout.Y_AXIS));
-        name.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        nameField.setMaximumSize(nameField.getPreferredSize());
-        nameField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
-        namePanel.add(name);
-        namePanel.add(nameField);
 
-        //Surname
-        JLabel surname = new JLabel("Cognome :");
-        JTextField surnameField = new JTextField(20);
-        JPanel surnamePanel = new JPanel();
-        surnamePanel.setLayout(new BoxLayout(surnamePanel, BoxLayout.Y_AXIS));
-        surname.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        surnameField.setMaximumSize(surnameField.getPreferredSize());
-        surnameField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
-        surnamePanel.add(surname);
-        surnamePanel.add(surnameField);
+        //Username
+        username = new JLabel("Username:");
+        usernameField = new JTextField(20);
+        usernamePanel = new JPanel();
+        usernamePanel.setLayout(new BoxLayout(usernamePanel, BoxLayout.Y_AXIS));
+        username.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+        usernameField.setMaximumSize(usernameField.getPreferredSize());
+        usernameField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
+        usernamePanel.add(username);
+        usernamePanel.add(usernameField);
+
 
         //Email
-        JLabel email = new JLabel("Email :");
+        email = new JLabel("Email :");
         emailField = new JTextField(20);
-        JPanel emailPanel = new JPanel();
+        emailPanel = new JPanel();
         emailPanel.setLayout(new BoxLayout(emailPanel, BoxLayout.Y_AXIS));
         email.setAlignmentX(JLabel.CENTER_ALIGNMENT);
         emailField.setMaximumSize(emailField.getPreferredSize());
@@ -64,9 +76,9 @@ public class RegistrationPage implements ViewPanel {
         emailPanel.add(emailField);
 
         //Password
-        JLabel password = new JLabel("Password :");
+        password = new JLabel("Password :");
         passwordField = new JPasswordField(20);
-        JPanel passwordPanel = new JPanel();
+        passwordPanel = new JPanel();
         passwordPanel.setLayout(new BoxLayout(passwordPanel, BoxLayout.Y_AXIS));
         password.setAlignmentX(JLabel.CENTER_ALIGNMENT);
         passwordField.setMaximumSize(passwordField.getPreferredSize());
@@ -75,9 +87,9 @@ public class RegistrationPage implements ViewPanel {
         passwordPanel.add(passwordField);
 
         //Confirm Password
-        JLabel confirmPassword = new JLabel("Conferma Password :");
+        confirmPassword = new JLabel("Conferma Password :");
         confirmPasswordField = new JPasswordField(20);
-        JPanel confirmPasswordPanel = new JPanel();
+        confirmPasswordPanel = new JPanel();
         confirmPasswordPanel.setLayout(new BoxLayout(confirmPasswordPanel, BoxLayout.Y_AXIS));
         confirmPassword.setAlignmentX(JLabel.CENTER_ALIGNMENT);
         confirmPasswordField.setMaximumSize(confirmPasswordField.getPreferredSize());
@@ -85,25 +97,37 @@ public class RegistrationPage implements ViewPanel {
         confirmPasswordPanel.add(confirmPassword);
         confirmPasswordPanel.add(confirmPasswordField);
 
+        //Error label
+        errorLabel = new JLabel("");
+        errorLabel.setForeground(Color.RED);
+        errorLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+        errorLabel.setVisible(false);
+
+
         //Register Button
         JButton registerButton = new JButton("Registrati!");
         registerButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
         registerButton.addActionListener(e -> {
             Authentication auth = new Authentication(this);
-            if(auth.validate()) {
-                JOptionPane.showMessageDialog(null,"La registrazione è avvenuta in modo corretto");
+            if(!auth.validateUsername()) {
+                errorLabel.setText("Lo username deve contenere al massimo 12 caratteri!");
+                errorLabel.setVisible(true);
+            }else if(!auth.validatePasswordMatch()){
+                errorLabel.setText("Le password non coincidono!");
+                errorLabel.setVisible(true);
+            } else if(!auth.validatePasswordStrength()) {
+                errorLabel.setText("La passwword deve contenere almeno: una lettera maiuscola, un numero e un carattere speciale tra: !,$,&,@,#. ");
+                errorLabel.setVisible(true);
+            } else if(auth.validate()){
+                errorLabel.setVisible(false);
                 frame.setView(new LoginPage(frame));
-            } else {
-                JOptionPane.showMessageDialog(null, "Le credenziali sono errate");
             }
         });
 
 
         //Add all to the centerPanel
         centerPanel.add(Box.createVerticalGlue());
-        centerPanel.add(namePanel);
-        centerPanel.add(Box.createVerticalStrut(10));
-        centerPanel.add(surnamePanel);
+        centerPanel.add(usernamePanel);
         centerPanel.add(Box.createVerticalStrut(10));
         centerPanel.add(emailPanel);
         centerPanel.add(Box.createVerticalStrut(10));
@@ -112,6 +136,8 @@ public class RegistrationPage implements ViewPanel {
         centerPanel.add(confirmPasswordPanel);
         centerPanel.add(Box.createVerticalStrut(20));
         centerPanel.add(registerButton);
+        centerPanel.add(Box.createVerticalStrut(20));
+        centerPanel.add(errorLabel);
         centerPanel.add(Box.createVerticalGlue());
 
 
@@ -127,6 +153,10 @@ public class RegistrationPage implements ViewPanel {
     @Override
     public JPanel getPanel() {
         return registrationPanel;
+    }
+
+    public String getUsernameField() {
+        return usernameField.getText();
     }
 
     public String getEmailField() {
