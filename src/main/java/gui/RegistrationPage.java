@@ -27,6 +27,9 @@ public class RegistrationPage implements GeneralPanel {
 
     private JLabel errorLabel;
 
+    private JButton registerButton;
+    private BackButton backButton;
+
     private final JTextField usernameField;
     private final JTextField emailField;
     private final JPasswordField passwordField;
@@ -39,10 +42,15 @@ public class RegistrationPage implements GeneralPanel {
 
 
         //Top Panel
-        registrationLabel = new JLabel("Registrati!");
         topPanel = new JPanel();
-        topPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-        topPanel.add(registrationLabel);
+        registrationLabel = new JLabel("Registrati!", JLabel.CENTER);
+        topPanel.setLayout(new BorderLayout());
+        backButton = new BackButton(frame);
+        topPanel.add(backButton,  BorderLayout.WEST);
+        topPanel.add(registrationLabel,  BorderLayout.CENTER);
+
+        //Aggiungo un pannello vuoto a destra per centrare la scritta Registrati
+        topPanel.add(Box.createHorizontalStrut(backButton.getPreferredSize().width), BorderLayout.EAST);
 
 
 

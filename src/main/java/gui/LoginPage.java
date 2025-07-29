@@ -7,33 +7,49 @@ import java.awt.*;
 
 public class LoginPage implements GeneralPanel {
     private JPanel loginPanel;
-    private JTextField emailField;
-    private JPasswordField passwordField;
+    private JPanel topPanel;
+    private JPanel centerPanel;
+    private JPanel emailPanel;
+    private JPanel passwordPanel;
+    private JPanel bottomPanel;
+
+    private JLabel loginLabel;
+    private JLabel emailLabel;
+    private JLabel passwordLabel;
+
+    private JButton infoButton;
+    private JButton accessButton;
+    private JButton guestButton;
+    private JButton registerButton;
+
+    private final JTextField emailField;
+    private final JPasswordField passwordField;
 
     public LoginPage(MainFrame frame) {
         loginPanel = new JPanel();
         loginPanel.setLayout(new BorderLayout());
 
         // Pannello in alto
-        JPanel topPanel = new JPanel(new BorderLayout());
-        JButton helpButton = new JButton("Help");
-        topPanel.add(helpButton, BorderLayout.WEST);
-        JLabel loginLabel = new JLabel("Login!", JLabel.CENTER  );
+        topPanel = new JPanel(new BorderLayout());
+        infoButton = new JButton("Info");
+        infoButton.addActionListener(e ->  frame.setView(new HelpPage(frame)));
+        topPanel.add(infoButton, BorderLayout.WEST);
+        loginLabel = new JLabel("Login!", JLabel.CENTER );
         topPanel.add(loginLabel, BorderLayout.CENTER);
 
         //Aggiungo un pannello vuoto a destra per centrare la scritta Login!
-        topPanel.add(Box.createHorizontalStrut(helpButton.getPreferredSize().width), BorderLayout.EAST);
+        topPanel.add(Box.createHorizontalStrut(infoButton.getPreferredSize().width), BorderLayout.EAST);
 
         loginPanel.add(topPanel, BorderLayout.NORTH);
 
         //Pannello centrale
-        JPanel centerPanel = new JPanel();
+        centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
         //Email
-        JLabel emailLabel = new JLabel("Email");
-        JTextField emailField = new JTextField(20);
-        JPanel emailPanel = new JPanel();
+        emailLabel = new JLabel("Email");
+        emailField = new JTextField(20);
+        emailPanel = new JPanel();
         emailPanel.setLayout(new BoxLayout(emailPanel, BoxLayout.Y_AXIS));
         emailLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
         emailField.setMaximumSize(emailField.getPreferredSize());
@@ -42,10 +58,10 @@ public class LoginPage implements GeneralPanel {
         emailPanel.add(emailField);
 
         //Password
-        JLabel passwordLabel = new JLabel("Password");
-        JTextField passwordField = new JTextField(20);
+        passwordLabel = new JLabel("Password");
+        passwordField = new JPasswordField(20);
 
-        JPanel passwordPanel = new JPanel();
+        passwordPanel = new JPanel();
         passwordPanel.setLayout(new BoxLayout(passwordPanel, BoxLayout.Y_AXIS));
         passwordLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
         passwordField.setMaximumSize(passwordField.getPreferredSize());
@@ -54,8 +70,8 @@ public class LoginPage implements GeneralPanel {
         passwordPanel.add(passwordField);
 
         //Bottone Accedi!
-        JButton accediButton = new JButton("Accedi!");
-        accediButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
+        accessButton = new JButton("Accedi!");
+        accessButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
 
         // Aggiungo tutto al pannello centrale con gli spazi necessari
         centerPanel.add(Box.createVerticalGlue());
@@ -63,16 +79,16 @@ public class LoginPage implements GeneralPanel {
         centerPanel.add(Box.createVerticalStrut(10));
         centerPanel.add(passwordPanel);
         centerPanel.add(Box.createVerticalStrut(20));
-        centerPanel.add(accediButton);
+        centerPanel.add(accessButton);
         centerPanel.add(Box.createVerticalGlue());
 
         loginPanel.add(centerPanel, BorderLayout.CENTER);
 
         // Bottom panel
-        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel = new JPanel(new BorderLayout());
 
-        JButton guestButton = new JButton("Entra come Ospite");
-        JButton registerButton = new JButton("Registrati!");
+        guestButton = new JButton("Entra come Ospite");
+        registerButton = new JButton("Registrati!");
         registerButton.addActionListener(e -> frame.setView(new RegistrationPage(frame)));
 
         bottomPanel.add(guestButton, BorderLayout.WEST);
