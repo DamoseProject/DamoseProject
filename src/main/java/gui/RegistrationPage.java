@@ -162,17 +162,17 @@ public class RegistrationPage implements GeneralPanel {
         return registrationPanel;
     }
 
-    public String getUsernameField() {
+    public String getUsernameRegistration() {
         return usernameField.getText();
     }
 
-    public String getEmailField() {
+    public String getEmailRegistration() {
         return emailField.getText();
     }
-    public char[] getPasswordField() {
+    public char[] getPasswordRegistration() {
         return passwordField.getPassword();
     }
-    public char[] getConfirmPasswordField() {
+    public char[] getConfirmPasswordRegistration() {
         return confirmPasswordField.getPassword();
     }
 }

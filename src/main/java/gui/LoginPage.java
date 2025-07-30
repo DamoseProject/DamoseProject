@@ -9,12 +9,12 @@ public class LoginPage implements GeneralPanel {
     private final JPanel loginPanel;
     private final JPanel topPanel;
     private final JPanel centerPanel;
-    private final JPanel emailPanel;
+    private final JPanel usernamePanel;
     private final JPanel passwordPanel;
     private final JPanel bottomPanel;
 
     private JLabel loginLabel;
-    private JLabel emailLabel;
+    private JLabel usernameLabel;
     private JLabel passwordLabel;
 
     private JButton infoButton;
@@ -23,7 +23,7 @@ public class LoginPage implements GeneralPanel {
     private JButton registerButton;
 
 
-    private final JTextField emailField;
+    private final JTextField usernameField;
     private final JPasswordField passwordField;
 
 
@@ -49,18 +49,18 @@ public class LoginPage implements GeneralPanel {
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
         //Email
-        emailLabel = new JLabel("Email");
-        emailField = new JTextField(20);
-        emailPanel = new JPanel();
-        emailPanel.setLayout(new BoxLayout(emailPanel, BoxLayout.Y_AXIS));
-        emailLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        emailField.setMaximumSize(emailField.getPreferredSize());
-        emailField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
-        emailPanel.add(emailLabel);
-        emailPanel.add(emailField);
+        usernameLabel = new JLabel("Username:");
+        usernameField = new JTextField(20);
+        usernamePanel = new JPanel();
+        usernamePanel.setLayout(new BoxLayout(usernamePanel, BoxLayout.Y_AXIS));
+        usernameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+        usernameField.setMaximumSize(usernameField.getPreferredSize());
+        usernameField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
+        usernamePanel.add(usernameLabel);
+        usernamePanel.add(usernameField);
 
         //Password
-        passwordLabel = new JLabel("Password");
+        passwordLabel = new JLabel("Password:");
         passwordField = new JPasswordField(20);
 
 
@@ -79,7 +79,7 @@ public class LoginPage implements GeneralPanel {
 
         // Aggiungo tutto al pannello centrale con gli spazi necessari
         centerPanel.add(Box.createVerticalGlue());
-        centerPanel.add(emailPanel);
+        centerPanel.add(usernamePanel);
         centerPanel.add(Box.createVerticalStrut(10));
         centerPanel.add(passwordPanel);
         centerPanel.add(Box.createVerticalStrut(20));
@@ -109,11 +109,11 @@ public class LoginPage implements GeneralPanel {
         return loginPanel;
     }
 
-    public String getEmail() {
-        return emailField.getText().trim();
+    public String getUsernameLogin() {
+        return usernameField.getText().trim();
     }
 
-    public char[] getPassword() {
+    public char[] getPasswordLogin() {
         return passwordField.getPassword();
     }
 

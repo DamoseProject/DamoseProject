@@ -9,10 +9,10 @@ public class Authentication {
     private char[] confirmPassword;
 
     public Authentication(RegistrationPage registrationPage) {
-        this.email = registrationPage.getEmailField();
-        this.username = registrationPage.getUsernameField();
-        this.password = registrationPage.getPasswordField();
-        this.confirmPassword = registrationPage.getConfirmPasswordField();
+        this.email = registrationPage.getEmailRegistration();
+        this.username = registrationPage.getUsernameRegistration();
+        this.password = registrationPage.getPasswordRegistration();
+        this.confirmPassword = registrationPage.getConfirmPasswordRegistration();
     }
 
     public boolean validatePresenceUsername() {
