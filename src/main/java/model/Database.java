@@ -31,8 +31,61 @@ public class Database {
     }
 
 
+    /// //////////////////////
+    public boolean isUserRegistered(String user) throws SQLException {
+        String query = "SELECT * FROM UTENTE WHERE username = ?";
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
+        preparedStatement.setString(1, user);
+        ResultSet rs = preparedStatement.executeQuery();
+        return rs.next();
+
+    }
+
+    public boolean isEmailRegistered(String email) throws SQLException {
+        String query = "SELECT * FROM UTENTE WHERE email = ?";
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
+        preparedStatement.setString(1, email);
+        ResultSet rs = preparedStatement.executeQuery();
+        return rs.next();
+    }
 
 
+    public User getUser(int id) throws SQLException {
+        String sql = "SELECT * FROM UTENTE WHERE ID = ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setInt(1, id);
+        ResultSet rs = pstmt.executeQuery();
+        if (rs.next()) {
+            return new User(rs.getInt("ID"), rs.getString("NOME"), rs.getString("COGNOME"), rs.getString("USERNAME"), rs.getString("EMAIL"), rs.getString("PASSWORD"));
+        }
+        return null;
+    }
+
+
+
+    ///SOSTITUIRE INT CON UN ESITO PIU CHIARO
+    public int addUser(User user) throws SQLException {
+        try {
+            String sql = "INSERT INTO UTENTE(NOME, COGNOME, USERNAME, EMAIL, PASSWORD) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement pstmt = connection.prepareStatement(sql);
+            pstmt.setString(1, user.getName());
+            pstmt.setString(2, user.getSurname());
+            pstmt.setString(3, user.getUsername());
+            pstmt.setString(4, user.getEmail());
+            pstmt.setString(5, user.getPassword());
+            pstmt.executeUpdate();
+            pstmt.close();
+            return 0; /// Aggiunto senza errori
+        }
+        catch(Exception e) {
+            return 1; /// Si è verificato un errore.
+        }
+
+    }
+
+
+
+/// ///////////////////////////////////////
 
     public void addBus(Bus bus) throws SQLException {
         String sql = "INSERT INTO Bus (ID, LABEL, LICENSE_PLATE) VALUES (?, ?, ?)";
@@ -207,40 +260,6 @@ public class Database {
     }
 
 
-    /// //////////////////////
-
-    public User getUser(int id) throws SQLException {
-        String sql = "SELECT * FROM UTENTE WHERE ID = ?";
-        PreparedStatement pstmt = connection.prepareStatement(sql);
-        pstmt.setInt(1, id);
-        ResultSet rs = pstmt.executeQuery();
-        if (rs.next()) {
-            return new User(rs.getInt("ID"), rs.getString("NOME"), rs.getString("COGNOME"), rs.getString("USERNAME"), rs.getString("EMAIL"), rs.getString("PASSWORD"));
-        }
-        return null;
-    }
-
-
-
-    ///SOSTITUIRE INT CON UN ESITO PIU CHIARO
-    public int addUser(User user) throws SQLException {
-        try {
-            String sql = "INSERT INTO UTENTE(NOME, COGNOME, USERNAME, EMAIL, PASSWORD) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement pstmt = connection.prepareStatement(sql);
-            pstmt.setString(1, user.getName());
-            pstmt.setString(2, user.getSurname());
-            pstmt.setString(3, user.getUsername());
-            pstmt.setString(4, user.getEmail());
-            pstmt.setString(5, user.getPassword());
-            pstmt.executeUpdate();
-            pstmt.close();
-            return 0; /// Aggiunto senza errori
-        }
-        catch(Exception e) {
-            return 1; /// Si è verificato un errore.
-        }
-
-    }
 
 
 

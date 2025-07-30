@@ -3,6 +3,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 
 import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
@@ -51,11 +52,17 @@ public class GtfsRealtimeExample {
 //        ArrayList<Stop> stopsList = db.getStops();
 
 
-        System.out.println(db.addUser(new User("Carmine", "Fontanarosa" ,"Carmine0660", "mickolsverde06@outlook.it", "ElonMusk28")));
-        System.out.println();
-
         URL url = new URL(LINK);
         FeedMessage feed = FeedMessage.parseFrom(url.openStream());
+
+        boolean userRegistered = db.isUserRegistered("Carmine0660");
+        System.out.println("User registered: " + userRegistered);
+
+        boolean emailRegistered = db.isEmailRegistered("mickolsverde05@outlook.it");
+        System.out.println("Email registered: " + emailRegistered);
+
+
+        System.exit(0);
 
         for (FeedEntity entity : feed.getEntityList()) {
             if (entity.hasTripUpdate()) {
@@ -68,18 +75,21 @@ public class GtfsRealtimeExample {
 
                 //List<TripUpdate.StopTimeUpdate> stopTimeUpdates = entityData.getStopTimeUpdateList();
 
-
+                if((db.getRoute(routeID) == null || !Objects.equals(db.getRoute(routeID).getShortName(), "20"))){
+                    continue;
+                }
                 System.out.println("AUTOBUS " + db.getRoute(routeID).getShortName());
 
                 TripUpdate.StopTimeUpdate lastUpdate = entityData.getStopTimeUpdate(entityData.getStopTimeUpdateCount() - 1);
                 printUpdate(lastUpdate);
 
 
-                System.out.println("\n\n");
+
 
                 //System.out.println(entity.getAllFields());
                 System.out.println(tripID);
-                System.exit(0);
+                //System.exit(0);
+                System.out.println("\n\n");
 
             }
 
