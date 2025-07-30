@@ -2,8 +2,7 @@ package gui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+
 
 public class RegistrationPage implements GeneralPanel {
     private final JPanel registrationPanel;
@@ -128,7 +127,7 @@ public class RegistrationPage implements GeneralPanel {
                 errorLabel.setVisible(true);
             } else if(auth.validate()){
                 errorLabel.setVisible(false);
-                frame.setView(new LoginPage(frame));
+                frame.setView(new EmailVerificationPage(frame));
             }
         });
 
