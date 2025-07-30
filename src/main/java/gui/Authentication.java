@@ -5,8 +5,8 @@ import java.util.Arrays;
 public class Authentication {
     private String username;
     private String email;
-    private char[]  password;
-    private char[] confirmPassword;
+    private String  password;
+    private String confirmPassword;
 
     public Authentication(RegistrationPage registrationPage) {
         this.email = registrationPage.getEmailRegistration();
@@ -16,21 +16,24 @@ public class Authentication {
     }
 
     public boolean validatePresenceUsername() {
+
         return username != null && !username.isEmpty();
     }
 
     public boolean validateLengthUsername() {
+
         return username.length() <= 12;
     }
 
     public boolean validatePresenceEmail() {
+
         return email != null && !email.isEmpty();
     }
 
     public boolean validatePasswordMatch() {
             return password != null && confirmPassword != null &&
-                    password.length > 0 && confirmPassword.length > 0 &&
-                    Arrays.equals(password, confirmPassword);
+                    !password.isEmpty() && !confirmPassword.isEmpty() &&
+                    password.equals(confirmPassword);
     }
 
     public boolean validatePasswordStrength() {
@@ -41,8 +44,8 @@ public class Authentication {
 
         String specialChars = "!$&@#";
 
-        for (int i = 0; i < password.length; i++) {
-            char c = password[i];
+        for (int i = 0; i < password.length(); i++) {
+            char c = password.charAt(i);
 
             if (Character.isUpperCase(c)) {      //Almeno una maiuscola
                 hasUppercase = true;

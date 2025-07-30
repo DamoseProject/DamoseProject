@@ -1,7 +1,10 @@
 package gui;
 
+import model.Database;
+
 import javax.swing.*;
 import java.awt.*;
+import java.sql.SQLException;
 
 
 
@@ -16,13 +19,14 @@ public class LoginPage implements GeneralPanel {
     private JLabel loginLabel;
     private JLabel usernameLabel;
     private JLabel passwordLabel;
+    private JLabel errorAccessLabel;
 
     private JButton infoButton;
     private JButton accessButton;
     private JButton guestButton;
     private JButton registerButton;
 
-
+    private Database userControl;
     private final JTextField usernameField;
     private final JPasswordField passwordField;
 
@@ -73,9 +77,32 @@ public class LoginPage implements GeneralPanel {
         passwordPanel.add(passwordField);
 
 
+        //Username dal database
+        userControl = new Database();
+        userControl.connect();
+
+        //Error asccess label
+        errorAccessLabel = new JLabel("");
+        errorAccessLabel.setForeground(Color.RED);
+        errorAccessLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+        errorAccessLabel.setVisible(false);
+
         //Bottone Accedi!
         accessButton = new JButton("Accedi!");
         accessButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
+        accessButton.addActionListener(e -> {
+            try {
+                if(!userControl.isUserRegistered(getUsernameLogin())) {
+                    errorAccessLabel.setText("Username o password errata!");
+                    errorAccessLabel.setVisible(true);
+                } else{
+                    errorAccessLabel.setVisible(false);
+                    frame.setView(new RegistrationPage(frame));
+                }
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
 
         // Aggiungo tutto al pannello centrale con gli spazi necessari
         centerPanel.add(Box.createVerticalGlue());
@@ -84,6 +111,8 @@ public class LoginPage implements GeneralPanel {
         centerPanel.add(passwordPanel);
         centerPanel.add(Box.createVerticalStrut(20));
         centerPanel.add(accessButton);
+        centerPanel.add(Box.createVerticalStrut(20));
+        centerPanel.add(errorAccessLabel);
         centerPanel.add(Box.createVerticalGlue());
 
         loginPanel.add(centerPanel, BorderLayout.CENTER);
