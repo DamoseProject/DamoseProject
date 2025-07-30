@@ -6,12 +6,12 @@ import java.awt.*;
 
 
 public class LoginPage implements GeneralPanel {
-    private JPanel loginPanel;
-    private JPanel topPanel;
-    private JPanel centerPanel;
-    private JPanel emailPanel;
-    private JPanel passwordPanel;
-    private JPanel bottomPanel;
+    private final JPanel loginPanel;
+    private final JPanel topPanel;
+    private final JPanel centerPanel;
+    private final JPanel emailPanel;
+    private final JPanel passwordPanel;
+    private final JPanel bottomPanel;
 
     private JLabel loginLabel;
     private JLabel emailLabel;
@@ -22,8 +22,10 @@ public class LoginPage implements GeneralPanel {
     private JButton guestButton;
     private JButton registerButton;
 
+
     private final JTextField emailField;
     private final JPasswordField passwordField;
+
 
     public LoginPage(MainFrame frame) {
         loginPanel = new JPanel();
@@ -61,6 +63,7 @@ public class LoginPage implements GeneralPanel {
         passwordLabel = new JLabel("Password");
         passwordField = new JPasswordField(20);
 
+
         passwordPanel = new JPanel();
         passwordPanel.setLayout(new BoxLayout(passwordPanel, BoxLayout.Y_AXIS));
         passwordLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
@@ -68,6 +71,7 @@ public class LoginPage implements GeneralPanel {
         passwordField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
         passwordPanel.add(passwordLabel);
         passwordPanel.add(passwordField);
+
 
         //Bottone Accedi!
         accessButton = new JButton("Accedi!");

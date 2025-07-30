@@ -4,17 +4,27 @@ import java.util.Arrays;
 
 public class Authentication {
     private String username;
+    private String email;
     private char[]  password;
     private char[] confirmPassword;
 
     public Authentication(RegistrationPage registrationPage) {
+        this.email = registrationPage.getEmailField();
         this.username = registrationPage.getUsernameField();
         this.password = registrationPage.getPasswordField();
         this.confirmPassword = registrationPage.getConfirmPasswordField();
     }
 
-    public boolean validateUsername() {
-        return username != null && !username.isEmpty() && username.length() <= 12;
+    public boolean validatePresenceUsername() {
+        return username != null && !username.isEmpty();
+    }
+
+    public boolean validateLengthUsername() {
+        return username.length() <= 12;
+    }
+
+    public boolean validatePresenceEmail() {
+        return email != null && !email.isEmpty();
     }
 
     public boolean validatePasswordMatch() {
@@ -47,6 +57,6 @@ public class Authentication {
     }
 
     public boolean validate() {
-        return validateUsername() && validatePasswordMatch() && validatePasswordStrength();
+        return validatePresenceUsername() && validateLengthUsername() && validatePresenceEmail() && validatePasswordMatch() && validatePasswordStrength();
     }
 }

@@ -6,29 +6,23 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class RegistrationPage implements GeneralPanel {
-    private JPanel registrationPanel;
+    private final JPanel registrationPanel;
+    private final JPanel topPanel;
+    private final JPanel centerPanel;
+    private final JPanel usernamePanel;
+    private final JPanel emailPanel;
+    private final JPanel passwordPanel;
+    private final JPanel confirmPasswordPanel;
+
     private JLabel registrationLabel;
-
-    private JPanel topPanel;
-
-    private JPanel centerPanel;
-
     private JLabel username;
-    private JPanel usernamePanel;
-
     private JLabel email;
-    private JPanel emailPanel;
-
     private JLabel password;
-    private JPanel passwordPanel;
-
     private JLabel confirmPassword;
-    private JPanel confirmPasswordPanel;
-
     private JLabel errorLabel;
 
     private JButton registerButton;
-    private BackButton backButton;
+    private final BackButton backButton;
 
     private final JTextField usernameField;
     private final JTextField emailField;
@@ -113,14 +107,20 @@ public class RegistrationPage implements GeneralPanel {
 
 
         //Register Button
-        JButton registerButton = new JButton("Registrati!");
+        registerButton = new JButton("Registrati!");
         registerButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
         registerButton.addActionListener(e -> {
             Authentication auth = new Authentication(this);
-            if(!auth.validateUsername()) {
+            if(!auth.validatePresenceUsername()) {
+                errorLabel.setText("Inserire uno username!");
+                errorLabel.setVisible(true);
+            } else if(!auth.validateLengthUsername()) {
                 errorLabel.setText("Lo username deve contenere al massimo 12 caratteri!");
                 errorLabel.setVisible(true);
-            }else if(!auth.validatePasswordMatch()){
+            } else if(!auth.validatePresenceEmail()) {
+                errorLabel.setText("Inserire una email per completare la registrazione!");
+                errorLabel.setVisible(true);
+            } else if(!auth.validatePasswordMatch()){
                 errorLabel.setText("Le password non coincidono!");
                 errorLabel.setVisible(true);
             } else if(!auth.validatePasswordStrength()) {
