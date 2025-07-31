@@ -1,14 +1,12 @@
 package gui;
 
-import java.util.Arrays;
-
-public class Authentication {
+public class RegistrationAuth {
     private String username;
     private String email;
     private String  password;
     private String confirmPassword;
 
-    public Authentication(RegistrationPage registrationPage) {
+    public RegistrationAuth(RegistrationPage registrationPage) {
         this.email = registrationPage.getEmailRegistration();
         this.username = registrationPage.getUsernameRegistration();
         this.password = registrationPage.getPasswordRegistration();

@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 
+
 public class EmailVerificationPage implements GeneralPanel {
     private final JPanel emailVerificationPanel;
     private final JPanel topPanel;

@@ -119,7 +119,7 @@ public class RegistrationPage implements GeneralPanel {
         registerButton = new JButton("Registrati!");
         registerButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
         registerButton.addActionListener(e -> {
-            Authentication auth = new Authentication(this);
+            RegistrationAuth auth = new RegistrationAuth(this);
             if(!auth.validatePresenceUsername()) {
                 errorLabel.setText("Inserire uno username!");
                 errorLabel.setVisible(true);

@@ -26,7 +26,8 @@ public class LoginPage implements GeneralPanel {
     private JButton guestButton;
     private JButton registerButton;
 
-    private Database userControl;
+    private final Database db;
+    private final LoginAuth loginAuth;
     private final JTextField usernameField;
     private final JPasswordField passwordField;
 
@@ -76,10 +77,10 @@ public class LoginPage implements GeneralPanel {
         passwordPanel.add(passwordLabel);
         passwordPanel.add(passwordField);
 
-
-        //Username dal database
-        userControl = new Database();
-        userControl.connect();
+        //Connection to database
+        db =  new Database();
+        db.connect();
+        loginAuth = new LoginAuth(db);
 
         //Error asccess label
         errorAccessLabel = new JLabel("");
@@ -92,7 +93,7 @@ public class LoginPage implements GeneralPanel {
         accessButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
         accessButton.addActionListener(e -> {
             try {
-                if(!userControl.isUserRegistered(getUsernameLogin())) {
+                if(!loginAuth.isLoginValid(getUsernameLogin(), getPasswordLogin())) {
                     errorAccessLabel.setText("Username o password errata!");
                     errorAccessLabel.setVisible(true);
                 } else{
@@ -100,7 +101,8 @@ public class LoginPage implements GeneralPanel {
                     frame.setView(new RegistrationPage(frame));
                 }
             } catch (SQLException ex) {
-                throw new RuntimeException(ex);
+                errorAccessLabel.setText("Errore di connessione al database.");
+                errorAccessLabel.setVisible(true);
             }
         });
 
@@ -135,15 +137,18 @@ public class LoginPage implements GeneralPanel {
 
     @Override
     public JPanel getPanel() {
+
         return loginPanel;
     }
 
     public String getUsernameLogin() {
+
         return usernameField.getText().trim();
     }
 
-    public char[] getPasswordLogin() {
-        return passwordField.getPassword();
+    public String getPasswordLogin() {
+
+        return passwordField.getText();
     }
 
 
