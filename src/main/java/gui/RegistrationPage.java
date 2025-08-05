@@ -1,7 +1,11 @@
 package gui;
 
+import model.Database;
+import model.User;
+
 import javax.swing.*;
 import java.awt.*;
+import java.sql.SQLException;
 
 
 public class RegistrationPage implements GeneralPanel {
@@ -19,6 +23,8 @@ public class RegistrationPage implements GeneralPanel {
     private JLabel password;
     private JLabel confirmPassword;
     private JLabel errorLabel;
+
+    private Database registrationControl;
 
     private JButton registerButton;
     private final BackButton backButton;
@@ -98,6 +104,10 @@ public class RegistrationPage implements GeneralPanel {
         confirmPasswordPanel.add(confirmPassword);
         confirmPasswordPanel.add(confirmPasswordField);
 
+        //registration control
+        registrationControl = new Database();
+        registrationControl.connect();
+
         //Error label
         errorLabel = new JLabel("");
         errorLabel.setForeground(Color.RED);
@@ -127,6 +137,12 @@ public class RegistrationPage implements GeneralPanel {
                 errorLabel.setVisible(true);
             } else if(auth.validate()){
                 errorLabel.setVisible(false);
+                User user = new User("Davide", "Allegrini", getUsernameRegistration(), getEmailRegistration(), getPasswordRegistration());
+                try {
+                    registrationControl.addUser(user);
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
                 frame.setView(new EmailVerificationPage(frame));
             }
         });
@@ -163,16 +179,19 @@ public class RegistrationPage implements GeneralPanel {
     }
 
     public String getUsernameRegistration() {
+
         return usernameField.getText();
     }
 
     public String getEmailRegistration() {
+
         return emailField.getText();
     }
-    public char[] getPasswordRegistration() {
-        return passwordField.getPassword();
+    public String getPasswordRegistration() {
+
+        return passwordField.getText();
     }
-    public char[] getConfirmPasswordRegistration() {
-        return confirmPasswordField.getPassword();
+    public String getConfirmPasswordRegistration() {
+        return confirmPasswordField.getText();
     }
 }
