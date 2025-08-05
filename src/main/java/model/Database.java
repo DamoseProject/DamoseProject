@@ -63,6 +63,40 @@ public class Database {
 
 
 
+
+    public User getUserByUsername(String username) throws SQLException {
+        String sql = "SELECT * FROM UTENTE WHERE USERNAME = ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, username);
+        ResultSet rs = pstmt.executeQuery();
+        if (rs.next()) {
+            return new User(rs.getInt("ID"), rs.getString("NOME"), rs.getString("COGNOME"), rs.getString("USERNAME"), rs.getString("EMAIL"), rs.getString("PASSWORD"));
+        }
+        return null;
+    }
+
+
+    public User getUserByEmail(String email) throws SQLException {
+        String sql = "SELECT * FROM UTENTE WHERE EMAIL = ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, email);
+        ResultSet rs = pstmt.executeQuery();
+        if (rs.next()) {
+            return new User(rs.getInt("ID"), rs.getString("NOME"), rs.getString("COGNOME"), rs.getString("USERNAME"), rs.getString("EMAIL"), rs.getString("PASSWORD"));
+        }
+        return null;
+    }
+
+
+
+
+
+
+
+
+
+
+
     ///SOSTITUIRE INT CON UN ESITO PIU CHIARO
     public int addUser(User user) throws SQLException {
         try {
