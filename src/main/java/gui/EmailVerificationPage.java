@@ -72,7 +72,7 @@ public class EmailVerificationPage implements GeneralPanel {
                 errorVerificationCodeLabel.setVisible(true);
             } else {
                 errorVerificationCodeLabel.setVisible(false);
-                frame.setView(new LoginPage(frame));
+                frame.setView(new AppPage(frame));
             }
         });
 

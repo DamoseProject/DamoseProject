@@ -11,6 +11,7 @@ import java.sql.SQLException;
 public class LoginPage implements GeneralPanel {
     private final JPanel loginPanel;
     private final JPanel topPanel;
+    private final JPanel topRightPanel;
     private final JPanel centerPanel;
     private final JPanel usernamePanel;
     private final JPanel passwordPanel;
@@ -37,15 +38,33 @@ public class LoginPage implements GeneralPanel {
         loginPanel.setLayout(new BorderLayout());
 
         // Pannello in alto
-        topPanel = new JPanel(new BorderLayout());
+        topPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        //Bottone info
         infoButton = new JButton("Info");
         infoButton.addActionListener(e ->  frame.setView(new HelpPage(frame)));
-        topPanel.add(infoButton, BorderLayout.WEST);
-        loginLabel = new JLabel("Login!", JLabel.CENTER );
-        topPanel.add(loginLabel, BorderLayout.CENTER);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        topPanel.add(infoButton, gbc);
 
-        //Aggiungo un pannello vuoto a destra per centrare la scritta Login!
-        topPanel.add(Box.createHorizontalStrut(infoButton.getPreferredSize().width), BorderLayout.EAST);
+        //Label centrata
+        loginLabel = new JLabel("Login!");
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        topPanel.add(loginLabel, gbc);
+
+        //Spazio a destra per centrare la label
+        topRightPanel = new JPanel();
+        topRightPanel.setPreferredSize(infoButton.getPreferredSize());
+        gbc.gridx = 2;
+        gbc.weightx = 0;
+        gbc.anchor = GridBagConstraints.EAST;
+        topPanel.add(topRightPanel, gbc);
+
+
 
         loginPanel.add(topPanel, BorderLayout.NORTH);
 
@@ -98,7 +117,7 @@ public class LoginPage implements GeneralPanel {
                     errorAccessLabel.setVisible(true);
                 } else{
                     errorAccessLabel.setVisible(false);
-                    frame.setView(new RegistrationPage(frame));
+                    frame.setView(new AppPage(frame));
                 }
             } catch (SQLException ex) {
                 errorAccessLabel.setText("Errore di connessione al database.");
