@@ -4,12 +4,16 @@ import model.Database;
 
 import java.sql.SQLException;
 
-public class LoginAuth {
+public class UserAuth {
     private final Database db;
 
-    public LoginAuth(Database db) {
+    public UserAuth(Database db) {
         this.db = db;
 
+    }
+
+    public boolean isUsernameUnique(String username) throws SQLException {
+        return db.isUserRegistered(username);
     }
 
     public boolean isLoginValid(String username, String password) throws SQLException {

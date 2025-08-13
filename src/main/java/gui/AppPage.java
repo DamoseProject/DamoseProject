@@ -14,68 +14,35 @@ import javax.swing.event.MouseInputListener;
 import java.awt.*;
 
 public class AppPage implements GeneralPanel {
+    private final MainFrame frame;
     private final JPanel appPanel;
+    private JPanel topPanel;
 
-    private final GeoPosition roma;
 
-    private GridBagConstraints gbc;
-
-    private JXMapViewer mapViewer;
-
+    private JButton backButton;
 
 
     public AppPage(MainFrame frame) {
-        appPanel = new JPanel();
-        appPanel.setLayout(new GridBagLayout());
+        this.frame = frame;
+        appPanel = new JPanel(new BorderLayout());
+
+        createTopPanel();
+
+        appPanel.add(topPanel, BorderLayout.NORTH);
+
+    }
 
 
-        mapViewer = new JXMapViewer();
+    public void createTopPanel() {
+        topPanel = new JPanel(new BorderLayout());
 
-        gbc = new GridBagConstraints();
+        //Bottone che torna su pagina di login
+        JButton regLogButton = new JButton("Accedi o Registrati!");
+        regLogButton.addActionListener(e -> frame.setView(new LoginPage(frame)));
 
-        TileFactoryInfo info = new OSMTileFactoryInfo();
-        DefaultTileFactory tileFactory = new DefaultTileFactory(info);
-        mapViewer.setTileFactory(tileFactory);
+        topPanel.add(regLogButton, BorderLayout.WEST);
 
-        roma = new GeoPosition(41.9028, 12.4964);
-        mapViewer.setAddressLocation(roma);
-        mapViewer.setZoom(7);
 
-        MouseInputListener mia = new PanMouseInputListener(mapViewer);
-        mapViewer.addMouseListener(mia);
-        mapViewer.addMouseMotionListener(mia);
-        mapViewer.addMouseWheelListener(new ZoomMouseWheelListenerCenter(mapViewer));
-        mapViewer.addKeyListener(new PanKeyListener(mapViewer));
-
-        // Dimensioni mappa
-        int larghezza = 300;
-        int altezza = 200;
-        mapViewer.setPreferredSize(new Dimension(larghezza, altezza));
-
-        // Posizionamento con GridBagLayout: in basso a sinistra
-        gbc.gridx = 0;           // colonna 0 (sinistra)
-        gbc.gridy = 1;           // riga 1 (in basso)
-        gbc.anchor = GridBagConstraints.LINE_START;  // allinea a sinistra
-        gbc.weightx = 1.0;       // per spingere tutto verso il basso
-        gbc.weighty = 1.0;
-        gbc.insets = new Insets(0, 0, 10, 0);  // margine in basso (10px)
-
-        // Per spingere la mappa in basso, mettiamo un "dummy" componente sopra per occupare lo spazio
-        // Riga 0: componente invisibile che occupa spazio
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        appPanel.add(Box.createGlue(), gbc);
-
-        // Ora aggiungiamo la mappa
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        appPanel.add(mapViewer, gbc);
     }
 
     @Override

@@ -6,126 +6,91 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
 
-
-
 public class LoginPage implements GeneralPanel {
     private final JPanel loginPanel;
-    private final JPanel topPanel;
-    private final JPanel topRightPanel;
-    private final JPanel centerPanel;
-    private final JPanel usernamePanel;
-    private final JPanel passwordPanel;
-    private final JPanel bottomPanel;
+    private JPanel topPanel;
+    private JPanel centerPanel;
+    private JPanel bottomPanel;
 
-    private JLabel loginLabel;
-    private JLabel usernameLabel;
-    private JLabel passwordLabel;
     private JLabel errorAccessLabel;
+    private JTextField usernameField;
+    private JPasswordField passwordField;
 
-    private JButton infoButton;
-    private JButton accessButton;
-    private JButton guestButton;
-    private JButton registerButton;
-
-    private final Database db;
-    private final LoginAuth loginAuth;
-    private final JTextField usernameField;
-    private final JPasswordField passwordField;
-
+    private final MainFrame frame;
 
     public LoginPage(MainFrame frame) {
+        this.frame = frame;
         loginPanel = new JPanel();
         loginPanel.setLayout(new BorderLayout());
 
-        // Pannello in alto
-        topPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        //Bottone info
-        infoButton = new JButton("Info");
-        infoButton.addActionListener(e ->  frame.setView(new HelpPage(frame)));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        topPanel.add(infoButton, gbc);
-
-        //Label centrata
-        loginLabel = new JLabel("Login!");
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.CENTER;
-        topPanel.add(loginLabel, gbc);
-
-        //Spazio a destra per centrare la label
-        topRightPanel = new JPanel();
-        topRightPanel.setPreferredSize(infoButton.getPreferredSize());
-        gbc.gridx = 2;
-        gbc.weightx = 0;
-        gbc.anchor = GridBagConstraints.EAST;
-        topPanel.add(topRightPanel, gbc);
-
-
+        createTopPanel();
+        createCenterPanel();
+        createBottomPanel();
 
         loginPanel.add(topPanel, BorderLayout.NORTH);
+        loginPanel.add(centerPanel, BorderLayout.CENTER);
+        loginPanel.add(bottomPanel, BorderLayout.SOUTH);
+    }
 
-        //Pannello centrale
+    // ------------------ CREAZIONE PANNELLI ------------------
+
+    private void createTopPanel() {
+        topPanel = new JPanel(new BorderLayout());
+
+        // Bottone Info a sinistra
+        JButton infoButton = new JButton("Info");
+        infoButton.addActionListener(e -> frame.setView(new HelpPage(frame)));
+        topPanel.add(infoButton, BorderLayout.WEST);
+
+        // Label centrata
+        JLabel loginLabel = new JLabel("Login!", JLabel.CENTER);
+        topPanel.add(loginLabel, BorderLayout.CENTER);
+
+        // Strut a destra per bilanciare il bottone
+        topPanel.add(Box.createHorizontalStrut(infoButton.getPreferredSize().width), BorderLayout.EAST);
+    }
+
+
+    private JPanel createFieldPanel(String labelName, JComponent field) {
+        JPanel fieldPanel = new JPanel();
+        fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
+
+        JLabel label = new JLabel(labelName);
+        label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+
+        field.setMaximumSize(field.getPreferredSize());
+        field.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+
+        fieldPanel.add(label);
+        fieldPanel.add(field);
+
+        return fieldPanel;
+    }
+
+    private void createCenterPanel() {
         centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
-        //Email
-        usernameLabel = new JLabel("Username:");
+        // Username
         usernameField = new JTextField(20);
-        usernamePanel = new JPanel();
-        usernamePanel.setLayout(new BoxLayout(usernamePanel, BoxLayout.Y_AXIS));
-        usernameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        usernameField.setMaximumSize(usernameField.getPreferredSize());
-        usernameField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
-        usernamePanel.add(usernameLabel);
-        usernamePanel.add(usernameField);
+        JPanel usernamePanel = createFieldPanel("Username: ", usernameField);
 
-        //Password
-        passwordLabel = new JLabel("Password:");
+        // Password
         passwordField = new JPasswordField(20);
+        JPanel passwordPanel = createFieldPanel("Password: ", passwordField);
 
-
-        passwordPanel = new JPanel();
-        passwordPanel.setLayout(new BoxLayout(passwordPanel, BoxLayout.Y_AXIS));
-        passwordLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        passwordField.setMaximumSize(passwordField.getPreferredSize());
-        passwordField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
-        passwordPanel.add(passwordLabel);
-        passwordPanel.add(passwordField);
-
-        //Connection to database
-        db =  new Database();
-        db.connect();
-        loginAuth = new LoginAuth(db);
-
-        //Error asccess label
+        // Label errore
         errorAccessLabel = new JLabel("");
         errorAccessLabel.setForeground(Color.RED);
         errorAccessLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
         errorAccessLabel.setVisible(false);
 
-        //Bottone Accedi!
-        accessButton = new JButton("Accedi!");
+        // Bottone Accedi
+        JButton accessButton = new JButton("Accedi!");
         accessButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
-        accessButton.addActionListener(e -> {
-            try {
-                if(!loginAuth.isLoginValid(getUsernameLogin(), getPasswordLogin())) {
-                    errorAccessLabel.setText("Username o password errata!");
-                    errorAccessLabel.setVisible(true);
-                } else{
-                    errorAccessLabel.setVisible(false);
-                    frame.setView(new AppPage(frame));
-                }
-            } catch (SQLException ex) {
-                errorAccessLabel.setText("Errore di connessione al database.");
-                errorAccessLabel.setVisible(true);
-            }
-        });
+        accessButton.addActionListener(e -> handleLogin());
 
-        // Aggiungo tutto al pannello centrale con gli spazi necessari
+        // Aggiunta al centro
         centerPanel.add(Box.createVerticalGlue());
         centerPanel.add(usernamePanel);
         centerPanel.add(Box.createVerticalStrut(10));
@@ -135,40 +100,51 @@ public class LoginPage implements GeneralPanel {
         centerPanel.add(Box.createVerticalStrut(20));
         centerPanel.add(errorAccessLabel);
         centerPanel.add(Box.createVerticalGlue());
+    }
 
-        loginPanel.add(centerPanel, BorderLayout.CENTER);
-
-        // Bottom panel
+    private void createBottomPanel() {
         bottomPanel = new JPanel(new BorderLayout());
 
-        guestButton = new JButton("Entra come Ospite");
-        registerButton = new JButton("Registrati!");
+        JButton guestButton = new JButton("Entra come Ospite");
+        JButton registerButton = new JButton("Registrati!");
         registerButton.addActionListener(e -> frame.setView(new RegistrationPage(frame)));
 
         bottomPanel.add(guestButton, BorderLayout.WEST);
         bottomPanel.add(registerButton, BorderLayout.EAST);
+    }
 
-        loginPanel.add(bottomPanel, BorderLayout.SOUTH);
+    // ------------------ LOGICA ------------------
 
+    private void handleLogin() {
+        try {
+            Database db = new Database();
+            db.connect();
+            UserAuth loginAuth = new UserAuth(db);
+            if (!loginAuth.isLoginValid(getUsernameLogin(), getPasswordLogin())) {
+                errorAccessLabel.setText("Username o password errata!");
+                errorAccessLabel.setVisible(true);
+            } else {
+                errorAccessLabel.setVisible(false);
+                frame.setView(new AppPage(frame));
+            }
+        } catch (SQLException ex) {
+            errorAccessLabel.setText("Errore di connessione al database.");
+            errorAccessLabel.setVisible(true);
+        }
     }
 
 
 
     @Override
     public JPanel getPanel() {
-
         return loginPanel;
     }
 
     public String getUsernameLogin() {
-
         return usernameField.getText().trim();
     }
 
     public String getPasswordLogin() {
-
-        return passwordField.getText();
+        return new String(passwordField.getPassword());
     }
-
-
 }

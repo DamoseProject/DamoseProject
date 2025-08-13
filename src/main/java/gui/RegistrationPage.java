@@ -7,148 +7,97 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
 
-
 public class RegistrationPage implements GeneralPanel {
     private final JPanel registrationPanel;
-    private final JPanel topPanel;
-    private final JPanel centerPanel;
-    private final JPanel usernamePanel;
-    private final JPanel emailPanel;
-    private final JPanel passwordPanel;
-    private final JPanel confirmPasswordPanel;
+    private JPanel topPanel;
+    private JPanel centerPanel;
 
-    private JLabel registrationLabel;
-    private JLabel username;
-    private JLabel email;
-    private JLabel password;
-    private JLabel confirmPassword;
     private JLabel errorLabel;
+    private JTextField usernameField;
+    private JTextField emailField;
+    private JPasswordField passwordField;
+    private JPasswordField confirmPasswordField;
 
-    private Database registrationControl;
-
-    private JButton registerButton;
-    private final BackButton backButton;
-
-    private final JTextField usernameField;
-    private final JTextField emailField;
-    private final JPasswordField passwordField;
-    private final JPasswordField confirmPasswordField;
-
+    private final MainFrame frame;
 
     public RegistrationPage(MainFrame frame) {
-        registrationPanel = new JPanel();
-        registrationPanel.setLayout(new BorderLayout());
+        this.frame = frame;
+        registrationPanel = new JPanel(new BorderLayout());
 
+        createTopPanel();
+        createCenterPanel();
 
-        //Top Panel
-        topPanel = new JPanel();
-        registrationLabel = new JLabel("Registrati!", JLabel.CENTER);
-        topPanel.setLayout(new BorderLayout());
-        backButton = new BackButton(frame);
-        topPanel.add(backButton,  BorderLayout.WEST);
-        topPanel.add(registrationLabel,  BorderLayout.CENTER);
+        registrationPanel.add(topPanel, BorderLayout.NORTH);
+        registrationPanel.add(centerPanel, BorderLayout.CENTER);
+    }
 
-        //Aggiungo un pannello vuoto a destra per centrare la scritta Registrati
+    // ------------------ CREAZIONE PANNELLI ------------------
+
+    private void createTopPanel() {
+        topPanel = new JPanel(new BorderLayout());
+
+        JLabel registrationLabel = new JLabel("Registrati!", JLabel.CENTER);
+        BackButton backButton = new BackButton(frame);
+
+        topPanel.add(backButton, BorderLayout.WEST);
+        topPanel.add(registrationLabel, BorderLayout.CENTER);
         topPanel.add(Box.createHorizontalStrut(backButton.getPreferredSize().width), BorderLayout.EAST);
+    }
 
+    private JPanel createFieldPanel(String labelName, JComponent field ) {
+        JPanel fieldPanel = new JPanel();
+        fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
 
+        JLabel label = new JLabel(labelName);
+        label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 
+        field.setMaximumSize(field.getPreferredSize());
+        field.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 
-        //Center Panel
+        fieldPanel.add(label);
+        fieldPanel.add(field);
+
+        return fieldPanel;
+    }
+
+    private void createCenterPanel() {
         centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
-
-        //Username
-        username = new JLabel("Username:");
+        // Username
         usernameField = new JTextField(20);
-        usernamePanel = new JPanel();
-        usernamePanel.setLayout(new BoxLayout(usernamePanel, BoxLayout.Y_AXIS));
-        username.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        usernameField.setMaximumSize(usernameField.getPreferredSize());
-        usernameField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
-        usernamePanel.add(username);
-        usernamePanel.add(usernameField);
+        JPanel usernamePanel = createFieldPanel("Username", usernameField);
 
-
-        //Email
-        email = new JLabel("Email :");
+        // Email
         emailField = new JTextField(20);
-        emailPanel = new JPanel();
-        emailPanel.setLayout(new BoxLayout(emailPanel, BoxLayout.Y_AXIS));
-        email.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        emailField.setMaximumSize(emailField.getPreferredSize());
-        emailField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
-        emailPanel.add(email);
-        emailPanel.add(emailField);
+        JPanel emailPanel = createFieldPanel("Email", emailField);
 
-        //Password
-        password = new JLabel("Password :");
+        // Password
         passwordField = new JPasswordField(20);
-        passwordPanel = new JPanel();
-        passwordPanel.setLayout(new BoxLayout(passwordPanel, BoxLayout.Y_AXIS));
-        password.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        passwordField.setMaximumSize(passwordField.getPreferredSize());
-        passwordField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
-        passwordPanel.add(password);
-        passwordPanel.add(passwordField);
+        JPanel passwordPanel = createFieldPanel("Password", passwordField);
 
-        //Confirm Password
-        confirmPassword = new JLabel("Conferma Password :");
+        // Conferma password
         confirmPasswordField = new JPasswordField(20);
-        confirmPasswordPanel = new JPanel();
-        confirmPasswordPanel.setLayout(new BoxLayout(confirmPasswordPanel, BoxLayout.Y_AXIS));
-        confirmPassword.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        confirmPasswordField.setMaximumSize(confirmPasswordField.getPreferredSize());
-        confirmPasswordField.setAlignmentX(JTextField.CENTER_ALIGNMENT);
-        confirmPasswordPanel.add(confirmPassword);
-        confirmPasswordPanel.add(confirmPasswordField);
+        JPanel confirmPasswordPanel = createFieldPanel("Confirm Password", confirmPasswordField);
 
-        //registration control
-        registrationControl = new Database();
-        registrationControl.connect();
-
-        //Error label
+        // Label errore
         errorLabel = new JLabel("");
         errorLabel.setForeground(Color.RED);
         errorLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
         errorLabel.setVisible(false);
 
-
-        //Register Button
-        registerButton = new JButton("Registrati!");
+        // Bottone Registrati
+        JButton registerButton = new JButton("Registrati!");
         registerButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
         registerButton.addActionListener(e -> {
-            RegistrationAuth auth = new RegistrationAuth(this);
-            if(!auth.validatePresenceUsername()) {
-                errorLabel.setText("Inserire uno username!");
-                errorLabel.setVisible(true);
-            } else if(!auth.validateLengthUsername()) {
-                errorLabel.setText("Lo username deve contenere al massimo 12 caratteri!");
-                errorLabel.setVisible(true);
-            } else if(!auth.validatePresenceEmail()) {
-                errorLabel.setText("Inserire una email per completare la registrazione!");
-                errorLabel.setVisible(true);
-            } else if(!auth.validatePasswordMatch()){
-                errorLabel.setText("Le password non coincidono!");
-                errorLabel.setVisible(true);
-            } else if(!auth.validatePasswordStrength()) {
-                errorLabel.setText("La passwword deve contenere almeno: una lettera maiuscola, un numero e un carattere speciale tra: !,$,&,@,#. ");
-                errorLabel.setVisible(true);
-            } else if(auth.validate()){
-                errorLabel.setVisible(false);
-                User user = new User("Davide", "Allegrini", getUsernameRegistration(), getEmailRegistration(), getPasswordRegistration());
-                try {
-                    registrationControl.addUser(user);
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
-                }
-                frame.setView(new EmailVerificationPage(frame));
+            try {
+                handleRegistration();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
             }
         });
 
-
-        //Add all to the centerPanel
+        // Composizione
         centerPanel.add(Box.createVerticalGlue());
         centerPanel.add(usernamePanel);
         centerPanel.add(Box.createVerticalStrut(10));
@@ -162,16 +111,49 @@ public class RegistrationPage implements GeneralPanel {
         centerPanel.add(Box.createVerticalStrut(20));
         centerPanel.add(errorLabel);
         centerPanel.add(Box.createVerticalGlue());
-
-
-        registrationPanel.add(topPanel, BorderLayout.NORTH);
-        registrationPanel.add(centerPanel, BorderLayout.CENTER);
-
-
-
-
-
     }
+
+
+
+    private void handleRegistration() throws SQLException {
+        RegistrationAuth auth = new RegistrationAuth(this);
+        Database db = new Database();
+        db.connect();
+        UserAuth regAuth = new UserAuth(db);
+
+        if (!auth.validatePresenceUsername()) {
+            showError("Inserire uno username!");
+        } else if (!auth.validateLengthUsername()) {
+            showError("Lo username deve contenere al massimo 12 caratteri!");
+        } else if (regAuth.isUsernameUnique(getUsernameRegistration())){
+            showError("Username già in uso!");
+        } else if (!auth.validatePresenceEmail()) {
+            showError("Inserire una email per completare la registrazione!");
+        } else if (!auth.validatePasswordMatch()) {
+            showError("Le password non coincidono!");
+        } else if (!auth.validatePasswordStrength()) {
+            showError("La password deve contenere almeno: una lettera maiuscola, un numero e un carattere speciale tra: !,$,&,@,#.");
+        } else if (auth.validate()) {
+            try {
+                Database registrationControl = new Database();
+                registrationControl.connect();
+                User user = new User("Davide", "Allegrini", getUsernameRegistration(), getEmailRegistration(), getPasswordRegistration());
+                registrationControl.addUser(user);
+
+                errorLabel.setVisible(false);
+                frame.setView(new EmailVerificationPage(frame));
+            } catch (SQLException ex) {
+                showError("Errore durante la registrazione.");
+            }
+        }
+    }
+
+    private void showError(String message) {
+        errorLabel.setText(message);
+        errorLabel.setVisible(true);
+    }
+
+
 
     @Override
     public JPanel getPanel() {
@@ -179,19 +161,18 @@ public class RegistrationPage implements GeneralPanel {
     }
 
     public String getUsernameRegistration() {
-
-        return usernameField.getText();
+        return usernameField.getText().trim();
     }
 
     public String getEmailRegistration() {
-
-        return emailField.getText();
+        return emailField.getText().trim();
     }
+
     public String getPasswordRegistration() {
-
-        return passwordField.getText();
+        return new String(passwordField.getPassword());
     }
+
     public String getConfirmPasswordRegistration() {
-        return confirmPasswordField.getText();
+        return new String(confirmPasswordField.getPassword());
     }
 }
