@@ -19,6 +19,8 @@ public class AppPage implements GeneralPanel {
     private JPanel topPanel;
     private JPanel mapPanel;
 
+    private JTextField researchField;
+
 
     public AppPage(MainFrame frame) {
         this.frame = frame;
@@ -53,7 +55,7 @@ public class AppPage implements GeneralPanel {
     private void createTopPanel() {
         topPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(5, 5, 5, 5); // spazi vuoi da 5 pixel attorno
 
         // ---------------- leftPanel: bottone + spazio + textfield (verticale) ----------------
         JPanel leftPanel = new JPanel();
@@ -67,7 +69,7 @@ public class AppPage implements GeneralPanel {
         // spazio verticale tra bottone e textfield
         leftPanel.add(Box.createVerticalStrut(30));
 
-        JTextField researchField = new JTextField(20);
+        researchField = new JTextField(20);
         JPanel researchFieldPanel = createFieldPanel("Inserisci n. Fermata o nome della Linea!", researchField);
         researchFieldPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         leftPanel.add(researchFieldPanel);
@@ -82,7 +84,7 @@ public class AppPage implements GeneralPanel {
 
         // ---------------- centerLabel: colonna centrale, occupa lo spazio orizzontale ----------------
         JLabel centerLabel = new JLabel("Dove vuoi andare?", SwingConstants.CENTER);
-        // la anchoro in alto per avere la stessa "linea" del bottone
+        // la ancoro in alto per avere la stessa "linea" del bottone
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.NORTH;
@@ -122,6 +124,7 @@ public class AppPage implements GeneralPanel {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
 
+
         JXMapViewer mapViewer = createMapViewer();
         mapPanel.add(mapViewer, gbc);
     }
@@ -156,8 +159,15 @@ public class AppPage implements GeneralPanel {
 
 
 
+
+
     @Override
     public JPanel getPanel() {
         return appPanel;
+    }
+
+
+    public String getResearchField() {
+        return researchField.getText().trim();
     }
 }
