@@ -14,14 +14,14 @@ public class MainFrame extends JFrame {
 
     public void setView(GeneralPanel view) {
         setContentPane(view.getPanel());
-        revalidate();
-        repaint();
+        revalidate();  //gestione struttura e layout
+        repaint();     //"refresh" grafico
     }
 
 
     public static void main(String[] args) {
 
-        SwingUtilities.invokeLater(() -> new MainFrame());
+        SwingUtilities.invokeLater(MainFrame::new);
     }
 
 }

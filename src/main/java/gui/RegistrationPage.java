@@ -36,11 +36,12 @@ public class RegistrationPage implements GeneralPanel {
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
 
-        JLabel registrationLabel = new JLabel("Registrati!", JLabel.CENTER);
         BackButton backButton = new BackButton(frame);
-
         topPanel.add(backButton, BorderLayout.WEST);
+
+        JLabel registrationLabel = new JLabel("Registrati!", JLabel.CENTER);
         topPanel.add(registrationLabel, BorderLayout.CENTER);
+
         topPanel.add(Box.createHorizontalStrut(backButton.getPreferredSize().width), BorderLayout.EAST);
     }
 

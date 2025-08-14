@@ -12,7 +12,7 @@ public class EmailVerificationPage implements GeneralPanel {
     private JTextField verificationCodeField;
     private JLabel errorVerificationCodeLabel;
 
-    private MainFrame frame;
+    private final MainFrame frame;
 
     public EmailVerificationPage(MainFrame frame) {
         this.frame = frame;

@@ -4,12 +4,11 @@ import javax.swing.*;
 import java.awt.*;
 
 public class HelpPage implements GeneralPanel {
-    private JPanel helpPanel;
+    private final JPanel helpPanel;
     private JPanel topPanel;
     private JPanel centerPanel;
 
-    private JLabel helpLabel;
-    private MainFrame frame;
+    private final MainFrame frame;
 
     public HelpPage(MainFrame frame) {
         this.frame = frame;
@@ -37,7 +36,7 @@ public class HelpPage implements GeneralPanel {
         centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
-        helpLabel = new JLabel(getHelpText(), JLabel.CENTER);
+        JLabel helpLabel = new JLabel(getHelpText(), JLabel.CENTER);
         helpLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         centerPanel.add(Box.createVerticalGlue());

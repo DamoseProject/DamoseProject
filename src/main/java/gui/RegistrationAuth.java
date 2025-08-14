@@ -1,10 +1,10 @@
 package gui;
 
 public class RegistrationAuth {
-    private String username;
-    private String email;
-    private String  password;
-    private String confirmPassword;
+    private final String username;
+    private final String email;
+    private final String  password;
+    private final String confirmPassword;
 
     public RegistrationAuth(RegistrationPage registrationPage) {
         this.email = registrationPage.getEmailRegistration();
