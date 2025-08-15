@@ -6,91 +6,50 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
 
-public class LoginPage implements GeneralPanel {
-    private final JPanel loginPanel;
+public class LoginPage extends BasePage {
     private JPanel topPanel;
     private JPanel centerPanel;
     private JPanel bottomPanel;
-
     private JLabel errorAccessLabel;
     private JTextField usernameField;
     private JPasswordField passwordField;
 
-    private final MainFrame frame;
-
     public LoginPage(MainFrame frame) {
-        this.frame = frame;
-        loginPanel = new JPanel();
-        loginPanel.setLayout(new BorderLayout());
-
+        super(frame);
         createTopPanel();
         createCenterPanel();
         createBottomPanel();
-
-        loginPanel.add(topPanel, BorderLayout.NORTH);
-        loginPanel.add(centerPanel, BorderLayout.CENTER);
-        loginPanel.add(bottomPanel, BorderLayout.SOUTH);
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     }
-
-    // ------------------ CREAZIONE PANNELLI ------------------
 
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
-
-        // Bottone Info a sinistra
         JButton infoButton = new JButton("Info");
         infoButton.addActionListener(e -> frame.setView(new HelpPage(frame)));
-        topPanel.add(infoButton, BorderLayout.WEST);
-
-        // Label centrata
         JLabel loginLabel = new JLabel("Login!", JLabel.CENTER);
+        topPanel.add(infoButton, BorderLayout.WEST);
         topPanel.add(loginLabel, BorderLayout.CENTER);
-
-        // Strut a destra per bilanciare il bottone
         topPanel.add(Box.createHorizontalStrut(infoButton.getPreferredSize().width), BorderLayout.EAST);
-    }
-
-
-    private JPanel createFieldPanel(String labelName, JComponent field) {
-        JPanel fieldPanel = new JPanel();
-        fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
-
-        JLabel label = new JLabel(labelName);
-        label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-
-        field.setMaximumSize(field.getPreferredSize());
-        field.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-
-        fieldPanel.add(label);
-        fieldPanel.add(field);
-
-        return fieldPanel;
     }
 
     private void createCenterPanel() {
         centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
-        // Username
         usernameField = new JTextField(20);
         JPanel usernamePanel = createFieldPanel("Username: ", usernameField);
 
-        // Password
         passwordField = new JPasswordField(20);
         JPanel passwordPanel = createFieldPanel("Password: ", passwordField);
 
-        // Label errore
-        errorAccessLabel = new JLabel("");
-        errorAccessLabel.setForeground(Color.RED);
-        errorAccessLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        errorAccessLabel.setVisible(false);
+        errorAccessLabel = createErrorLabel();
 
-        // Bottone Accedi
         JButton accessButton = new JButton("Accedi!");
-        accessButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
+        accessButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         accessButton.addActionListener(e -> handleLogin());
 
-        // Aggiunta al centro
         centerPanel.add(Box.createVerticalGlue());
         centerPanel.add(usernamePanel);
         centerPanel.add(Box.createVerticalStrut(10));
@@ -104,16 +63,12 @@ public class LoginPage implements GeneralPanel {
 
     private void createBottomPanel() {
         bottomPanel = new JPanel(new BorderLayout());
-
         JButton guestButton = new JButton("Entra come Ospite");
         JButton registerButton = new JButton("Registrati!");
         registerButton.addActionListener(e -> frame.setView(new RegistrationPage(frame)));
-
         bottomPanel.add(guestButton, BorderLayout.WEST);
         bottomPanel.add(registerButton, BorderLayout.EAST);
     }
-
-    // ------------------ LOGICA ------------------
 
     private void handleLogin() {
         try {
@@ -133,18 +88,6 @@ public class LoginPage implements GeneralPanel {
         }
     }
 
-
-
-    @Override
-    public JPanel getPanel() {
-        return loginPanel;
-    }
-
-    public String getUsernameLogin() {
-        return usernameField.getText().trim();
-    }
-
-    public String getPasswordLogin() {
-        return new String(passwordField.getPassword());
-    }
+    public String getUsernameLogin() { return usernameField.getText().trim(); }
+    public String getPasswordLogin() { return new String(passwordField.getPassword()); }
 }

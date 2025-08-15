@@ -7,89 +7,52 @@ import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
 
-public class RegistrationPage implements GeneralPanel {
-    private final JPanel registrationPanel;
+public class RegistrationPage extends BasePage {
     private JPanel topPanel;
     private JPanel centerPanel;
-
     private JLabel errorLabel;
     private JTextField usernameField;
     private JTextField emailField;
     private JPasswordField passwordField;
     private JPasswordField confirmPasswordField;
 
-    private final MainFrame frame;
-
     public RegistrationPage(MainFrame frame) {
-        this.frame = frame;
-        registrationPanel = new JPanel(new BorderLayout());
-
+        super(frame);
         createTopPanel();
         createCenterPanel();
-
-        registrationPanel.add(topPanel, BorderLayout.NORTH);
-        registrationPanel.add(centerPanel, BorderLayout.CENTER);
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
     }
-
-    // ------------------ CREAZIONE PANNELLI ------------------
 
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
-
         BackButton backButton = new BackButton(frame);
-        topPanel.add(backButton, BorderLayout.WEST);
-
         JLabel registrationLabel = new JLabel("Registrati!", JLabel.CENTER);
+        topPanel.add(backButton, BorderLayout.WEST);
         topPanel.add(registrationLabel, BorderLayout.CENTER);
-
         topPanel.add(Box.createHorizontalStrut(backButton.getPreferredSize().width), BorderLayout.EAST);
-    }
-
-    private JPanel createFieldPanel(String labelName, JComponent field ) {
-        JPanel fieldPanel = new JPanel();
-        fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
-
-        JLabel label = new JLabel(labelName);
-        label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-
-        field.setMaximumSize(field.getPreferredSize());
-        field.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-
-        fieldPanel.add(label);
-        fieldPanel.add(field);
-
-        return fieldPanel;
     }
 
     private void createCenterPanel() {
         centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
-        // Username
         usernameField = new JTextField(20);
         JPanel usernamePanel = createFieldPanel("Username", usernameField);
 
-        // Email
         emailField = new JTextField(20);
         JPanel emailPanel = createFieldPanel("Email", emailField);
 
-        // Password
         passwordField = new JPasswordField(20);
         JPanel passwordPanel = createFieldPanel("Password", passwordField);
 
-        // Conferma password
         confirmPasswordField = new JPasswordField(20);
         JPanel confirmPasswordPanel = createFieldPanel("Confirm Password", confirmPasswordField);
 
-        // Label errore
-        errorLabel = new JLabel("");
-        errorLabel.setForeground(Color.RED);
-        errorLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-        errorLabel.setVisible(false);
+        errorLabel = createErrorLabel();
 
-        // Bottone Registrati
         JButton registerButton = new JButton("Registrati!");
-        registerButton.setAlignmentX(JButton.CENTER_ALIGNMENT);
+        registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         registerButton.addActionListener(e -> {
             try {
                 handleRegistration();
@@ -98,7 +61,6 @@ public class RegistrationPage implements GeneralPanel {
             }
         });
 
-        // Composizione
         centerPanel.add(Box.createVerticalGlue());
         centerPanel.add(usernamePanel);
         centerPanel.add(Box.createVerticalStrut(10));
@@ -114,8 +76,6 @@ public class RegistrationPage implements GeneralPanel {
         centerPanel.add(Box.createVerticalGlue());
     }
 
-
-
     private void handleRegistration() throws SQLException {
         RegistrationAuth auth = new RegistrationAuth(this);
         Database db = new Database();
@@ -126,7 +86,7 @@ public class RegistrationPage implements GeneralPanel {
             showError("Inserire uno username!");
         } else if (!auth.validateLengthUsername()) {
             showError("Lo username deve contenere al massimo 12 caratteri!");
-        } else if (regAuth.isUsernameUnique(getUsernameRegistration())){
+        } else if (regAuth.isUsernameUnique(getUsernameRegistration())) {
             showError("Username già in uso!");
         } else if (!auth.validatePresenceEmail()) {
             showError("Inserire una email per completare la registrazione!");
@@ -154,25 +114,15 @@ public class RegistrationPage implements GeneralPanel {
         errorLabel.setVisible(true);
     }
 
-
-
-    @Override
-    public JPanel getPanel() {
-        return registrationPanel;
-    }
-
     public String getUsernameRegistration() {
         return usernameField.getText().trim();
     }
-
     public String getEmailRegistration() {
         return emailField.getText().trim();
     }
-
     public String getPasswordRegistration() {
         return new String(passwordField.getPassword());
     }
-
     public String getConfirmPasswordRegistration() {
         return new String(confirmPasswordField.getPassword());
     }

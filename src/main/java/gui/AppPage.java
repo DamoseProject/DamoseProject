@@ -13,51 +13,25 @@ import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 import java.awt.*;
 
-public class AppPage implements GeneralPanel {
-    private final MainFrame frame;
-    private final JPanel appPanel;
+public class AppPage extends BasePage {
     private JPanel topPanel;
     private JPanel mapPanel;
-
     private JTextField researchField;
 
-
     public AppPage(MainFrame frame) {
-        this.frame = frame;
-        appPanel = new JPanel(new BorderLayout());
-
+        super(frame);
         createTopPanel();
         createMapPanel();
-
-        appPanel.add(topPanel, BorderLayout.NORTH);
-        appPanel.add(mapPanel, BorderLayout.CENTER);
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(mapPanel, BorderLayout.CENTER);
     }
-
-    private JPanel createFieldPanel(String labelName, JComponent field) {
-        JPanel fieldPanel = new JPanel();
-        fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
-
-        JLabel label = new JLabel(labelName);
-        label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-
-        field.setMaximumSize(field.getPreferredSize());
-        field.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-
-        fieldPanel.add(label);
-        fieldPanel.add(field);
-
-        return fieldPanel;
-
-
-    }
-
 
     private void createTopPanel() {
         topPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5); // spazi vuoi da 5 pixel attorno
+        gbc.insets = new Insets(5, 5, 5, 5);
 
-        // ---------------- leftPanel: bottone + spazio + textfield (verticale) ----------------
+        // ---------------- leftPanel ----------------
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
 
@@ -66,15 +40,14 @@ public class AppPage implements GeneralPanel {
         regLogButton.addActionListener(e -> frame.setView(new LoginPage(frame)));
         leftPanel.add(regLogButton);
 
-        // spazio verticale tra bottone e textfield
-        leftPanel.add(Box.createVerticalStrut(30));
+        leftPanel.add(Box.createVerticalStrut(70));
 
         researchField = new JTextField(20);
         JPanel researchFieldPanel = createFieldPanel("Inserisci n. Fermata o nome della Linea!", researchField);
         researchFieldPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         leftPanel.add(researchFieldPanel);
 
-        // Aggiungo leftPanel nella colonna 0, riga 0 (ancorato in alto a sinistra)
+        // aggiunta in topPanel
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -82,18 +55,16 @@ public class AppPage implements GeneralPanel {
         gbc.fill = GridBagConstraints.NONE;
         topPanel.add(leftPanel, gbc);
 
-        // ---------------- centerLabel: colonna centrale, occupa lo spazio orizzontale ----------------
+        // ---------------- centerLabel ----------------
         JLabel centerLabel = new JLabel("Dove vuoi andare?", SwingConstants.CENTER);
-        // la ancoro in alto per avere la stessa "linea" del bottone
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.NORTH;
-        gbc.weightx = 1.0;                    // la colonna centrale si espande
+        gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         topPanel.add(centerLabel, gbc);
 
-        // ---------------- right spacer: colonna 2, stessa larghezza di leftPanel ----------------
-        // uso la larghezza preferita di leftPanel
+        // ---------------- right spacer ----------------
         int leftWidth = leftPanel.getPreferredSize().width;
         Component rightSpacer = Box.createRigidArea(new Dimension(leftWidth, 1));
 
@@ -104,7 +75,7 @@ public class AppPage implements GeneralPanel {
         gbc.fill = GridBagConstraints.NONE;
         topPanel.add(rightSpacer, gbc);
 
-        // ---------------- riga di riempimento per occupare lo spazio rimanente verticalmente ----------------
+        // ---------------- filler ----------------
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weighty = 1.0;
@@ -112,18 +83,16 @@ public class AppPage implements GeneralPanel {
         topPanel.add(Box.createGlue(), gbc);
     }
 
-
     private void createMapPanel() {
         mapPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.SOUTHWEST; // angolo in basso a sinistra
-        gbc.insets = new Insets(10, 0, 0, 0); // 10px sopra per il JTextField
+        gbc.anchor = GridBagConstraints.SOUTHWEST;
+        gbc.insets = new Insets(10, 0, 0, 0);
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-
 
         JXMapViewer mapViewer = createMapViewer();
         mapPanel.add(mapViewer, gbc);
@@ -142,30 +111,15 @@ public class AppPage implements GeneralPanel {
 
         mapViewer.setPreferredSize(new Dimension(500, 400));
 
-        // --- AGGIUNGI I LISTENER ---
-        // Pan con mouse (drag)
+        // listener
         MouseInputListener mil = new PanMouseInputListener(mapViewer);
         mapViewer.addMouseListener(mil);
         mapViewer.addMouseMotionListener(mil);
-
-        // Zoom con rotellina del mouse
         mapViewer.addMouseWheelListener(new ZoomMouseWheelListenerCenter(mapViewer));
-
-        // Pan con tastiera (freccette)
         mapViewer.addKeyListener(new PanKeyListener(mapViewer));
 
         return mapViewer;
     }
-
-
-
-
-
-    @Override
-    public JPanel getPanel() {
-        return appPanel;
-    }
-
 
     public String getResearchField() {
         return researchField.getText().trim();

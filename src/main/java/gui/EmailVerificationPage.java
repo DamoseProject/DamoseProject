@@ -3,36 +3,26 @@ package gui;
 import javax.swing.*;
 import java.awt.*;
 
-public class EmailVerificationPage implements GeneralPanel {
-    private final JPanel emailVerificationPanel;
+
+public class EmailVerificationPage extends BasePage {
     private JPanel topPanel;
     private JPanel centerPanel;
     private JPanel verificationCodePanel;
-
     private JTextField verificationCodeField;
     private JLabel errorVerificationCodeLabel;
 
-    private final MainFrame frame;
-
     public EmailVerificationPage(MainFrame frame) {
-        this.frame = frame;
-        emailVerificationPanel = new JPanel(new BorderLayout());
-
+        super(frame);
         createTopPanel();
         createCenterPanel();
-
-        emailVerificationPanel.add(topPanel, BorderLayout.NORTH);
-        emailVerificationPanel.add(centerPanel, BorderLayout.CENTER);
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
     }
-
-    // ------------------ CREAZIONE PANNELLI ------------------
 
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
-
         BackButton backButton = new BackButton(frame);
         JLabel completeRegistrationLabel = new JLabel("Completa la tua registrazione!", JLabel.CENTER);
-
         topPanel.add(backButton, BorderLayout.WEST);
         topPanel.add(completeRegistrationLabel, BorderLayout.CENTER);
         topPanel.add(Box.createHorizontalStrut(backButton.getPreferredSize().width), BorderLayout.EAST);
@@ -43,13 +33,16 @@ public class EmailVerificationPage implements GeneralPanel {
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
         createVerificationCodePanel();
-        createErrorLabel();
-        createSubmitButton();
+        errorVerificationCodeLabel = createErrorLabel();
+
+        JButton submitButton = new JButton("Fine!");
+        submitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        submitButton.addActionListener(e -> handleSubmit());
 
         centerPanel.add(Box.createVerticalGlue());
         centerPanel.add(verificationCodePanel);
         centerPanel.add(Box.createVerticalStrut(20));
-        centerPanel.add(createSubmitButton());
+        centerPanel.add(submitButton);
         centerPanel.add(Box.createVerticalStrut(20));
         centerPanel.add(errorVerificationCodeLabel);
         centerPanel.add(Box.createVerticalGlue());
@@ -75,23 +68,6 @@ public class EmailVerificationPage implements GeneralPanel {
         verificationCodePanel.add(verificationCodeField);
     }
 
-    private void createErrorLabel() {
-        errorVerificationCodeLabel = new JLabel("");
-        errorVerificationCodeLabel.setForeground(Color.RED);
-        errorVerificationCodeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        errorVerificationCodeLabel.setVisible(false);
-    }
-
-    private JButton createSubmitButton() {
-        JButton submitButton = new JButton("Fine!");
-        submitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        submitButton.addActionListener(e -> handleSubmit());
-        return submitButton;
-    }
-
-    // ------------------ LOGICA ------------------
-
     private void handleSubmit() {
         String code = getVerificationCode();
 
@@ -110,14 +86,5 @@ public class EmailVerificationPage implements GeneralPanel {
         errorVerificationCodeLabel.setVisible(true);
     }
 
-    // ------------------ INTERFACCIA ------------------
-
-    @Override
-    public JPanel getPanel() {
-        return emailVerificationPanel;
-    }
-
-    public String getVerificationCode() {
-        return verificationCodeField.getText().trim();
-    }
+    public String getVerificationCode() { return verificationCodeField.getText().trim(); }
 }

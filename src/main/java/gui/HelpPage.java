@@ -3,32 +3,22 @@ package gui;
 import javax.swing.*;
 import java.awt.*;
 
-public class HelpPage implements GeneralPanel {
-    private final JPanel helpPanel;
+public class HelpPage extends BasePage {
     private JPanel topPanel;
     private JPanel centerPanel;
 
-    private final MainFrame frame;
-
     public HelpPage(MainFrame frame) {
-        this.frame = frame;
-        helpPanel = new JPanel(new BorderLayout());
-
+        super(frame);
         createTopPanel();
         createCenterPanel();
-
-        helpPanel.add(topPanel, BorderLayout.NORTH);
-        helpPanel.add(centerPanel, BorderLayout.CENTER);
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
     }
-
-    // ------------------ CREAZIONE PANNELLI ------------------
 
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
-
         BackButton backButton = new BackButton(frame);
         backButton.addActionListener(e -> frame.setView(new LoginPage(frame)));
-
         topPanel.add(backButton, BorderLayout.WEST);
     }
 
@@ -50,12 +40,5 @@ public class HelpPage implements GeneralPanel {
                 + "Avendo un account collegato si ha la possibilità di aggiungere alla lista Preferiti "
                 + "una linea o una fermata che ci interessa particolarmente."
                 + "</div></html>";
-    }
-
-    // ------------------ INTERFACCIA ------------------
-
-    @Override
-    public JPanel getPanel() {
-        return helpPanel;
     }
 }
