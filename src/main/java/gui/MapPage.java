@@ -57,6 +57,8 @@ public class MapPage extends BasePage {
         centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 10, 10));
+
         researchField = new JTextField(30);
         researchField.setMaximumSize(new Dimension(Integer.MAX_VALUE, researchField.getPreferredSize().height));
 
@@ -100,7 +102,7 @@ public class MapPage extends BasePage {
                 errorLabel.setVisible(true);
             } else {
                 errorLabel.setVisible(false);
-                performSearch(text); // qui puoi inserire la logica di ricerca
+                performSearch(text); 
             }
         });
     }
