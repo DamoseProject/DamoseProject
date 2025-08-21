@@ -77,7 +77,7 @@ public class EmailVerificationPage extends BasePage {
             showError("Il codice inserito è errato!");
         } else {
             errorVerificationCodeLabel.setVisible(false);
-            frame.setView(new AppPage(frame));
+            frame.setView(new MapPage(frame));
         }
     }
 

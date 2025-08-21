@@ -80,7 +80,7 @@ public class LoginPage extends BasePage {
                 errorAccessLabel.setVisible(true);
             } else {
                 errorAccessLabel.setVisible(false);
-                frame.setView(new AppPage(frame));
+                frame.setView(new MapPage(frame));
             }
         } catch (SQLException ex) {
             errorAccessLabel.setText("Errore di connessione al database.");
