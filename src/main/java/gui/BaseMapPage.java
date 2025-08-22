@@ -13,15 +13,16 @@ import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 import java.awt.*;
 
-public class MapPage extends BasePage {
-    private JPanel topPanel;
-    private JPanel centerPanel;
-    private JPanel mapAndResultsPanel;
-    private JTextField researchField;
-    private JTextArea resultsArea;
+public abstract class BaseMapPage extends BasePage{
+    protected JPanel topPanel;
+    protected JPanel centerPanel;
+    protected JPanel mapAndResultsPanel;
+    protected JTextField researchField;
+    protected JTextArea resultsArea;
 
-    public MapPage(MainFrame frame) {
+    protected BaseMapPage(MainFrame frame) {
         super(frame);
+
         createTopPanel();
         createCenterPanel();
         createMapAndResultsPanel();
@@ -56,37 +57,19 @@ public class MapPage extends BasePage {
     private void createCenterPanel() {
         centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-
         centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 10, 10));
 
         researchField = new JTextField(30);
         researchField.setMaximumSize(new Dimension(Integer.MAX_VALUE, researchField.getPreferredSize().height));
 
-        // Creiamo il pannello con la label sopra il JTextField
         JPanel researchFieldPanel = createFieldPanel("Inserisci n. Fermata o nome della Linea!", researchField);
-
-        // Label di errore invisibile
-        JLabel errorLabel = new JLabel("Inserire una ricerca da effettuare");
+        JLabel errorLabel = new JLabel();
         errorLabel.setForeground(Color.RED);
         errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         errorLabel.setVisible(false);
 
-        // Bottoni
-        JButton addFav = new JButton("Aggiungi ai preferiti!");
-        JButton checkFav = new JButton("Preferiti!");
+        JPanel buttonsPanel = createButtonsPanel(errorLabel);
 
-        JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
-        addFav.setAlignmentY(Component.CENTER_ALIGNMENT);
-        checkFav.setAlignmentY(Component.CENTER_ALIGNMENT);
-
-        buttonsPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-        buttonsPanel.add(addFav);
-        buttonsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        buttonsPanel.add(checkFav);
-        buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // Inseriamo tutto nel centerPanel con spazi verticali
         centerPanel.add(Box.createVerticalStrut(10));
         centerPanel.add(researchFieldPanel);
         centerPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -95,39 +78,38 @@ public class MapPage extends BasePage {
         centerPanel.add(buttonsPanel);
         centerPanel.add(Box.createVerticalStrut(10));
 
-        // ActionListener per Invio
         researchField.addActionListener(e -> {
             String text = researchField.getText().trim();
             if (text.isEmpty()) {
+                errorLabel.setText("Inserire una ricerca da effettuare!");
                 errorLabel.setVisible(true);
             } else {
                 errorLabel.setVisible(false);
-                performSearch(text); 
+                performSearch(text);
             }
         });
     }
 
+    protected abstract JPanel createButtonsPanel(JLabel errorLabel);
 
     private void createMapAndResultsPanel() {
         mapAndResultsPanel = new JPanel();
         mapAndResultsPanel.setLayout(new BoxLayout(mapAndResultsPanel, BoxLayout.X_AXIS));
 
-        // Mappa
         JXMapViewer mapViewer = createMapViewer();
         JPanel mapContainer = new JPanel(new BorderLayout());
         mapContainer.add(mapViewer, BorderLayout.CENTER);
 
-        // Area risultati
         resultsArea = new JTextArea();
         resultsArea.setEditable(false);
         resultsArea.setLineWrap(true);
         resultsArea.setWrapStyleWord(true);
 
         JScrollPane resultsScroll = new JScrollPane(resultsArea);
-        resultsScroll.setPreferredSize(new Dimension(250, 400)); // larghezza fissa, altezza come la mappa
+        resultsScroll.setPreferredSize(new Dimension(250, 400));
 
         mapAndResultsPanel.add(mapContainer);
-        mapAndResultsPanel.add(Box.createRigidArea(new Dimension(10, 0))); // spazio tra mappa e risultati
+        mapAndResultsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
         mapAndResultsPanel.add(resultsScroll);
     }
 
@@ -141,10 +123,8 @@ public class MapPage extends BasePage {
         GeoPosition roma = new GeoPosition(41.9028, 12.4964);
         mapViewer.setZoom(5);
         mapViewer.setAddressLocation(roma);
-
         mapViewer.setPreferredSize(new Dimension(500, 400));
 
-        // listener
         MouseInputListener mil = new PanMouseInputListener(mapViewer);
         mapViewer.addMouseListener(mil);
         mapViewer.addMouseMotionListener(mil);
@@ -154,21 +134,19 @@ public class MapPage extends BasePage {
         return mapViewer;
     }
 
-    private void performSearch(String text) {
-        text = researchField.getText().trim();
-        if(text.isEmpty()) {
+    protected void performSearch(String text) {
+        if (text.isEmpty()) {
             resultsArea.setText("Inserisci un termine di ricerca!");
             return;
         }
-
-        // Simulazione risultati
-        String results = "Risultati per: " + text + "\n";
-        results += "Fermata 1\nFermata 2\nLinea A\nLinea B"; // esempio
-
+        String results = "Risultati per: " + text + "\nFermata 1\nFermata 2\nLinea A\nLinea B";
         resultsArea.setText(results);
     }
 
-    public String getResearchField() {
-        return researchField.getText().trim();
+    public String[] getResearchField() {
+        String text = researchField.getText().trim();
+        return text.isEmpty() ? new String[0] : text.split("\\s+");
     }
+
+
 }

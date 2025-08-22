@@ -64,6 +64,7 @@ public class LoginPage extends BasePage {
     private void createBottomPanel() {
         bottomPanel = new JPanel(new BorderLayout());
         JButton guestButton = new JButton("Entra come Ospite");
+        guestButton.addActionListener(e -> frame.setView(new MapNotLogPage(frame)));
         JButton registerButton = new JButton("Registrati!");
         registerButton.addActionListener(e -> frame.setView(new RegistrationPage(frame)));
         bottomPanel.add(guestButton, BorderLayout.WEST);
@@ -80,7 +81,7 @@ public class LoginPage extends BasePage {
                 errorAccessLabel.setVisible(true);
             } else {
                 errorAccessLabel.setVisible(false);
-                frame.setView(new MapPage(frame));
+                frame.setView(new MapLogPage(frame));
             }
         } catch (SQLException ex) {
             errorAccessLabel.setText("Errore di connessione al database.");
