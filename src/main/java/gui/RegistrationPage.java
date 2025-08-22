@@ -26,7 +26,7 @@ public class RegistrationPage extends BasePage {
 
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
-        BackButton backButton = new BackButton(frame);
+        BackButton backButton = new BackButton(frame, () -> frame.setView(new LoginPage(frame)));
         JLabel registrationLabel = new JLabel("Registrati!", JLabel.CENTER);
         topPanel.add(backButton, BorderLayout.WEST);
         topPanel.add(registrationLabel, BorderLayout.CENTER);

@@ -3,8 +3,8 @@ package gui;
 import javax.swing.*;
 
 public class BackButton extends JButton {
-    public BackButton(MainFrame frame) {
+    public BackButton(MainFrame frame, Runnable action) {
         super("Indietro");
-        addActionListener(e -> frame.setView(new LoginPage(frame)));
+        addActionListener(e -> action.run());
     }
 }

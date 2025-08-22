@@ -21,7 +21,7 @@ public class EmailVerificationPage extends BasePage {
 
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
-        BackButton backButton = new BackButton(frame);
+        BackButton backButton = new BackButton(frame, () -> frame.setView(new RegistrationPage(frame)));
         JLabel completeRegistrationLabel = new JLabel("Completa la tua registrazione!", JLabel.CENTER);
         topPanel.add(backButton, BorderLayout.WEST);
         topPanel.add(completeRegistrationLabel, BorderLayout.CENTER);

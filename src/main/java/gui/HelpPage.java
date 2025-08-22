@@ -17,7 +17,7 @@ public class HelpPage extends BasePage {
 
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
-        BackButton backButton = new BackButton(frame);
+        BackButton backButton = new BackButton(frame, () -> frame.setView(new LoginPage(frame)));
         backButton.addActionListener(e -> frame.setView(new LoginPage(frame)));
         topPanel.add(backButton, BorderLayout.WEST);
     }
