@@ -13,6 +13,13 @@ public abstract class BasePage implements GeneralPanel{
     }
 
     /**
+     * Metodo se le sotto-classi non volessero utilizzare BorderLayout in mainPanel
+     */
+    protected void setLayout(LayoutManager layout) {
+        mainPanel.setLayout(layout);
+    }
+
+    /**
      * Crea un pannello con etichetta sopra e campo centrato.
      */
     protected JPanel createFieldPanel(String labelName, JComponent field) {

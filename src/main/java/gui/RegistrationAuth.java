@@ -3,14 +3,14 @@ package gui;
 public class RegistrationAuth {
     private final String username;
     private final String email;
-    private final String  password;
+    private final String password;
     private final String confirmPassword;
 
-    public RegistrationAuth(RegistrationPage registrationPage) {
-        this.email = registrationPage.getEmailRegistration();
-        this.username = registrationPage.getUsernameRegistration();
-        this.password = registrationPage.getPasswordRegistration();
-        this.confirmPassword = registrationPage.getConfirmPasswordRegistration();
+    public RegistrationAuth(String username, String email, String password, String confirmPassword) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.confirmPassword = confirmPassword;
     }
 
     public boolean validatePresenceUsername() {
@@ -20,12 +20,20 @@ public class RegistrationAuth {
 
     public boolean validateLengthUsername() {
 
-        return username.length() <= 12;
+        return username.length() <= ErrorMessages.MAX_USERNAME_LENGTH;
     }
 
     public boolean validatePresenceEmail() {
 
         return email != null && !email.isEmpty();
+    }
+
+    public boolean validatePresencePassword() {
+        return password != null && !password.isEmpty();
+    }
+
+    public boolean validatePresenceConfirmPassword() {
+        return confirmPassword != null && !confirmPassword.isEmpty();
     }
 
     public boolean validatePasswordMatch() {
@@ -40,7 +48,7 @@ public class RegistrationAuth {
         boolean hasDigit = false;
         boolean hasSpecialChar = false;
 
-        String specialChars = "!$&@#";
+        String specialChars = ErrorMessages.SPECIAL_CHARS;
 
         for (int i = 0; i < password.length(); i++) {
             char c = password.charAt(i);

@@ -17,8 +17,7 @@ public class HelpPage extends BasePage {
 
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
-        BackButton backButton = new BackButton(frame, () -> frame.setView(new LoginPage(frame)));
-        backButton.addActionListener(e -> frame.setView(new LoginPage(frame)));
+        BackButton backButton = new BackButton(frame, () -> frame.setView(PageFactory.createPage(PageType.LOGIN, frame)));
         topPanel.add(backButton, BorderLayout.WEST);
     }
 
@@ -37,6 +36,7 @@ public class HelpPage extends BasePage {
     private String getHelpText() {
         return "<html><div style='text-align: center;'>"
                 + "Perché è utile effettuare l'accesso o la registrazione alla piattaforma?<br>"
+                + "<br>"
                 + "Avendo un account collegato si ha la possibilità di aggiungere alla lista Preferiti "
                 + "una linea o una fermata che ci interessa particolarmente."
                 + "</div></html>";

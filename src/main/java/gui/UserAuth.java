@@ -12,7 +12,7 @@ public class UserAuth {
 
     }
 
-    public boolean isUsernameUnique(String username) throws SQLException {
+    public boolean isUsernameTaken(String username) throws SQLException {
         return db.isUserRegistered(username);
     }
 

@@ -26,7 +26,7 @@ public class RegistrationPage extends BasePage {
 
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
-        BackButton backButton = new BackButton(frame, () -> frame.setView(new LoginPage(frame)));
+        BackButton backButton = new BackButton(frame, () -> frame.setView(PageFactory.createPage(PageType.LOGIN, frame)));
         JLabel registrationLabel = new JLabel("Registrati!", JLabel.CENTER);
         topPanel.add(backButton, BorderLayout.WEST);
         topPanel.add(registrationLabel, BorderLayout.CENTER);
@@ -38,16 +38,16 @@ public class RegistrationPage extends BasePage {
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
         usernameField = new JTextField(20);
-        JPanel usernamePanel = createFieldPanel("Username", usernameField);
+        JPanel usernamePanel = createFieldPanel("Username: ", usernameField);
 
         emailField = new JTextField(20);
-        JPanel emailPanel = createFieldPanel("Email", emailField);
+        JPanel emailPanel = createFieldPanel("Email: ", emailField);
 
         passwordField = new JPasswordField(20);
-        JPanel passwordPanel = createFieldPanel("Password", passwordField);
+        JPanel passwordPanel = createFieldPanel("Password: ", passwordField);
 
         confirmPasswordField = new JPasswordField(20);
-        JPanel confirmPasswordPanel = createFieldPanel("Confirm Password", confirmPasswordField);
+        JPanel confirmPasswordPanel = createFieldPanel("Conferma Password: ", confirmPasswordField);
 
         errorLabel = createErrorLabel();
 
@@ -77,35 +77,20 @@ public class RegistrationPage extends BasePage {
     }
 
     private void handleRegistration() throws SQLException {
-        RegistrationAuth auth = new RegistrationAuth(this);
-        Database db = new Database();
-        db.connect();
-        UserAuth regAuth = new UserAuth(db);
+        RegistrationController controller = new RegistrationController();
 
-        if (!auth.validatePresenceUsername()) {
-            showError("Inserire uno username!");
-        } else if (!auth.validateLengthUsername()) {
-            showError("Lo username deve contenere al massimo 12 caratteri!");
-        } else if (regAuth.isUsernameUnique(getUsernameRegistration())) {
-            showError("Username già in uso!");
-        } else if (!auth.validatePresenceEmail()) {
-            showError("Inserire una email per completare la registrazione!");
-        } else if (!auth.validatePasswordMatch()) {
-            showError("Le password non coincidono!");
-        } else if (!auth.validatePasswordStrength()) {
-            showError("La password deve contenere almeno: una lettera maiuscola, un numero e un carattere speciale tra: !,$,&,@,#.");
-        } else if (auth.validate()) {
-            try {
-                Database registrationControl = new Database();
-                registrationControl.connect();
-                User user = new User("Davide", "Allegrini", getUsernameRegistration(), getEmailRegistration(), getPasswordRegistration());
-                registrationControl.addUser(user);
+        RegistrationResult result = controller.handleRegistration(
+                getUsernameRegistration(),
+                getEmailRegistration(),
+                getPasswordRegistration(),
+                getConfirmPasswordRegistration()
+        );
 
-                errorLabel.setVisible(false);
-                frame.setView(new EmailVerificationPage(frame));
-            } catch (SQLException ex) {
-                showError("Errore durante la registrazione.");
-            }
+        if (result.isSuccess()) {
+            errorLabel.setVisible(false);
+            frame.setView(PageFactory.createPage(PageType.EMAIL_VERIFICATION, frame));
+        } else {
+            showError(result.getErrorMessage());
         }
     }
 

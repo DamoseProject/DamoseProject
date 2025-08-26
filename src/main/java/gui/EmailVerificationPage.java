@@ -21,7 +21,7 @@ public class EmailVerificationPage extends BasePage {
 
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
-        BackButton backButton = new BackButton(frame, () -> frame.setView(new RegistrationPage(frame)));
+        BackButton backButton = new BackButton(frame, () -> frame.setView(PageFactory.createPage(PageType.REGISTRATION, frame)));
         JLabel completeRegistrationLabel = new JLabel("Completa la tua registrazione!", JLabel.CENTER);
         topPanel.add(backButton, BorderLayout.WEST);
         topPanel.add(completeRegistrationLabel, BorderLayout.CENTER);
@@ -53,7 +53,7 @@ public class EmailVerificationPage extends BasePage {
         verificationCodePanel.setLayout(new BoxLayout(verificationCodePanel, BoxLayout.Y_AXIS));
 
         JLabel verificationCodeLabel = new JLabel(
-                "Inserisci il codice di verifica a 6 cifre che è stato inviato alla tua e-mail!",
+                "Inserisci il codice di verifica a 6 cifre che è stato inviato alla tua e-mail: ",
                 JLabel.CENTER
         );
         verificationCodeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -72,9 +72,9 @@ public class EmailVerificationPage extends BasePage {
         String code = getVerificationCode();
 
         if (code.isEmpty()) {
-            showError("Inserire il codice di verifica a 6 cifre");
-        } else if (code.length() != 6) {
-            showError("Il codice inserito è errato!");
+            showError(ErrorMessages.MISSED_VER_CODE);
+        } else if (code.length() != ErrorMessages.VERIFICATION_CODE_LENGTH) {
+            showError(ErrorMessages.WRONG_VER_CODE);
         } else {
             errorVerificationCodeLabel.setVisible(false);
             frame.setView(new MapLogPage(frame));

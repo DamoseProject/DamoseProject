@@ -27,7 +27,7 @@ public class LoginPage extends BasePage {
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
         JButton infoButton = new JButton("Info");
-        infoButton.addActionListener(e -> frame.setView(new HelpPage(frame)));
+        infoButton.addActionListener(e -> frame.setView(PageFactory.createPage(PageType.HELP, frame)));
         JLabel loginLabel = new JLabel("Login!", JLabel.CENTER);
         topPanel.add(infoButton, BorderLayout.WEST);
         topPanel.add(loginLabel, BorderLayout.CENTER);
@@ -64,9 +64,9 @@ public class LoginPage extends BasePage {
     private void createBottomPanel() {
         bottomPanel = new JPanel(new BorderLayout());
         JButton guestButton = new JButton("Entra come Ospite");
-        guestButton.addActionListener(e -> frame.setView(new MapNotLogPage(frame)));
+        guestButton.addActionListener(e -> frame.setView(PageFactory.createPage(PageType.MAP_GUEST, frame)));
         JButton registerButton = new JButton("Registrati!");
-        registerButton.addActionListener(e -> frame.setView(new RegistrationPage(frame)));
+        registerButton.addActionListener(e -> frame.setView(PageFactory.createPage(PageType.REGISTRATION, frame)));
         bottomPanel.add(guestButton, BorderLayout.WEST);
         bottomPanel.add(registerButton, BorderLayout.EAST);
     }
@@ -77,14 +77,14 @@ public class LoginPage extends BasePage {
             db.connect();
             UserAuth loginAuth = new UserAuth(db);
             if (!loginAuth.isLoginValid(getUsernameLogin(), getPasswordLogin())) {
-                errorAccessLabel.setText("Username o password errata!");
+                errorAccessLabel.setText(ErrorMessages.USERNAME_OR_PSW_WRONG);
                 errorAccessLabel.setVisible(true);
             } else {
                 errorAccessLabel.setVisible(false);
                 frame.setView(new MapLogPage(frame));
             }
         } catch (SQLException ex) {
-            errorAccessLabel.setText("Errore di connessione al database.");
+            errorAccessLabel.setText(ErrorMessages.CONNECTION_ERROR_DATABASE);
             errorAccessLabel.setVisible(true);
         }
     }
