@@ -36,7 +36,8 @@ public abstract class BaseMapPage extends BasePage {
     }
 
     private void createTopPanel() {
-        topPanel = new JPanel(new BorderLayout());
+        topPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
         JButton regLoginButton = new JButton("Accedi o Registrati!");
         regLoginButton.addActionListener(e -> frame.setView(PageFactory.createPage(PageType.LOGIN, frame)));
@@ -45,18 +46,45 @@ public abstract class BaseMapPage extends BasePage {
 
         JButton newsButton = new JButton("News");
 
-        int strutWidth = regLoginButton.getPreferredSize().width - newsButton.getPreferredSize().width;
-        Component horizontalStrut = Box.createHorizontalStrut(Math.max(strutWidth, 0));
-
-        JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.add(mainLabel, BorderLayout.CENTER);
-        centerPanel.add(horizontalStrut, BorderLayout.EAST);
-
-        topPanel.add(regLoginButton, BorderLayout.WEST);
-        topPanel.add(newsButton, BorderLayout.EAST);
-        topPanel.add(centerPanel, BorderLayout.CENTER);
+        
+        int maxButtonWidth = Math.max(regLoginButton.getPreferredSize().width,
+                newsButton.getPreferredSize().width);
 
 
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        leftPanel.setPreferredSize(new Dimension(maxButtonWidth + 10,
+                regLoginButton.getPreferredSize().height));
+        leftPanel.add(regLoginButton);
+
+
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        rightPanel.setPreferredSize(new Dimension(maxButtonWidth + 10,
+                newsButton.getPreferredSize().height));
+        rightPanel.add(newsButton);
+
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        topPanel.add(leftPanel, gbc);
+
+
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        topPanel.add(mainLabel, gbc);
+
+
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        gbc.anchor = GridBagConstraints.EAST;
+        topPanel.add(rightPanel, gbc);
     }
 
     private void createCenterPanel() {
