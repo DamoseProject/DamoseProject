@@ -81,7 +81,7 @@ public class LoginPage extends BasePage {
                 errorAccessLabel.setVisible(true);
             } else {
                 errorAccessLabel.setVisible(false);
-                frame.setView(new MapLogPage(frame));
+                frame.setView(PageFactory.createPage(PageType.MAP_LOGGED, frame));
             }
         } catch (SQLException ex) {
             errorAccessLabel.setText(ErrorMessages.CONNECTION_ERROR_DATABASE);

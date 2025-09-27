@@ -38,7 +38,12 @@ public class HelpPage extends BasePage {
                 + "Perché è utile effettuare l'accesso o la registrazione alla piattaforma?<br>"
                 + "<br>"
                 + "Avendo un account collegato si ha la possibilità di aggiungere alla lista Preferiti "
-                + "una linea o una fermata che ci interessa particolarmente."
+                + "una linea o una fermata che ci interessa particolarmente.<br>"
+                + "<br>"
+                + "<br>"
+                + "Come zoomare sulla mappa?<br>"
+                + "<br>"
+                + "Per effettuare lo zoom sulla mappa si possono utilizzare i tasti + e - presenti sulla propria tastiera."
                 + "</div></html>";
     }
 }
