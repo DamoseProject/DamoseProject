@@ -1,6 +1,7 @@
 package gui;
 
 import model.Database;
+import model.User;
 
 import java.sql.SQLException;
 
@@ -17,6 +18,8 @@ public class UserAuth {
     }
 
     public boolean isLoginValid(String username, String password) throws SQLException {
-        return db.isUserRegistered(username);
+        User user = db.getUserByUsername(username);
+        String pwd = user.getPassword();
+        return db.isUserRegistered(username) && pwd.equals(password);
     }
 }
