@@ -4,76 +4,40 @@ import javax.swing.*;
 import java.awt.*;
 
 
-public class EmailVerificationPage implements GeneralPanel {
-    private final JPanel emailVerificationPanel;
-    private final JPanel topPanel;
-    private final JPanel centerPanel;
-    private final JPanel verificationCodePanel;
-
+public class EmailVerificationPage extends BasePage {
+    private JPanel topPanel;
+    private JPanel centerPanel;
+    private JPanel verificationCodePanel;
     private JTextField verificationCodeField;
-
-    private JButton submitButton;
-    private BackButton backButton;
-
-    private JLabel completeRegistrationLabel;
-    private JLabel verificationCodeLabel;
     private JLabel errorVerificationCodeLabel;
 
-
-
     public EmailVerificationPage(MainFrame frame) {
-        emailVerificationPanel = new JPanel();
-        emailVerificationPanel.setLayout(new BorderLayout());
+        super(frame);
+        createTopPanel();
+        createCenterPanel();
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
+    }
 
-        //Top panel
-        topPanel = new JPanel();
-        topPanel.setLayout(new BorderLayout());
-        backButton = new BackButton(frame);
-        completeRegistrationLabel = new JLabel("Completa la tua registrazione!", JLabel.CENTER);
-        topPanel.add(backButton,  BorderLayout.WEST);
+    private void createTopPanel() {
+        topPanel = new JPanel(new BorderLayout());
+        BackButton backButton = new BackButton(frame, () -> frame.setView(PageFactory.createPage(PageType.REGISTRATION, frame)));
+        JLabel completeRegistrationLabel = new JLabel("Completa la tua registrazione!", JLabel.CENTER);
+        topPanel.add(backButton, BorderLayout.WEST);
         topPanel.add(completeRegistrationLabel, BorderLayout.CENTER);
-
-        //Aggiungo un pannello vuoto a destra per centrare la scritta Registrati
         topPanel.add(Box.createHorizontalStrut(backButton.getPreferredSize().width), BorderLayout.EAST);
+    }
 
-
-
-        //Center panel
+    private void createCenterPanel() {
         centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
-        verificationCodeLabel = new JLabel("Inserisci il codice di verifica a 6 cifre che è stato inviato alla tua e-mail!");
-        verificationCodeField = new JTextField(6);
-        verificationCodePanel = new JPanel();
-        verificationCodePanel.setLayout(new BoxLayout(verificationCodePanel, BoxLayout.Y_AXIS));
-        verificationCodeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        verificationCodeField.setMaximumSize(verificationCodeField.getPreferredSize());
-        verificationCodePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        verificationCodePanel.add(verificationCodeLabel);
-        verificationCodePanel.add(verificationCodeField);
+        createVerificationCodePanel();
+        errorVerificationCodeLabel = createErrorLabel();
 
-
-        //Error label
-        errorVerificationCodeLabel = new JLabel("");
-        errorVerificationCodeLabel.setForeground(Color.RED);
-        errorVerificationCodeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        errorVerificationCodeLabel.setVisible(false);
-
-        //Submit button
-        submitButton = new JButton("Fine!");
+        JButton submitButton = new JButton("Fine!");
         submitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        submitButton.addActionListener(e -> {
-            if(verificationCodeField.getText().isEmpty()) {
-                errorVerificationCodeLabel.setText("Inserire il codice di verifica a 6 cifre");
-                errorVerificationCodeLabel.setVisible(true);
-            } else if(verificationCodeField.getText().length() != 6) {
-                errorVerificationCodeLabel.setText("Il codice inserito è errato!");
-                errorVerificationCodeLabel.setVisible(true);
-            } else {
-                errorVerificationCodeLabel.setVisible(false);
-                frame.setView(new LoginPage(frame));
-            }
-        });
+        submitButton.addActionListener(e -> handleSubmit());
 
         centerPanel.add(Box.createVerticalGlue());
         centerPanel.add(verificationCodePanel);
@@ -82,20 +46,45 @@ public class EmailVerificationPage implements GeneralPanel {
         centerPanel.add(Box.createVerticalStrut(20));
         centerPanel.add(errorVerificationCodeLabel);
         centerPanel.add(Box.createVerticalGlue());
-
-
-
-
-        emailVerificationPanel.add(topPanel, BorderLayout.NORTH);
-        emailVerificationPanel.add(centerPanel, BorderLayout.CENTER);
     }
 
-    @Override
-    public JPanel getPanel() {
-        return emailVerificationPanel;
+    private void createVerificationCodePanel() {
+        verificationCodePanel = new JPanel();
+        verificationCodePanel.setLayout(new BoxLayout(verificationCodePanel, BoxLayout.Y_AXIS));
+
+        JLabel verificationCodeLabel = new JLabel(
+                "Inserisci il codice di verifica a 6 cifre che è stato inviato alla tua e-mail: ",
+                JLabel.CENTER
+        );
+        verificationCodeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        verificationCodeField = new JTextField(6);
+        verificationCodeField.setMaximumSize(verificationCodeField.getPreferredSize());
+        verificationCodeField.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        verificationCodePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        verificationCodePanel.add(verificationCodeLabel);
+        verificationCodePanel.add(Box.createVerticalStrut(10));
+        verificationCodePanel.add(verificationCodeField);
     }
 
-    public String getVerificationCode() {
-        return verificationCodeField.getText();
+    private void handleSubmit() {
+        String code = getVerificationCode();
+
+        if (code.isEmpty()) {
+            showError(ErrorMessages.MISSED_VER_CODE);
+        } else if (code.length() != ErrorMessages.VERIFICATION_CODE_LENGTH) {
+            showError(ErrorMessages.WRONG_VER_CODE);
+        } else {
+            errorVerificationCodeLabel.setVisible(false);
+            frame.setView(new MapLogPage(frame));
+        }
     }
+
+    private void showError(String message) {
+        errorVerificationCodeLabel.setText(message);
+        errorVerificationCodeLabel.setVisible(true);
+    }
+
+    public String getVerificationCode() { return verificationCodeField.getText().trim(); }
 }
