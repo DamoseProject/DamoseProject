@@ -2,11 +2,12 @@ package model;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Database {
 
 
-    private static String DATABASE_LINK = "jdbc:sqlite:RomeBusDatabase";
+    private static String DATABASE_LINK = "jdbc:sqlite:RomeBusDatabase.db";
     private static Connection connection;
 
     public Database() {
@@ -86,6 +87,37 @@ public class Database {
         }
         return null;
     }
+
+
+
+    //Restituisce List di Fermate da nome
+    public List<Stop> getStopsByName(String name) throws SQLException {
+        List<Stop> stops = new ArrayList<>();
+        String sql = "SELECT * FROM Fermata WHERE NOME LIKE ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, "%" + name + "%");
+        ResultSet rs = pstmt.executeQuery();
+        while (rs.next()) {
+            stops.add(new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME"), rs.getFloat("LATITUDINE"), rs.getFloat("LONGITUDINE")));
+
+        }
+        return stops;
+    }
+
+
+    //Restituisce List di Fermate da nome
+    public List<Route> getRoutesByName(String name) throws SQLException {
+        List<Route> routes = new ArrayList<>();
+        String sql = "SELECT * FROM PERCORSO WHERE NOME_BREVE LIKE ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, name);
+        ResultSet rs = pstmt.executeQuery();
+        while (rs.next()) {
+            routes.add(new Route(rs.getString("ID"), rs.getString("AGENZIA_ID"), rs.getString("NOME_BREVE"), rs.getString("NOME_COMPLETO"), rs.getString("TIPO")));
+        }
+        return routes;
+    }
+
 
 
 
