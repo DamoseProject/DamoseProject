@@ -82,9 +82,11 @@ public class Database {
         PreparedStatement pstmt = connection.prepareStatement(sql);
         pstmt.setString(1, email);
         ResultSet rs = pstmt.executeQuery();
+
         if (rs.next()) {
             return new User(rs.getInt("ID"), rs.getString("NOME"), rs.getString("COGNOME"), rs.getString("USERNAME"), rs.getString("EMAIL"), rs.getString("PASSWORD"));
         }
+        pstmt.close();
         return null;
     }
 
@@ -97,10 +99,12 @@ public class Database {
         PreparedStatement pstmt = connection.prepareStatement(sql);
         pstmt.setString(1, "%" + name + "%");
         ResultSet rs = pstmt.executeQuery();
+
         while (rs.next()) {
             stops.add(new Stop(rs.getString("ID"), rs.getString("CODICE"), rs.getString("NOME"), rs.getFloat("LATITUDINE"), rs.getFloat("LONGITUDINE")));
 
         }
+        pstmt.close();
         return stops;
     }
 
@@ -112,6 +116,7 @@ public class Database {
         PreparedStatement pstmt = connection.prepareStatement(sql);
         pstmt.setString(1, name);
         ResultSet rs = pstmt.executeQuery();
+        pstmt.close();
         while (rs.next()) {
             routes.add(new Route(rs.getString("ID"), rs.getString("AGENZIA_ID"), rs.getString("NOME_BREVE"), rs.getString("NOME_COMPLETO"), rs.getString("TIPO")));
         }
@@ -119,6 +124,30 @@ public class Database {
     }
 
 
+    //Aggiungi una fermata ai preferiti di un utente
+    public void addUserFavouriteStop(User user, Stop stop) throws SQLException {
+        String sql = "INSERT INTO PREFERITI_FERMATE (UTENTE_ID, FERMATA_ID) VALUES (?, ?)";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setInt(1, user.getId());
+        pstmt.setString(2, stop.getId());
+        pstmt.executeUpdate();
+        pstmt.close();
+    }
+
+    public List<Stop> getFavouriteStopsByUser(User user) throws SQLException {
+        String sql = "SELECT * FROM PREFERITI_FERMATE WHERE UTENTE_ID = ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setInt(1, user.getId());
+        ResultSet rs = pstmt.executeQuery();
+        List<Stop> stops = new ArrayList<>();
+        while (rs.next()) {
+            stops.add(getStop(rs.getString("FERMATA_ID")));
+        }
+        rs.close();
+        pstmt.close();
+        return stops;
+
+    }
 
 
 

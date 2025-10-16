@@ -1,6 +1,9 @@
 package model;
 
+import java.util.List;
+
 public class User {
+
 
     private int id;
     private String name;
@@ -8,6 +11,9 @@ public class User {
     private String username;
     private String email;
     private String password;
+
+    private List<Stop> favoriteStops;
+    private List<Route> favoriteRoutes;
 
 
     public User(String name, String surname, String username, String email, String password) {
@@ -74,4 +80,20 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+
+    void addFavoriteStop(Stop stop) {
+        favoriteStops.add(stop);
+
+    }
+
+    void removeFavoriteStop(Stop stop) {
+        favoriteStops.remove(stop);
+    }
+
+    List<Stop> getFavoriteStops() {
+        return favoriteStops;
+    }
+
+
 }

@@ -21,6 +21,7 @@ public class LoginPage extends BasePage {
         createBottomPanel();
         mainPanel.add(topPanel, BorderLayout.NORTH);
         mainPanel.add(centerPanel, BorderLayout.CENTER);
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     }
 

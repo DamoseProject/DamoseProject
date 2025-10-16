@@ -1,5 +1,7 @@
 package gui;
 
+import model.Database;
+import model.Stop;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.input.PanKeyListener;
@@ -13,7 +15,8 @@ import javax.swing.event.MouseInputListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-
+import java.sql.SQLException;
+import java.util.List;
 
 public abstract class BaseMapPage extends BasePage {
     private JPanel topPanel;
@@ -23,6 +26,7 @@ public abstract class BaseMapPage extends BasePage {
     private JPanel resultsPanel;
     private JXMapViewer mapViewer;
     private JLabel errorLabel;
+    private Database db;
 
     // FLAG per gestire il comportamento del JTextField
     private boolean searchConfirmed = false;
@@ -30,6 +34,12 @@ public abstract class BaseMapPage extends BasePage {
 
     protected BaseMapPage(MainFrame frame) {
         super(frame);
+
+        Database db = new Database();
+        db.connect();
+
+        this.db = db;
+
 
         createTopPanel();
         createCenterPanel();
@@ -130,13 +140,27 @@ public abstract class BaseMapPage extends BasePage {
 
         // Gestione Invio
         researchField.addActionListener(e -> {
-            String[] words = getResearchField();
-            if (words.length == 0) {
+            String search = getResearchField();
+
+            List<Stop> fermate = null;
+            try {
+                fermate = db.getStopsByName(search);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+            for(var fermata:fermate){
+                System.out.println(fermata.getName());
+            }
+            if (search.length() == 0) {
                 errorLabel.setText(ErrorMessages.MISSED_RESEARCH);
                 errorLabel.setVisible(true);
             } else {
                 errorLabel.setVisible(false);
-                performSearch(words);
+                try {
+                    performSearch(search);
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
                 searchConfirmed = true; // testo confermato, rimane nel campo
                 researchField.getParent().requestFocusInWindow();
             }
@@ -199,7 +223,7 @@ public abstract class BaseMapPage extends BasePage {
     }
 
     private JXMapViewer createMapViewer() {
-        TileFactoryInfo info = new OSMTileFactoryInfo();
+        TileFactoryInfo info = new OSMTileFactoryInfo("OpenStreetMap", "https://tile.openstreetmap.org");
         DefaultTileFactory tileFactory = new DefaultTileFactory(info);
 
         JXMapViewer mapViewer = new JXMapViewer();
@@ -259,6 +283,7 @@ public abstract class BaseMapPage extends BasePage {
                 errorLabel.setForeground(Color.GREEN);
                 errorLabel.setText("Aggiunto ai preferiti: " + resultText);
                 errorLabel.setVisible(true);
+
             });
         }
         return addButton;
@@ -316,14 +341,10 @@ public abstract class BaseMapPage extends BasePage {
         resultsPanel.repaint();
     }
 
-    public String[] getResearchField() {
+    public String getResearchField() {
         String text = researchField.getText().trim();
-        if (text.isEmpty()) {
-            return new String[0];
-        } else {
-            String[] words = text.split("\\s+");
-            return words.clone();  // restituisce una copia dell'array
-        }
+        return text;
+
     }
 
 
@@ -331,10 +352,19 @@ public abstract class BaseMapPage extends BasePage {
         researchField.setText("");
     }
 
-    protected void performSearch(String[] words) {
+    protected void performSearch(String search) throws SQLException {
         errorLabel.setVisible(false);
-        String searchText = String.join(" ", words);
 
-        setResults("Risultati per: " + searchText + "\nFermata 1\nFermata 2\nLinea A\nLinea B");
+
+
+        List<Stop> fermate = db.getStopsByName(search);
+
+        String fermateRecord = "";
+        for(var fermata:fermate){
+            fermateRecord += fermata.getId() + " " + fermata.getName() + "\n";
+        }
+
+
+        setResults("Risultati per: " + search + "\n" + fermateRecord);
     }
 }
