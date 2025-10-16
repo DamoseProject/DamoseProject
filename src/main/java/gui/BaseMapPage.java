@@ -56,47 +56,66 @@ public abstract class BaseMapPage extends BasePage {
         topPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        JButton regLoginButton = new JButton("Accedi o Registrati!");
-        regLoginButton.addActionListener(e -> frame.setView(PageFactory.createPage(PageType.LOGIN, frame)));
+        ButtonMapPageConfig config = getButtonConfig();
 
-        JLabel mainLabel = new JLabel("Dove vuoi andare?", JLabel.CENTER);
+
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+
+        JButton regLoginButton = new JButton("Accedi o Registrati!");
+        regLoginButton.addActionListener(e ->
+                frame.setView(PageFactory.createPage(PageType.LOGIN, frame))
+        );
 
         JButton newsButton = new JButton("News");
 
-        int maxButtonWidth = Math.max(regLoginButton.getPreferredSize().width,
-                newsButton.getPreferredSize().width);
-
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        leftPanel.setPreferredSize(new Dimension(maxButtonWidth + 10,
-                regLoginButton.getPreferredSize().height));
-        leftPanel.add(regLoginButton);
-
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        rightPanel.setPreferredSize(new Dimension(maxButtonWidth + 10,
-                newsButton.getPreferredSize().height));
+        if (config.isShowRegLoginButton()) {
+            leftPanel.add(regLoginButton);
+        }
         rightPanel.add(newsButton);
+
+
+        int leftButtonWidth = config.isShowRegLoginButton() ? regLoginButton.getPreferredSize().width : 0;
+        int rightButtonWidth = newsButton.getPreferredSize().width;
+        int sideWidth = Math.max(leftButtonWidth, rightButtonWidth) + 10;
+
+
+        int sideHeight = Math.max(
+                config.isShowRegLoginButton() ? regLoginButton.getPreferredSize().height : 0,
+                newsButton.getPreferredSize().height
+        );
+
+        Dimension sideSize = new Dimension(sideWidth, Math.max(sideHeight, 24));
+        leftPanel.setPreferredSize(sideSize);
+        rightPanel.setPreferredSize(sideSize);
+
+        JLabel mainLabel = new JLabel("Dove vuoi andare?", JLabel.CENTER);
+
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.WEST;
         topPanel.add(leftPanel, gbc);
 
+
         gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.CENTER;
         topPanel.add(mainLabel, gbc);
 
+
         gbc.gridx = 2;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.EAST;
         topPanel.add(rightPanel, gbc);
     }
+
+
+
 
     private void createCenterPanel() {
         centerPanel = new JPanel();
@@ -174,10 +193,7 @@ public abstract class BaseMapPage extends BasePage {
                 errorLabel.setText(config.getViewFavoritesErrorMessage());
                 errorLabel.setVisible(true);
             });
-        } else {
-
         }
-
         buttonsPanel.add(checkFav);
         return buttonsPanel;
     }
