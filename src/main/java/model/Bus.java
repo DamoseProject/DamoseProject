@@ -8,6 +8,9 @@ public class Bus {
     private String idBus;
     private String labelBus;
     private String licensePlate;
+    private float latitude;
+    private float longitude;
+
 
     public Bus(String id, String label, String licensePlate) {
         this.idBus = id;
@@ -18,8 +21,28 @@ public class Bus {
     }
 
 
+
+
+
+
     public boolean equals(Bus otherBus) {
         return Objects.equals(this.idBus, otherBus.idBus);
+    }
+
+    public float getLatitude() {
+        return latitude;
+    }
+
+    public float getLongitude() {
+        return longitude;
+    }
+
+    public void setLatitude(float latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(float longitude) {
+        this.longitude = longitude;
     }
 
 
