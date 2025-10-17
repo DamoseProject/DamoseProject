@@ -88,7 +88,7 @@ public class RegistrationPage extends BasePage {
 
         if (result.isSuccess()) {
             errorLabel.setVisible(false);
-            frame.setView(PageFactory.createPage(PageType.EMAIL_VERIFICATION, frame));
+            frame.setView(PageFactory.createPage(PageType.MAP_LOGGED, frame));
         } else {
             showError(result.getErrorMessage());
         }
