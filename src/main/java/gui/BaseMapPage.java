@@ -6,9 +6,7 @@ import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.input.PanKeyListener;
 import org.jxmapviewer.input.PanMouseInputListener;
-import org.jxmapviewer.viewer.DefaultTileFactory;
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.TileFactoryInfo;
+import org.jxmapviewer.viewer.*;
 
 import javax.swing.*;
 import javax.swing.event.MouseInputListener;
@@ -16,7 +14,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public abstract class BaseMapPage extends BasePage {
     private JPanel topPanel;
@@ -215,7 +215,7 @@ public abstract class BaseMapPage extends BasePage {
         JScrollPane resultsScroll = new JScrollPane(resultsPanel);
         resultsScroll.setPreferredSize(new Dimension(250, 400));
         resultsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        resultsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        resultsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         mapAndResultsPanel.add(mapContainer);
         mapAndResultsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -244,60 +244,124 @@ public abstract class BaseMapPage extends BasePage {
     }
 
     private JPanel createResultRow(String resultText) {
-        JPanel rowPanel = new JPanel(new BorderLayout());
-        rowPanel.setBorder(BorderFactory.createCompoundBorder(
+        JPanel rowsPanel = new JPanel(new BorderLayout());
+        rowsPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)
         ));
-        rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        rowPanel.setBackground(Color.WHITE);
+        rowsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        rowsPanel.setBackground(Color.WHITE);
 
         JLabel resultLabel = new JLabel(resultText);
-        rowPanel.add(resultLabel, BorderLayout.CENTER);
+        rowsPanel.add(resultLabel, BorderLayout.CENTER);
 
         if (!resultText.startsWith("Risultati per:")) {
-            JButton addButton = getJButton(resultText);
-            rowPanel.add(addButton, BorderLayout.EAST);
+            JButton addButton = getFavButton(resultText);
+            JButton mapButton = getMapButton(resultText);
+            rowsPanel.add(mapButton, BorderLayout.WEST);
+            rowsPanel.add(addButton, BorderLayout.EAST);
         } else {
             resultLabel.setFont(resultLabel.getFont().deriveFont(Font.BOLD));
             resultLabel.setForeground(new Color(60, 60, 60));
         }
 
-        return rowPanel;
+        return rowsPanel;
     }
 
-    private JButton getJButton(String resultText) {
-        JButton addButton = new JButton("<html>&#9734;</html>"); // stella vuota
-        addButton.setPreferredSize(new Dimension(30, 25));
-        addButton.setFont(new Font("SansSerif", Font.PLAIN, 20));
+    private JButton getFavButton(String resultText) {
+        JButton favButton = new JButton("<html>&#9734;</html>"); // stella vuota
+        favButton.setPreferredSize(new Dimension(30, 25));
+        favButton.setFont(new Font("SansSerif", Font.PLAIN, 15));
 
         ButtonMapPageConfig config = getButtonConfig();
 
-        addButton.addActionListener(e -> {
+        favButton.addActionListener(e -> {
             if (!config.isFavoritesEnabled()) {
                 errorLabel.setForeground(Color.RED);
                 errorLabel.setText(config.getFavoritesErrorMessage());
                 errorLabel.setVisible(true);
             } else {
 
-                if (addButton.getText().equals("<html>&#9734;</html>")) {
-                    addButton.setText("<html>&#9733;</html>"); // piena
-                    errorLabel.setForeground(Color.GREEN);
+                if (favButton.getText().equals("<html>&#9734;</html>")) {
+                    favButton.setText("<html>&#9733;</html>"); // piena
+                    errorLabel.setForeground(new Color(0, 100, 0)); //verde scuro
                     errorLabel.setText("Aggiunto ai preferiti: " + resultText);
                 } else {
-                    addButton.setText("<html>&#9734;</html>"); // vuota
-                    errorLabel.setForeground(Color.ORANGE);
+                    favButton.setText("<html>&#9734;</html>"); // vuota
+                    errorLabel.setForeground(new Color(255, 140, 0)); //arancione scuro
                     errorLabel.setText("Rimosso dai preferiti: " + resultText);
                 }
                 errorLabel.setVisible(true);
             }
         });
 
-        addButton.setBorderPainted(false);
-        addButton.setContentAreaFilled(false);
-        addButton.setFocusPainted(false);
+        favButton.setBorderPainted(false);
+        favButton.setContentAreaFilled(false);
+        favButton.setFocusPainted(false);
 
-        return addButton;
+        return favButton;
+    }
+
+    private JButton getMapButton(String resultText) {
+        JButton mapButton = new JButton("🗺️");
+        mapButton.setPreferredSize(new Dimension(30, 25));
+        mapButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        mapButton.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+
+        mapButton.addActionListener(e -> {
+            try {
+                String[] parts = resultText.split(" ");
+                String stopId = parts[0];
+
+
+                Stop stop = db.getStop(stopId);
+
+                if (stop != null) {
+                    showStopOnMap(stop);
+                    errorLabel.setVisible(false);
+                } else {
+                    errorLabel.setForeground(Color.RED);
+                    errorLabel.setText("Fermata non trovata nel database.");
+                    errorLabel.setVisible(true);
+                }
+
+            } catch (Exception ex) {
+                //ex.printStackTrace();
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setText("Errore durante la visualizzazione della mappa.");
+                errorLabel.setVisible(true);
+            }
+
+
+        });
+
+        mapButton.setBorderPainted(false);
+        mapButton.setContentAreaFilled(false);
+        mapButton.setFocusPainted(false);
+
+        return mapButton;
+    }
+
+    private void showStopOnMap(Stop stop) {
+        GeoPosition position = new GeoPosition(stop.getLatitude(), stop.getLongitude());
+
+
+        mapViewer.setAddressLocation(position);
+        mapViewer.setZoom(4);
+
+
+        Set<Waypoint> waypoints = new HashSet<>();
+        waypoints.add(new DefaultWaypoint(position));
+
+        WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
+        waypointPainter.setWaypoints(waypoints);
+
+
+        mapViewer.setOverlayPainter(waypointPainter);
+
+
+        mapViewer.revalidate();
+        mapViewer.repaint();
     }
 
 
@@ -323,6 +387,11 @@ public abstract class BaseMapPage extends BasePage {
             public void actionPerformed(ActionEvent e) {
                 mapViewer.setZoom(mapViewer.getZoom() + 1);
             }
+        });
+
+        mapViewer.addMouseWheelListener(e -> {
+            int notches = e.getWheelRotation();
+            mapViewer.setZoom(mapViewer.getZoom() - notches);
         });
     }
 
@@ -353,7 +422,7 @@ public abstract class BaseMapPage extends BasePage {
         resultsPanel.repaint();
     }
 
-    public String getResearchField() {
+    private String getResearchField() {
         String text = researchField.getText().trim();
         return text;
 
@@ -363,6 +432,8 @@ public abstract class BaseMapPage extends BasePage {
     protected void clearResearchField() {
         researchField.setText("");
     }
+
+
 
     protected void performSearch(String search) throws SQLException {
         errorLabel.setVisible(false);
