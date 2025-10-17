@@ -267,27 +267,39 @@ public abstract class BaseMapPage extends BasePage {
     }
 
     private JButton getJButton(String resultText) {
-        JButton addButton = new JButton("+");
+        JButton addButton = new JButton("<html>&#9734;</html>"); // stella vuota
         addButton.setPreferredSize(new Dimension(30, 25));
-
+        addButton.setFont(new Font("SansSerif", Font.PLAIN, 20));
 
         ButtonMapPageConfig config = getButtonConfig();
-        if (!config.isFavoritesEnabled()) {
-            addButton.addActionListener(e -> {
+
+        addButton.addActionListener(e -> {
+            if (!config.isFavoritesEnabled()) {
                 errorLabel.setForeground(Color.RED);
                 errorLabel.setText(config.getFavoritesErrorMessage());
                 errorLabel.setVisible(true);
-            });
-        } else {
-            addButton.addActionListener(e -> {
-                errorLabel.setForeground(Color.GREEN);
-                errorLabel.setText("Aggiunto ai preferiti: " + resultText);
-                errorLabel.setVisible(true);
+            } else {
 
-            });
-        }
+                if (addButton.getText().equals("<html>&#9734;</html>")) {
+                    addButton.setText("<html>&#9733;</html>"); // piena
+                    errorLabel.setForeground(Color.GREEN);
+                    errorLabel.setText("Aggiunto ai preferiti: " + resultText);
+                } else {
+                    addButton.setText("<html>&#9734;</html>"); // vuota
+                    errorLabel.setForeground(Color.ORANGE);
+                    errorLabel.setText("Rimosso dai preferiti: " + resultText);
+                }
+                errorLabel.setVisible(true);
+            }
+        });
+
+        addButton.setBorderPainted(false);
+        addButton.setContentAreaFilled(false);
+        addButton.setFocusPainted(false);
+
         return addButton;
     }
+
 
     private void setupKeyboardZoom() {
         InputMap inputMap = mapViewer.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
