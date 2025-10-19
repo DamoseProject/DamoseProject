@@ -10,6 +10,7 @@ public class RegistrationResult {
     }
 
     public static RegistrationResult success() {
+
         return new RegistrationResult(true, null);
     }
 

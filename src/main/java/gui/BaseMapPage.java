@@ -31,6 +31,8 @@ public abstract class BaseMapPage extends BasePage {
     // FLAG per gestire il comportamento del JTextField
     private boolean searchConfirmed = false;
 
+    private JPanel rowSelected = null;
+
 
     protected BaseMapPage(MainFrame frame) {
         super(frame);
@@ -151,7 +153,7 @@ public abstract class BaseMapPage extends BasePage {
             for(var fermata:fermate){
                 System.out.println(fermata.getName());
             }
-            if (search.length() == 0) {
+            if (search.isEmpty()) {
                 errorLabel.setText(ErrorMessages.MISSED_RESEARCH);
                 errorLabel.setVisible(true);
             } else {
@@ -163,16 +165,6 @@ public abstract class BaseMapPage extends BasePage {
                 }
                 searchConfirmed = true; // testo confermato, rimane nel campo
                 researchField.getParent().requestFocusInWindow();
-            }
-        });
-
-        researchField.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyPressed(java.awt.event.KeyEvent e) {
-                if (searchConfirmed) {
-                    researchField.setText("");
-                    searchConfirmed = false;
-                }
             }
         });
 
@@ -257,7 +249,7 @@ public abstract class BaseMapPage extends BasePage {
 
         if (!resultText.startsWith("Risultati per:")) {
             JButton addButton = getFavButton(resultText);
-            JButton mapButton = getMapButton(resultText);
+            JButton mapButton = getMapButton(resultText, rowsPanel);
             rowsPanel.add(mapButton, BorderLayout.WEST);
             rowsPanel.add(addButton, BorderLayout.EAST);
         } else {
@@ -302,7 +294,7 @@ public abstract class BaseMapPage extends BasePage {
         return favButton;
     }
 
-    private JButton getMapButton(String resultText) {
+    private JButton getMapButton(String resultText, JPanel rowPanel) {
         JButton mapButton = new JButton("🗺️");
         mapButton.setPreferredSize(new Dimension(30, 25));
         mapButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
@@ -319,6 +311,16 @@ public abstract class BaseMapPage extends BasePage {
                 if (stop != null) {
                     showStopOnMap(stop);
                     errorLabel.setVisible(false);
+
+                    for (Component comp : resultsPanel.getComponents()) {
+                        if (comp instanceof JPanel) {
+                            comp.setBackground(Color.WHITE);
+                        }
+                    }
+
+
+                    rowPanel.setBackground(Color.LIGHT_GRAY);
+                    rowSelected = rowPanel;
                 } else {
                     errorLabel.setForeground(Color.RED);
                     errorLabel.setText("Fermata non trovata nel database.");
@@ -347,7 +349,7 @@ public abstract class BaseMapPage extends BasePage {
 
 
         mapViewer.setAddressLocation(position);
-        mapViewer.setZoom(4);
+        mapViewer.setZoom(2);
 
 
         Set<Waypoint> waypoints = new HashSet<>();

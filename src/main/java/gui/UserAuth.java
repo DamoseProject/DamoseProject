@@ -19,7 +19,13 @@ public class UserAuth {
 
     public boolean isLoginValid(String username, String password) throws SQLException {
         User user = db.getUserByUsername(username);
+
+        if (user == null || password == null) {
+            return false;
+        }
+
         String pwd = user.getPassword();
-        return db.isUserRegistered(username) && pwd.equals(password);
+        return pwd != null && pwd.equals(password);
     }
+
 }
