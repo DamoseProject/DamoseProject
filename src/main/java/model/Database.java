@@ -11,7 +11,7 @@ import java.util.List;
 public class Database {
 
 
-    private static String DATABASE_LINK = "jdbc:sqlite:RomeBusDatabase.db";
+    final private static String DATABASE_LINK = "jdbc:sqlite:RomeBusDatabase.db";
     private static Connection connection;
 
     public Database() {
