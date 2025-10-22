@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -12,6 +13,7 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.FeedEntity;
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
 import com.sun.source.tree.YieldTree;
+import util.TimeComparator;
 import util.TimeManager;
 
 public class GtfsRealtimeExample {
@@ -56,8 +58,43 @@ public class GtfsRealtimeExample {
         User me = db.getUserByEmail("mickolsverde06@outlook.it");
 
 
+
+
+
+        List<BusInUnaFermataRecord> records = db.getArriviDiUnaLineaInUnaFermata("75466", "654");
+        BusInUnaFermataRecord prossimoArrivo = db.getProssimoArrivoInUnaFermata("75466");
+
+        System.out.println(prossimoArrivo.getRouteId() + " " + prossimoArrivo.getArrivalTime() );
+
+        System.exit(0);
+
+        for(BusInUnaFermataRecord record : records){
+            System.out.println(record.getRouteId() + " " + record.getArrivalTime() + " " + record.getDirection());
+        }
+
+
+
+        System.exit(0);
+
+
         List<Stop> fermatepreferite = db.getFavouriteStopsByUser(me);
         for(Stop fermata : fermatepreferite){
+
+            System.out.println(fermata.getId());
+
+
+
+
+            for(BusInUnaFermataRecord record : records){
+                System.out.println(record.getRouteId() + " " + record.getArrivalTime() + " " + record.getDirection());
+            }
+
+            System.exit(0);
+
+
+
+
+
             System.out.println(fermata.getLongitude() + " " + fermata.getLatitude() + " " + fermata.getName() + " " + fermata.getId());
         }
 

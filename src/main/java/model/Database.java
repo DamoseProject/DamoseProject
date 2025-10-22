@@ -1,6 +1,10 @@
 package model;
 
+import util.TimeComparator;
+
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +65,8 @@ public class Database {
         }
         return null;
     }
+
+
 
 
 
@@ -150,8 +156,74 @@ public class Database {
     }
 
 
+    public List<BusInUnaFermataRecord> getBusInUnaFermataRecord(String stopId) throws SQLException {
+        List<BusInUnaFermataRecord> busInUnaFermataRecords = new ArrayList<>();
+        String sql = "SELECT VIAGGIO_ID, PERCORSO_ID, SERVIZIO_ID, TESTO_DESTINAZIONE,  Viaggio.NOME_BREVE, DIREZIONE, ORARIO_ARRIVO, ORARIO_PARTENZA\n" +
+                "FROM (FERMATA_ORARIO INNER JOIN Fermata ON FERMATA_ID = Fermata.ID) INNER JOIN Viaggio ON FERMATA_ORARIO.VIAGGIO_ID = Viaggio.ID\n" +
+                "WHERE FERMATA_ID = ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, stopId);
+        ResultSet rs = pstmt.executeQuery();
+
+        while (rs.next()) {
+            busInUnaFermataRecords.add(new BusInUnaFermataRecord(rs.getString("VIAGGIO_ID"), rs.getString("PERCORSO_ID"), rs.getString("SERVIZIO_ID"), rs.getString("TESTO_DESTINAZIONE"), rs.getString("NOME_BREVE"), rs.getInt("DIREZIONE"), rs.getString("ORARIO_ARRIVO"), rs.getString("ORARIO_PARTENZA")));
+        }
+        rs.close();
+        pstmt.close();
+
+        busInUnaFermataRecords.sort( (a,b) -> a.getArrivalTime().compareTo(b.getArrivalTime()) );
+
+        return busInUnaFermataRecords;
+
+    }
+
+    public BusInUnaFermataRecord getProssimoArrivoInUnaFermata(String stopId) throws SQLException {
+        List<BusInUnaFermataRecord> records = getBusInUnaFermataRecord(stopId);
+        return getProssimoPerOrario(records);
+    }
 
 
+
+
+    public List<BusInUnaFermataRecord> getArriviDiUnaLineaInUnaFermata(String stopId, String routeId) throws SQLException {
+        List<BusInUnaFermataRecord> busInUnaFermataRecords = new ArrayList<>();
+        String sql = "SELECT VIAGGIO_ID, PERCORSO_ID, SERVIZIO_ID, TESTO_DESTINAZIONE,  Viaggio.NOME_BREVE, DIREZIONE, ORARIO_ARRIVO, ORARIO_PARTENZA\n" +
+                "FROM (FERMATA_ORARIO INNER JOIN Fermata ON FERMATA_ID = Fermata.ID) INNER JOIN Viaggio ON FERMATA_ORARIO.VIAGGIO_ID = Viaggio.ID\n" +
+                "WHERE FERMATA_ID = ? AND PERCORSO_ID = ?";
+        PreparedStatement pstmt = connection.prepareStatement(sql);
+        pstmt.setString(1, stopId);
+        pstmt.setString(2, routeId);
+        ResultSet rs = pstmt.executeQuery();
+
+        while (rs.next()) {
+            busInUnaFermataRecords.add(new BusInUnaFermataRecord(rs.getString("VIAGGIO_ID"), rs.getString("PERCORSO_ID"), rs.getString("SERVIZIO_ID"), rs.getString("TESTO_DESTINAZIONE"), rs.getString("NOME_BREVE"), rs.getInt("DIREZIONE"), rs.getString("ORARIO_ARRIVO"), rs.getString("ORARIO_PARTENZA")));
+        }
+        rs.close();
+
+        busInUnaFermataRecords.sort((a, b) -> a.getArrivalTime().compareTo(b.getArrivalTime()));
+        return busInUnaFermataRecords;
+
+    }
+
+
+
+
+    public BusInUnaFermataRecord getProssimoArrivoInUnaLineaInUnaFermata(String stopId, String routeId) throws SQLException {
+        List<BusInUnaFermataRecord> records = getArriviDiUnaLineaInUnaFermata(stopId, routeId);
+        return getProssimoPerOrario(records);
+
+    }
+
+    private BusInUnaFermataRecord getProssimoPerOrario(List<BusInUnaFermataRecord> records){
+        TimeComparator timeComparator = new TimeComparator();
+        for(int i = 0; i < records.size(); i++) {
+            if(timeComparator.compare(records.get(i).getArrivalTime(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))) > 0 ) {
+                return records.get(i);
+
+            }
+        }
+        return null;
+    }
 
 
 
