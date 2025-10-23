@@ -47,9 +47,15 @@ public abstract class BaseMapPage extends BasePage {
         createCenterPanel();
         createMapAndResultsPanel();
 
+
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.add(centerPanel, BorderLayout.NORTH);
+        contentPanel.add(mapAndResultsPanel, BorderLayout.CENTER);
+
+
         mainPanel.add(topPanel, BorderLayout.NORTH);
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
-        mainPanel.add(mapAndResultsPanel, BorderLayout.SOUTH);
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
+
 
         setupKeyboardZoom();
     }
@@ -205,7 +211,7 @@ public abstract class BaseMapPage extends BasePage {
         resultsPanel.setBackground(Color.WHITE);
 
         JScrollPane resultsScroll = new JScrollPane(resultsPanel);
-        resultsScroll.setPreferredSize(new Dimension(250, 400));
+        resultsScroll.setPreferredSize(new Dimension(350, 400));
         resultsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         resultsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 

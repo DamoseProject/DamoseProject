@@ -35,15 +35,17 @@ public class HelpPage extends BasePage {
 
     private String getHelpText() {
         return "<html><div style='text-align: center;'>"
-                + "Perché è utile effettuare l'accesso o la registrazione alla piattaforma?<br>"
+                + "<u>Perché è utile effettuare l'accesso o la registrazione alla piattaforma?</u><br>"
                 + "<br>"
                 + "Avendo un account collegato si ha la possibilità di aggiungere alla lista Preferiti "
                 + "una linea o una fermata che interessa particolarmente.<br>"
                 + "<br>"
                 + "<br>"
-                + "Come zoomare sulla mappa?<br>"
+                + "<u>Come effettuare lo zoom sulla mappa?</u><br>"
                 + "<br>"
-                + "Per effettuare lo zoom sulla mappa si possono utilizzare i tasti + e - presenti sulla propria tastiera."
+                + "Per effettuare lo zoom sulla mappa si possono utilizzare i tasti + e - presenti sulla propria tastiera o"
+                + "<br>"
+                + "la rotellina del mouse."
                 + "</div></html>";
     }
 }
