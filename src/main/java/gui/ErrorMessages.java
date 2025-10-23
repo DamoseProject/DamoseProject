@@ -16,6 +16,8 @@ public class ErrorMessages {
     public static final String MISSED_VER_CODE = "Inserire il codice di verifica a 6 cifre";
     public static final String WRONG_VER_CODE = "Il codice inserito è errato!";
     public static final String CONNECTION_ERROR_DATABASE = "Errore di connessione al database.";
+    public static final String STOP_NOT_FOUND = "Fermata non trovata nel database.";
+    public static final String WAYPOINT_ERROR = "Al momento non è possibile mostrare questa ricerca sulla mappa.";
 
 
     public static final int MAX_USERNAME_LENGTH = 12;

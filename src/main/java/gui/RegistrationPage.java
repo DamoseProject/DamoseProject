@@ -49,6 +49,14 @@ public class RegistrationPage extends BasePage {
         confirmPasswordField = new JPasswordField(20);
         JPanel confirmPasswordPanel = createFieldPanel("Conferma Password: ", confirmPasswordField);
 
+        confirmPasswordField.addActionListener(e -> {
+            try {
+                handleRegistration();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
         errorLabel = createErrorLabel();
 
         JButton registerButton = new JButton("Registrati!");
