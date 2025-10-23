@@ -13,6 +13,8 @@ import javax.swing.event.MouseInputListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +34,8 @@ public abstract class BaseMapPage extends BasePage {
     private boolean searchConfirmed = false;
 
     private JPanel rowSelected = null;
+
+    private boolean arrowFlag = false;
 
 
     protected BaseMapPage(MainFrame frame) {
@@ -211,7 +215,7 @@ public abstract class BaseMapPage extends BasePage {
         resultsPanel.setBackground(Color.WHITE);
 
         JScrollPane resultsScroll = new JScrollPane(resultsPanel);
-        resultsScroll.setPreferredSize(new Dimension(350, 400));
+        resultsScroll.setPreferredSize(new Dimension(450, 400));
         resultsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         resultsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
@@ -254,9 +258,21 @@ public abstract class BaseMapPage extends BasePage {
         rowsPanel.add(resultLabel, BorderLayout.CENTER);
 
         if (!resultText.startsWith("Risultati per:")) {
-            JButton addButton = getFavButton(resultText);
+
             JButton mapButton = getMapButton(resultText, rowsPanel);
-            rowsPanel.add(mapButton, BorderLayout.WEST);
+            JButton addButton = getFavButton(resultText);
+            JButton arrowButton = getArrowButton();
+
+            JPanel leftPanel = new JPanel();
+            leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.X_AXIS));
+            leftPanel.setOpaque(false);
+
+
+            leftPanel.add(arrowButton);
+            leftPanel.add(Box.createRigidArea(new Dimension(7, 0)));
+            leftPanel.add(mapButton);
+
+            rowsPanel.add(leftPanel, BorderLayout.WEST);
             rowsPanel.add(addButton, BorderLayout.EAST);
         } else {
             resultLabel.setFont(resultLabel.getFont().deriveFont(Font.BOLD));
@@ -264,7 +280,9 @@ public abstract class BaseMapPage extends BasePage {
         }
 
         return rowsPanel;
+
     }
+
 
     private JButton getFavButton(String resultText) {
         JButton favButton = new JButton("<html>&#9734;</html>"); // stella vuota
@@ -329,14 +347,14 @@ public abstract class BaseMapPage extends BasePage {
                     rowSelected = rowPanel;
                 } else {
                     errorLabel.setForeground(Color.RED);
-                    errorLabel.setText("Fermata non trovata nel database.");
+                    errorLabel.setText(ErrorMessages.STOP_NOT_FOUND);
                     errorLabel.setVisible(true);
                 }
 
             } catch (Exception ex) {
                 //ex.printStackTrace();
                 errorLabel.setForeground(Color.RED);
-                errorLabel.setText("Errore durante la visualizzazione della mappa.");
+                errorLabel.setText(ErrorMessages.WAYPOINT_ERROR);
                 errorLabel.setVisible(true);
             }
 
@@ -349,6 +367,28 @@ public abstract class BaseMapPage extends BasePage {
 
         return mapButton;
     }
+
+    private JButton getArrowButton() {
+        JButton arrowButton = new JButton("<html>▶</html>");
+        arrowButton.setPreferredSize(new Dimension(20, 20));
+        arrowButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        arrowButton.setBorderPainted(false);
+        arrowButton.setContentAreaFilled(false);
+        arrowButton.setFocusPainted(false);
+
+        arrowButton.addActionListener(e -> {
+            arrowFlag = !arrowFlag;
+            if (arrowFlag) {
+                arrowButton.setText("<html>▼</html>");
+            } else {
+                arrowButton.setText("<html>▶</html>");
+            }
+
+        });
+
+        return arrowButton;
+    }
+
 
     private void showStopOnMap(Stop stop) {
         GeoPosition position = new GeoPosition(stop.getLatitude(), stop.getLongitude());
