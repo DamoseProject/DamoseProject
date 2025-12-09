@@ -21,7 +21,7 @@ public class Scrape_missing_STOP_TIMES {
     final private static int indexStopHeadsign = titles.indexOf("stop_headsign");
     final private static int indexShapeDistTraveled = titles.indexOf("shape_dist_traveled");
 
-    private static String filePath = "C:\\Users\\micko\\Desktop\\stop_times.txt";
+    private static String filePath = "C:\\Users\\micko\\Downloads\\rome_static_gtfs (1)\\stop_times.txt";
 
     public static void scrapeAndAddToDatabase() throws IOException, SQLException {
         Database db = new Database();
@@ -53,7 +53,7 @@ public class Scrape_missing_STOP_TIMES {
 
         int counterRow = 0;
         for (String line : lines) {
-            if (counterRow <= 1248455) {
+            if (false) {
                 counterRow++;
                 System.out.println(counterRow);
                 continue;

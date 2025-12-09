@@ -21,7 +21,7 @@ public class Scrape_STOP {
     final private static int indexStopLon = titles.indexOf("stop_lon") ;
 
 
-    private static String filePath = "C:\\Users\\micko\\Downloads\\stops.txt";
+    private static String filePath = "C:\\Users\\micko\\Downloads\\rome_static_gtfs (1)\\stops.txt";
 
     public static void scrape() throws IOException, SQLException {
         Database db = new Database();

@@ -11,6 +11,11 @@ public class BusInUnaFermataRecord {
     private String arrivalTime;
     private String departureTime;
 
+    private boolean isRealTime = false;
+    private long delayInSecond = 0;
+
+
+
 
     public BusInUnaFermataRecord(String tripId, String routeId, String serviceId, String textDestination, String shortName, int direction, String arrivalTime, String departureTime) {
         this.tripId = tripId;
@@ -54,4 +59,18 @@ public class BusInUnaFermataRecord {
     public String getDepartureTime() {
         return departureTime;
     }
+
+    public void setRitardoInSecondi(long secondi) {
+        this.delayInSecond = secondi;
+        this.isRealTime = true;
+    }
+
+
+    public long getRitardoInSecondi() { return delayInSecond; }
+    public boolean isRealTime() { return isRealTime; }
+
+    public void setRealTime(boolean realTime) { isRealTime = realTime; }
+
+
+
 }
