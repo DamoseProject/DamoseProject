@@ -13,12 +13,9 @@ import javax.swing.event.MouseInputListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.sql.SQLException;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public abstract class BaseMapPage extends BasePage {
     private JPanel topPanel;
@@ -35,7 +32,8 @@ public abstract class BaseMapPage extends BasePage {
 
     private JPanel rowSelected = null;
 
-    private boolean arrowFlag = false;
+    private final Map<JPanel, JPanel> expandedRows = new HashMap<>();
+
 
 
     protected BaseMapPage(MainFrame frame) {
@@ -160,9 +158,6 @@ public abstract class BaseMapPage extends BasePage {
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
-            for(var fermata:fermate){
-                System.out.println(fermata.getName());
-            }
             if (search.isEmpty()) {
                 errorLabel.setText(ErrorMessages.MISSED_RESEARCH);
                 errorLabel.setVisible(true);
@@ -245,43 +240,99 @@ public abstract class BaseMapPage extends BasePage {
         return mapViewer;
     }
 
-    private JPanel createResultRow(String resultText) {
-        JPanel rowsPanel = new JPanel(new BorderLayout());
-        rowsPanel.setBorder(BorderFactory.createCompoundBorder(
+    private JPanel createGeneralRow(String resultText, boolean isStopRow) {
+        JPanel rowPanel = new JPanel(new BorderLayout());
+        rowPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)
         ));
-        rowsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        rowsPanel.setBackground(Color.WHITE);
+        rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        rowPanel.setBackground(Color.WHITE);
 
         JLabel resultLabel = new JLabel(resultText);
-        rowsPanel.add(resultLabel, BorderLayout.CENTER);
+        rowPanel.add(resultLabel, BorderLayout.CENTER);
 
-        if (!resultText.startsWith("Risultati per:")) {
-
-            JButton mapButton = getMapButton(resultText, rowsPanel);
-            JButton addButton = getFavButton(resultText);
-            JButton arrowButton = getArrowButton();
-
-            JPanel leftPanel = new JPanel();
-            leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.X_AXIS));
-            leftPanel.setOpaque(false);
-
-
-            leftPanel.add(arrowButton);
-            leftPanel.add(Box.createRigidArea(new Dimension(7, 0)));
-            leftPanel.add(mapButton);
-
-            rowsPanel.add(leftPanel, BorderLayout.WEST);
-            rowsPanel.add(addButton, BorderLayout.EAST);
-        } else {
+        if (resultText.startsWith("Risultati per:")) {
             resultLabel.setFont(resultLabel.getFont().deriveFont(Font.BOLD));
             resultLabel.setForeground(new Color(60, 60, 60));
+            return rowPanel;
         }
 
-        return rowsPanel;
+        //per le righe che vengono mostrate quando viene premuta la freccetta
+        if (!isStopRow) {
+            resultLabel.setFont(new Font("SansSerif", Font.ITALIC, 12));
+            resultLabel.setForeground(new Color(80, 80, 80));
+            return rowPanel;
+        }
+
+
+        JButton arrowButton = getArrowButton();
+        JButton mapButton = getWaypointButton(resultText, rowPanel);
+        JButton favButton = getFavButton(resultText);
+
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.X_AXIS));
+        leftPanel.setOpaque(false);
+        leftPanel.add(arrowButton);
+        leftPanel.add(Box.createRigidArea(new Dimension(7, 0)));
+        leftPanel.add(mapButton);
+
+        rowPanel.add(leftPanel, BorderLayout.WEST);
+        rowPanel.add(favButton, BorderLayout.EAST);
+
+
+        arrowButton.addActionListener(e -> createSubRows(rowPanel, resultText, arrowButton));
+
+        return rowPanel;
 
     }
+
+    //per semplificare le chiamate a metodo
+    private JPanel createGeneralRow(String resultText) {
+        return createGeneralRow(resultText, true);
+    }
+
+    private void createSubRows(JPanel parentRow, String text, JButton arrowButton) {
+        boolean isOpen = expandedRows.containsKey(parentRow);
+        if (isOpen) {
+            JPanel subList = expandedRows.remove(parentRow);
+            resultsPanel.remove(subList);
+            arrowButton.setText("<html>▶</html>");
+        } else {
+            JPanel subList = new JPanel();
+            subList.setLayout(new BoxLayout(subList, BoxLayout.Y_AXIS));
+            subList.setBackground(new Color(245, 245, 245));
+            subList.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
+
+            subList.add(createGeneralRow("🕒 Orari: 08:00 - 22:00", false));
+            subList.add(createGeneralRow("📍 Linee collegate: 64, 492, H", false));
+            subList.add(createGeneralRow("🚏 Fermata ID: " + text.split(" ")[0], false));
+
+            int index = findRowPos(parentRow);
+            if (index != -1) {
+                resultsPanel.add(subList, index + 1);
+            }
+
+            expandedRows.put(parentRow, subList);
+            arrowButton.setText("<html>▼</html>");
+        }
+
+        resultsPanel.revalidate();
+        resultsPanel.repaint();
+
+
+    }
+
+    //serve per trovare la riga alla quale è stata premuta la freccetta
+    private int findRowPos(JPanel row) {
+        Component[] components = resultsPanel.getComponents();
+        for (int i = 0; i < components.length; i++) {
+            if (components[i] == row) return i;
+        }
+        return -1;
+    }
+
+
 
 
     private JButton getFavButton(String resultText) {
@@ -318,10 +369,10 @@ public abstract class BaseMapPage extends BasePage {
         return favButton;
     }
 
-    private JButton getMapButton(String resultText, JPanel rowPanel) {
-        JButton mapButton = new JButton("🗺️");
+    private JButton getWaypointButton(String resultText, JPanel rowPanel) {
+        JButton mapButton = new JButton("📍");
         mapButton.setPreferredSize(new Dimension(30, 25));
-        mapButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        mapButton.setFont(new Font("SansSerif", Font.PLAIN, 15));
         mapButton.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
 
         mapButton.addActionListener(e -> {
@@ -375,17 +426,6 @@ public abstract class BaseMapPage extends BasePage {
         arrowButton.setBorderPainted(false);
         arrowButton.setContentAreaFilled(false);
         arrowButton.setFocusPainted(false);
-
-        arrowButton.addActionListener(e -> {
-            arrowFlag = !arrowFlag;
-            if (arrowFlag) {
-                arrowButton.setText("<html>▼</html>");
-            } else {
-                arrowButton.setText("<html>▶</html>");
-            }
-
-        });
-
         return arrowButton;
     }
 
@@ -458,7 +498,7 @@ public abstract class BaseMapPage extends BasePage {
 
         for (String line : lines) {
             if (!line.trim().isEmpty()) {
-                JPanel resultRow = createResultRow(line.trim());
+                JPanel resultRow = createGeneralRow(line.trim());
                 resultsPanel.add(resultRow);
             }
         }

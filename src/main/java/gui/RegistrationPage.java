@@ -5,6 +5,7 @@ import model.User;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.sql.SQLException;
 
 public class RegistrationPage extends BasePage {
@@ -49,13 +50,18 @@ public class RegistrationPage extends BasePage {
         confirmPasswordField = new JPasswordField(20);
         JPanel confirmPasswordPanel = createFieldPanel("Conferma Password: ", confirmPasswordField);
 
-        confirmPasswordField.addActionListener(e -> {
+        ActionListener actionListener = e -> {
             try {
                 handleRegistration();
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
-        });
+        };
+
+        usernameField.addActionListener(actionListener);
+        emailField.addActionListener(actionListener);
+        passwordField.addActionListener(actionListener);
+        confirmPasswordField.addActionListener(actionListener);
 
         errorLabel = createErrorLabel();
 

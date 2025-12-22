@@ -4,6 +4,7 @@ import model.Database;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
@@ -48,7 +49,11 @@ public class LoginPage extends BasePage {
         passwordField = new JPasswordField(20);
         JPanel passwordPanel = createFieldPanel("Password: ", passwordField);
 
-        passwordField.addActionListener(e -> handleLogin());
+
+        ActionListener actionListener = e -> handleLogin();
+
+        usernameField.addActionListener(actionListener);
+        passwordField.addActionListener(actionListener);
 
         errorAccessLabel = createErrorLabel();
 
