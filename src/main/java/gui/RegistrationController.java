@@ -39,8 +39,6 @@ public class RegistrationController {
                 return RegistrationResult.failure(ErrorMessages.USERNAME_TAKEN);
             }
 
-            User user = new User("Davide", "Allegrini", username, email, password);
-            db.addUser(user);
 
             return RegistrationResult.success();
 

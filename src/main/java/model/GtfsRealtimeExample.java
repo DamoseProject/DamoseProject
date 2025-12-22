@@ -76,6 +76,10 @@ public class GtfsRealtimeExample {
 
 
 
+        List<Stop> fermatepreferite = db.getFavouriteStopsByUser(me);
+        for(Stop fermata : fermatepreferite){
+            System.out.println(fermata.getLongitude() + " " + fermata.getLatitude() + " " + fermata.getName() + " " + fermata.getId());
+        }
 
         System.exit(0);
 
@@ -84,6 +88,7 @@ public class GtfsRealtimeExample {
 
 
 
+    }
 
 
         BusInUnaFermataRecord prossimoArrivo = db.getProssimoArrivoInUnaLineaInUnaFermata("75466", "669");
@@ -133,6 +138,19 @@ public class GtfsRealtimeExample {
 
 
 
+        //Aggiornamenti fermate
+        for(TripUpdate.StopTimeUpdate aggiornamentoFermata : aggiornamentiFermate){
+            String nextStopId = aggiornamentoFermata.getStopId();
+
+            TripUpdate.StopTimeEvent arrivo = aggiornamentoFermata.getArrival();
+            long arrivoOra = arrivo.getTime();
+
+
+            System.out.println(db.getStop(nextStopId).getName());
+            System.out.println("Arrivo: " + TimeManager.getDate(arrivoOra, "hh:mm"));
+
+        }
+        System.exit(0);
 
     }
 

@@ -6,9 +6,7 @@ import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.input.PanKeyListener;
 import org.jxmapviewer.input.PanMouseInputListener;
-import org.jxmapviewer.viewer.DefaultTileFactory;
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.TileFactoryInfo;
+import org.jxmapviewer.viewer.*;
 
 import javax.swing.*;
 import javax.swing.event.MouseInputListener;
@@ -16,6 +14,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.sql.SQLException;
+import java.util.*;
 import java.util.List;
 
 public abstract class BaseMapPage extends BasePage {
@@ -31,6 +30,11 @@ public abstract class BaseMapPage extends BasePage {
     // FLAG per gestire il comportamento del JTextField
     private boolean searchConfirmed = false;
 
+    private JPanel rowSelected = null;
+
+    private final Map<JPanel, JPanel> expandedRows = new HashMap<>();
+
+
 
     protected BaseMapPage(MainFrame frame) {
         super(frame);
@@ -45,9 +49,15 @@ public abstract class BaseMapPage extends BasePage {
         createCenterPanel();
         createMapAndResultsPanel();
 
+
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.add(centerPanel, BorderLayout.NORTH);
+        contentPanel.add(mapAndResultsPanel, BorderLayout.CENTER);
+
+
         mainPanel.add(topPanel, BorderLayout.NORTH);
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
-        mainPanel.add(mapAndResultsPanel, BorderLayout.SOUTH);
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
+
 
         setupKeyboardZoom();
     }
@@ -148,10 +158,7 @@ public abstract class BaseMapPage extends BasePage {
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
-            for(var fermata:fermate){
-                System.out.println(fermata.getName());
-            }
-            if (search.length() == 0) {
+            if (search.isEmpty()) {
                 errorLabel.setText(ErrorMessages.MISSED_RESEARCH);
                 errorLabel.setVisible(true);
             } else {
@@ -163,16 +170,6 @@ public abstract class BaseMapPage extends BasePage {
                 }
                 searchConfirmed = true; // testo confermato, rimane nel campo
                 researchField.getParent().requestFocusInWindow();
-            }
-        });
-
-        researchField.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyPressed(java.awt.event.KeyEvent e) {
-                if (searchConfirmed) {
-                    researchField.setText("");
-                    searchConfirmed = false;
-                }
             }
         });
 
@@ -213,9 +210,9 @@ public abstract class BaseMapPage extends BasePage {
         resultsPanel.setBackground(Color.WHITE);
 
         JScrollPane resultsScroll = new JScrollPane(resultsPanel);
-        resultsScroll.setPreferredSize(new Dimension(250, 400));
+        resultsScroll.setPreferredSize(new Dimension(450, 400));
         resultsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        resultsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        resultsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         mapAndResultsPanel.add(mapContainer);
         mapAndResultsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -243,7 +240,7 @@ public abstract class BaseMapPage extends BasePage {
         return mapViewer;
     }
 
-    private JPanel createResultRow(String resultText) {
+    private JPanel createGeneralRow(String resultText, boolean isStopRow) {
         JPanel rowPanel = new JPanel(new BorderLayout());
         rowPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
@@ -255,39 +252,206 @@ public abstract class BaseMapPage extends BasePage {
         JLabel resultLabel = new JLabel(resultText);
         rowPanel.add(resultLabel, BorderLayout.CENTER);
 
-        if (!resultText.startsWith("Risultati per:")) {
-            JButton addButton = getJButton(resultText);
-            rowPanel.add(addButton, BorderLayout.EAST);
-        } else {
+        if (resultText.startsWith("Risultati per:")) {
             resultLabel.setFont(resultLabel.getFont().deriveFont(Font.BOLD));
             resultLabel.setForeground(new Color(60, 60, 60));
+            return rowPanel;
         }
 
+        //per le righe che vengono mostrate quando viene premuta la freccetta
+        if (!isStopRow) {
+            resultLabel.setFont(new Font("SansSerif", Font.ITALIC, 12));
+            resultLabel.setForeground(new Color(80, 80, 80));
+            return rowPanel;
+        }
+
+
+        JButton arrowButton = getArrowButton();
+        JButton mapButton = getWaypointButton(resultText, rowPanel);
+        JButton favButton = getFavButton(resultText);
+
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.X_AXIS));
+        leftPanel.setOpaque(false);
+        leftPanel.add(arrowButton);
+        leftPanel.add(Box.createRigidArea(new Dimension(7, 0)));
+        leftPanel.add(mapButton);
+
+        rowPanel.add(leftPanel, BorderLayout.WEST);
+        rowPanel.add(favButton, BorderLayout.EAST);
+
+
+        arrowButton.addActionListener(e -> createSubRows(rowPanel, resultText, arrowButton));
+
         return rowPanel;
+
     }
 
-    private JButton getJButton(String resultText) {
-        JButton addButton = new JButton("+");
-        addButton.setPreferredSize(new Dimension(30, 25));
+    //per semplificare le chiamate a metodo
+    private JPanel createGeneralRow(String resultText) {
+        return createGeneralRow(resultText, true);
+    }
 
+    private void createSubRows(JPanel parentRow, String text, JButton arrowButton) {
+        boolean isOpen = expandedRows.containsKey(parentRow);
+        if (isOpen) {
+            JPanel subList = expandedRows.remove(parentRow);
+            resultsPanel.remove(subList);
+            arrowButton.setText("<html>▶</html>");
+        } else {
+            JPanel subList = new JPanel();
+            subList.setLayout(new BoxLayout(subList, BoxLayout.Y_AXIS));
+            subList.setBackground(new Color(245, 245, 245));
+            subList.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
+
+            subList.add(createGeneralRow("🕒 Orari: 08:00 - 22:00", false));
+            subList.add(createGeneralRow("📍 Linee collegate: 64, 492, H", false));
+            subList.add(createGeneralRow("🚏 Fermata ID: " + text.split(" ")[0], false));
+
+            int index = findRowPos(parentRow);
+            if (index != -1) {
+                resultsPanel.add(subList, index + 1);
+            }
+
+            expandedRows.put(parentRow, subList);
+            arrowButton.setText("<html>▼</html>");
+        }
+
+        resultsPanel.revalidate();
+        resultsPanel.repaint();
+
+
+    }
+
+    //serve per trovare la riga alla quale è stata premuta la freccetta
+    private int findRowPos(JPanel row) {
+        Component[] components = resultsPanel.getComponents();
+        for (int i = 0; i < components.length; i++) {
+            if (components[i] == row) return i;
+        }
+        return -1;
+    }
+
+
+
+
+    private JButton getFavButton(String resultText) {
+        JButton favButton = new JButton("<html>&#9734;</html>"); // stella vuota
+        favButton.setPreferredSize(new Dimension(30, 25));
+        favButton.setFont(new Font("SansSerif", Font.PLAIN, 15));
 
         ButtonMapPageConfig config = getButtonConfig();
-        if (!config.isFavoritesEnabled()) {
-            addButton.addActionListener(e -> {
+
+        favButton.addActionListener(e -> {
+            if (!config.isFavoritesEnabled()) {
                 errorLabel.setForeground(Color.RED);
                 errorLabel.setText(config.getFavoritesErrorMessage());
                 errorLabel.setVisible(true);
-            });
-        } else {
-            addButton.addActionListener(e -> {
-                errorLabel.setForeground(Color.GREEN);
-                errorLabel.setText("Aggiunto ai preferiti: " + resultText);
-                errorLabel.setVisible(true);
+            } else {
 
-            });
-        }
-        return addButton;
+                if (favButton.getText().equals("<html>&#9734;</html>")) {
+                    favButton.setText("<html>&#9733;</html>"); // piena
+                    errorLabel.setForeground(new Color(0, 100, 0)); //verde scuro
+                    errorLabel.setText("Aggiunto ai preferiti: " + resultText);
+                } else {
+                    favButton.setText("<html>&#9734;</html>"); // vuota
+                    errorLabel.setForeground(new Color(255, 140, 0)); //arancione scuro
+                    errorLabel.setText("Rimosso dai preferiti: " + resultText);
+                }
+                errorLabel.setVisible(true);
+            }
+        });
+
+        favButton.setBorderPainted(false);
+        favButton.setContentAreaFilled(false);
+        favButton.setFocusPainted(false);
+
+        return favButton;
     }
+
+    private JButton getWaypointButton(String resultText, JPanel rowPanel) {
+        JButton mapButton = new JButton("📍");
+        mapButton.setPreferredSize(new Dimension(30, 25));
+        mapButton.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        mapButton.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+
+        mapButton.addActionListener(e -> {
+            try {
+                String[] parts = resultText.split(" ");
+                String stopId = parts[0];
+
+
+                Stop stop = db.getStop(stopId);
+
+                if (stop != null) {
+                    showStopOnMap(stop);
+                    errorLabel.setVisible(false);
+
+                    for (Component comp : resultsPanel.getComponents()) {
+                        if (comp instanceof JPanel) {
+                            comp.setBackground(Color.WHITE);
+                        }
+                    }
+
+
+                    rowPanel.setBackground(Color.LIGHT_GRAY);
+                    rowSelected = rowPanel;
+                } else {
+                    errorLabel.setForeground(Color.RED);
+                    errorLabel.setText(ErrorMessages.STOP_NOT_FOUND);
+                    errorLabel.setVisible(true);
+                }
+
+            } catch (Exception ex) {
+                //ex.printStackTrace();
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setText(ErrorMessages.WAYPOINT_ERROR);
+                errorLabel.setVisible(true);
+            }
+
+
+        });
+
+        mapButton.setBorderPainted(false);
+        mapButton.setContentAreaFilled(false);
+        mapButton.setFocusPainted(false);
+
+        return mapButton;
+    }
+
+    private JButton getArrowButton() {
+        JButton arrowButton = new JButton("<html>▶</html>");
+        arrowButton.setPreferredSize(new Dimension(20, 20));
+        arrowButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        arrowButton.setBorderPainted(false);
+        arrowButton.setContentAreaFilled(false);
+        arrowButton.setFocusPainted(false);
+        return arrowButton;
+    }
+
+
+    private void showStopOnMap(Stop stop) {
+        GeoPosition position = new GeoPosition(stop.getLatitude(), stop.getLongitude());
+
+
+        mapViewer.setAddressLocation(position);
+        mapViewer.setZoom(2);
+
+
+        Set<Waypoint> waypoints = new HashSet<>();
+        waypoints.add(new DefaultWaypoint(position));
+
+        WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
+        waypointPainter.setWaypoints(waypoints);
+
+
+        mapViewer.setOverlayPainter(waypointPainter);
+
+
+        mapViewer.revalidate();
+        mapViewer.repaint();
+    }
+
 
     private void setupKeyboardZoom() {
         InputMap inputMap = mapViewer.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -312,6 +476,11 @@ public abstract class BaseMapPage extends BasePage {
                 mapViewer.setZoom(mapViewer.getZoom() + 1);
             }
         });
+
+        mapViewer.addMouseWheelListener(e -> {
+            int notches = e.getWheelRotation();
+            mapViewer.setZoom(mapViewer.getZoom() - notches);
+        });
     }
 
 
@@ -329,7 +498,7 @@ public abstract class BaseMapPage extends BasePage {
 
         for (String line : lines) {
             if (!line.trim().isEmpty()) {
-                JPanel resultRow = createResultRow(line.trim());
+                JPanel resultRow = createGeneralRow(line.trim());
                 resultsPanel.add(resultRow);
             }
         }
@@ -341,7 +510,7 @@ public abstract class BaseMapPage extends BasePage {
         resultsPanel.repaint();
     }
 
-    public String getResearchField() {
+    private String getResearchField() {
         String text = researchField.getText().trim();
         return text;
 
@@ -351,6 +520,8 @@ public abstract class BaseMapPage extends BasePage {
     protected void clearResearchField() {
         researchField.setText("");
     }
+
+
 
     protected void performSearch(String search) throws SQLException {
         errorLabel.setVisible(false);
