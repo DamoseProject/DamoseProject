@@ -49,23 +49,17 @@ public class EmailVerificationPage extends BasePage {
     }
 
     private void createVerificationCodePanel() {
-        verificationCodePanel = new JPanel();
-        verificationCodePanel.setLayout(new BoxLayout(verificationCodePanel, BoxLayout.Y_AXIS));
-
-        JLabel verificationCodeLabel = new JLabel(
-                "Inserisci il codice di verifica a 6 cifre che è stato inviato alla tua e-mail: ",
-                JLabel.CENTER
-        );
-        verificationCodeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
         verificationCodeField = new JTextField(6);
-        verificationCodeField.setMaximumSize(verificationCodeField.getPreferredSize());
-        verificationCodeField.setAlignmentX(Component.CENTER_ALIGNMENT);
+        verificationCodeField.setMaximumSize(
+                new Dimension(Integer.MAX_VALUE, verificationCodeField.getPreferredSize().height)
+        );
+
+        verificationCodePanel = createFieldPanel(
+                "Inserisci il codice di verifica a 6 cifre che è stato inviato alla tua e-mail:",
+                verificationCodeField
+        );
 
         verificationCodePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        verificationCodePanel.add(verificationCodeLabel);
-        verificationCodePanel.add(Box.createVerticalStrut(10));
-        verificationCodePanel.add(verificationCodeField);
     }
 
     private void handleSubmit() {
