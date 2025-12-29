@@ -1,4 +1,5 @@
 package model;
+/*
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -91,6 +92,8 @@ public class GtfsRealtimeExample {
     }
 
 
+
+    public static void checkRealtime(Database db) throws Exception {
         BusInUnaFermataRecord prossimoArrivo = db.getProssimoArrivoInUnaLineaInUnaFermata("75466", "669");
         String tripId = prossimoArrivo.getTripId();
 
@@ -124,18 +127,6 @@ public class GtfsRealtimeExample {
 
 
         System.exit(0);
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         //Aggiornamenti fermate
@@ -258,9 +249,5 @@ public class GtfsRealtimeExample {
             System.out.println("⚠ Nessun aggiornamento realtime disponibile - usa orario programmato");
         }
     }
-
-
-
-
-
 }
+*/

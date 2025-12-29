@@ -1,5 +1,6 @@
 package gui;
 
+import model.BusInUnaFermataRecord;
 import model.Database;
 import model.Stop;
 import org.jxmapviewer.JXMapViewer;
@@ -152,28 +153,64 @@ public abstract class BaseMapPage extends BasePage {
         researchField.addActionListener(e -> {
             String search = getResearchField();
 
-            List<Stop> fermate = null;
-            try {
-                fermate = db.getStopsByName(search);
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
             if (search.isEmpty()) {
                 errorLabel.setText(ErrorMessages.MISSED_RESEARCH);
                 errorLabel.setVisible(true);
-            } else {
-                errorLabel.setVisible(false);
-                try {
-                    performSearch(search);
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
+                return;
+            }
+
+            errorLabel.setVisible(false);
+
+            try {
+                List<Stop> fermate = new ArrayList<>();
+
+                //ricerca per ID
+                if (Character.isDigit(search.charAt(0))) {
+
+                    Stop stop = db.getStop(search);
+                    if (stop != null) {
+                        fermate.add(stop);
+                    }
+
                 }
-                searchConfirmed = true; // testo confermato, rimane nel campo
+                //ricerca per nome
+                else {
+                    fermate = db.getStopsByName(search);
+                }
+
+
+                showResults(search, fermate);
+
+                searchConfirmed = true;
                 researchField.getParent().requestFocusInWindow();
+
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
             }
         });
 
+
     }
+
+    private void showResults(String search, List<Stop> fermate) {
+        resultsPanel.removeAll();
+
+        resultsPanel.add(createGeneralRow("Risultati per: " + search));
+
+        if (fermate.isEmpty()) {
+            resultsPanel.add(createGeneralRow("Nessuna fermata trovata", false));
+        } else {
+            for (Stop fermata : fermate) {
+                String text = fermata.getId() + " " + fermata.getName();
+                resultsPanel.add(createGeneralRow(text));
+            }
+        }
+
+        resultsPanel.add(Box.createVerticalGlue());
+        resultsPanel.revalidate();
+        resultsPanel.repaint();
+    }
+
 
     protected abstract ButtonMapPageConfig getButtonConfig();
 
@@ -294,6 +331,7 @@ public abstract class BaseMapPage extends BasePage {
 
     private void createSubRows(JPanel parentRow, String text, JButton arrowButton) {
         boolean isOpen = expandedRows.containsKey(parentRow);
+
         if (isOpen) {
             JPanel subList = expandedRows.remove(parentRow);
             resultsPanel.remove(subList);
@@ -304,9 +342,21 @@ public abstract class BaseMapPage extends BasePage {
             subList.setBackground(new Color(245, 245, 245));
             subList.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
 
-            subList.add(createGeneralRow("🕒 Orari: 08:00 - 22:00", false));
-            subList.add(createGeneralRow("📍 Linee collegate: 64, 492, H", false));
-            subList.add(createGeneralRow("🚏 Fermata ID: " + text.split(" ")[0], false));
+            String stopId = text.split(" ")[0];
+
+            try {
+
+                BusInUnaFermataRecord prossimoBus = db.getProssimoArrivoInUnaFermata(stopId);
+
+                if (prossimoBus == null) {
+                    subList.add(createGeneralRow("Nessun bus in arrivo", false));
+                } else {
+                    subList.add(createBusRow(prossimoBus));
+                }
+
+            } catch (SQLException e) {
+                subList.add(createGeneralRow("Errore nel recupero dati", false));
+            }
 
             int index = findRowPos(parentRow);
             if (index != -1) {
@@ -319,9 +369,28 @@ public abstract class BaseMapPage extends BasePage {
 
         resultsPanel.revalidate();
         resultsPanel.repaint();
-
-
     }
+
+
+    private JPanel createBusRow(BusInUnaFermataRecord bus) {
+        String text = "🚌 " + bus.getRouteId() +
+                " → " + bus.getTextDestination() +
+                " | Arrivo: " + bus.getArrivalTime();
+
+        if (bus.isRealTime()) {
+            long min = bus.getRitardoInSecondi() / 60;
+            text += " (+" + min + " min)";
+        }
+
+        JPanel row = createGeneralRow(text, false);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        return row;
+    }
+
+
+
+
+
 
     //serve per trovare la riga alla quale è stata premuta la freccetta
     private int findRowPos(JPanel row) {
