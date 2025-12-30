@@ -1,6 +1,7 @@
 package gui;
 
 import model.Database;
+import model.User;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +24,6 @@ public class LoginPage extends BasePage {
         createCenterPanel();
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
     }
@@ -135,14 +135,18 @@ public class LoginPage extends BasePage {
         try {
             Database db = new Database();
             db.connect();
-            UserAuth loginAuth = new UserAuth(db);
-            if (!loginAuth.isLoginValid(getUsernameLogin(), getPasswordLogin())) {
+            UserAuth auth = new UserAuth(db);
+            User user = auth.login(getUsernameLogin(), getPasswordLogin());
+
+            if (user == null) {
                 errorAccessLabel.setText(ErrorMessages.USERNAME_OR_PSW_WRONG);
                 errorAccessLabel.setVisible(true);
             } else {
+                UserSession.getInstance().login(user.getId(), user.getUsername());
                 errorAccessLabel.setVisible(false);
                 frame.setView(PageFactory.createPage(PageType.MAP_LOGGED, frame));
             }
+
         } catch (SQLException ex) {
             errorAccessLabel.setText(ErrorMessages.CONNECTION_ERROR_DATABASE);
             errorAccessLabel.setVisible(true);
