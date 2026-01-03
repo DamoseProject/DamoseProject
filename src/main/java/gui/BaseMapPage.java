@@ -367,21 +367,37 @@ public abstract class BaseMapPage extends BasePage {
 
         try {
             User user = db.getUser(session.getUserId());
-            List<Stop> favorites = db.getFavouriteStopsByUser(user);
+            List<Stop> favStops = db.getFavouriteStopsByUser(user);
+            List<Route> favRoutes = db.getFavouriteRoutesByUser(user);
 
-            if (favorites.isEmpty()) {
-                resultsPanel.add(createGeneralRow(Constants.NO_FAVORITES_SAVED, false));
-            } else {
-                for (Stop stop : favorites) {
+            boolean hasFavorites = false;
+
+
+            if (!favStops.isEmpty()) {
+                for (Stop stop : favStops) {
                     String text = stop.getId() + " " + stop.getName();
                     resultsPanel.add(createGeneralRow(text));
                 }
+                hasFavorites = true;
+            }
+
+
+            if (!favRoutes.isEmpty()) {
+                for (Route route : favRoutes) {
+                    resultsPanel.add(createRouteRow(route));
+                }
+                hasFavorites = true;
+            }
+
+            if (!hasFavorites) {
+                resultsPanel.add(createGeneralRow(Constants.NO_FAVORITES_SAVED, false));
             }
 
         } catch (SQLException ex) {
             errorLabel.setForeground(Color.RED);
             errorLabel.setText(Constants.FAVORITES_RETRIEVAL_ERROR);
             errorLabel.setVisible(true);
+            //ex.printStackTrace();
         }
 
         resultsPanel.add(Box.createVerticalGlue());
@@ -398,15 +414,16 @@ public abstract class BaseMapPage extends BasePage {
 
         if (!fermate.isEmpty()) {
             for (Stop fermata : fermate) {
-                resultsPanel.add(createRouteRow(route));
+                String text = fermata.getId() + " " + fermata.getName();
+                resultsPanel.add(createGeneralRow(text));
             }
             foundSomething = true;
         }
 
+
         if (!linee.isEmpty()) {
             for (Route route : linee) {
-                String text = route.getId() + " " + route.getShortName();
-                resultsPanel.add(createGeneralRow(text, false));
+                resultsPanel.add(createRouteRow(route));
             }
             foundSomething = true;
         }
@@ -709,7 +726,7 @@ public abstract class BaseMapPage extends BasePage {
                     errorLabel.setForeground(new Color(0, 100, 0));
                     errorLabel.setText(Constants.FAV_ADDED + route.getShortName());
                 } else {
-                    db.removeUserFavoriteRoute(user, route);
+                    db.removeUserFavouriteRoute(user, route);
                     favButton.setText(EMPTY_STAR);
                     errorLabel.setForeground(new Color(255, 140, 0));
                     errorLabel.setText(Constants.FAV_REMOVED + route.getShortName());
