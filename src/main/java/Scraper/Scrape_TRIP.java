@@ -23,23 +23,22 @@ public class Scrape_TRIP {
 
 
 
-    private static String filePath = "/home/carmine/Scaricati/rome_static_gtfs/trips.txt";
+    private static String filePath = "C:\\Users\\micko\\Downloads\\rome_static_gtfs (1)\\trips.txt";
 
     public static void scrape() throws IOException, SQLException {
         Database db = new Database();
         db.connect();
 
         String contentFile = Files.readString(Path.of(filePath));
-        String[] lines = contentFile.split(System.lineSeparator());
+        String[] lines = contentFile.split("\\r?\\n");
 
-        int counter = 0;
+        System.out.println("Numero righe nel file (incluso header): " + lines.length);
 
-        for(String line : lines) {
-            if(counter <= 162542) {
-                counter++;
-                continue;
-            }
+        // Parti da 1 per saltare l'header
+        for (int i = 1; i < lines.length; i++) {
+            String line = lines[i];
             String[] words = line.split(",");
+
             String routeID = words[indexRouteID];
             String serviceID = words[indexServiceID];
             String tripID = words[indexTripID];
@@ -47,23 +46,19 @@ public class Scrape_TRIP {
             String tripShortName = words[indexTripShortName];
             String directionID = words[indexDirectionID];
             String wheelchairAccessible = words[indexWheelchairAccessible];
-            Trip trip;
-            try{
-                 trip = new Trip(tripID, routeID, serviceID, tripHeadsign, tripShortName, Integer.parseInt(directionID), Integer.parseInt(wheelchairAccessible));
 
-            }
-            catch(Exception e){
-                /// / controllare eccezioni
+            Trip trip;
+            try {
+                trip = new Trip(tripID, routeID, serviceID, tripHeadsign, tripShortName, Integer.parseInt(directionID), Integer.parseInt(wheelchairAccessible));
+            } catch (Exception e) {
                 trip = new Trip(tripID, routeID, serviceID, tripHeadsign, tripShortName, -1, -1);
             }
+
             db.addTrip(trip);
-            System.out.println(Trip.getCount());
-
+            System.out.println("Trip inseriti: " + Trip.getCount());
         }
-
-
-
     }
+
 
     public static void main(String[] args) throws IOException, SQLException {
         scrape();
