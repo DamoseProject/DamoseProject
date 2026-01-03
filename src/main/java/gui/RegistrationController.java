@@ -2,6 +2,7 @@ package gui;
 
 import model.Database;
 import model.User;
+
 import java.sql.SQLException;
 
 public class RegistrationController {
@@ -11,39 +12,49 @@ public class RegistrationController {
         RegistrationAuth auth = new RegistrationAuth(username, email, password, confirmPassword);
 
         if (!auth.validatePresenceUsername()) {
-            return RegistrationResult.failure(ErrorMessages.USERNAME_REQUIRED);
+            return RegistrationResult.failure(Constants.USERNAME_REQUIRED);
         }
         if (!auth.validateLengthUsername()) {
-            return RegistrationResult.failure(ErrorMessages.USERNAME_TOO_LONG);
+            return RegistrationResult.failure(Constants.USERNAME_TOO_LONG);
         }
         if (!auth.validatePresenceEmail()) {
-            return RegistrationResult.failure(ErrorMessages.EMAIL_REQUIRED);
+            return RegistrationResult.failure(Constants.EMAIL_REQUIRED);
         }
         if (!auth.validatePresencePassword() || !auth.validatePresenceConfirmPassword()) {
-            return RegistrationResult.failure(ErrorMessages.PASSWORD_REQUIRED);
+            return RegistrationResult.failure(Constants.PASSWORD_REQUIRED);
         }
         if (!auth.validatePasswordMatch()) {
-            return RegistrationResult.failure(ErrorMessages.PASSWORD_MISMATCH);
+            return RegistrationResult.failure(Constants.PASSWORD_MISMATCH);
         }
         if (!auth.validatePasswordStrength()) {
-            return RegistrationResult.failure(ErrorMessages.PASSWORD_WEAK);
+            return RegistrationResult.failure(Constants.PASSWORD_WEAK);
         }
 
-        // Controllo username esistente e registrazione
+
         try {
             Database db = new Database();
             db.connect();
             UserAuth userAuth = new UserAuth(db);
 
             if (userAuth.isUsernameTaken(username)) {
-                return RegistrationResult.failure(ErrorMessages.USERNAME_TAKEN);
+                return RegistrationResult.failure(Constants.USERNAME_TAKEN);
             }
 
+            User newUser = new User( "", "", username, email, password);
 
-            return RegistrationResult.success();
+
+            int result = db.addUser(newUser);
+
+
+            if (result == 0) {
+                return RegistrationResult.success();
+            } else {
+                return RegistrationResult.failure(Constants.REGISTRATION_ERROR);
+            }
 
         } catch (SQLException ex) {
-            return RegistrationResult.failure(ErrorMessages.REGISTRATION_ERROR);
+            //ex.printStackTrace();
+            return RegistrationResult.failure(Constants.REGISTRATION_ERROR);
         }
     }
 }
