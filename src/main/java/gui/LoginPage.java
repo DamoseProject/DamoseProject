@@ -139,7 +139,7 @@ public class LoginPage extends BasePage {
             User user = auth.login(getUsernameLogin(), getPasswordLogin());
 
             if (user == null) {
-                errorAccessLabel.setText(ErrorMessages.USERNAME_OR_PSW_WRONG);
+                errorAccessLabel.setText(Constants.USERNAME_OR_PSW_WRONG);
                 errorAccessLabel.setVisible(true);
             } else {
                 UserSession.getInstance().login(user.getId(), user.getUsername());
@@ -148,7 +148,7 @@ public class LoginPage extends BasePage {
             }
 
         } catch (SQLException ex) {
-            errorAccessLabel.setText(ErrorMessages.CONNECTION_ERROR_DATABASE);
+            errorAccessLabel.setText(Constants.CONNECTION_ERROR_DATABASE);
             errorAccessLabel.setVisible(true);
         }
     }

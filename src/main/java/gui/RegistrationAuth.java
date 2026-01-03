@@ -20,7 +20,7 @@ public class RegistrationAuth {
 
     public boolean validateLengthUsername() {
 
-        return username.length() <= ErrorMessages.MAX_USERNAME_LENGTH;
+        return username.length() <= Constants.MAX_USERNAME_LENGTH;
     }
 
     public boolean validatePresenceEmail() {
@@ -48,7 +48,7 @@ public class RegistrationAuth {
         boolean hasDigit = false;
         boolean hasSpecialChar = false;
 
-        String specialChars = ErrorMessages.SPECIAL_CHARS;
+        String specialChars = Constants.SPECIAL_CHARS;
 
         for (int i = 0; i < password.length(); i++) {
             char c = password.charAt(i);

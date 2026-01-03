@@ -66,9 +66,9 @@ public class EmailVerificationPage extends BasePage {
         String code = getVerificationCode();
 
         if (code.isEmpty()) {
-            showError(ErrorMessages.MISSED_VER_CODE);
-        } else if (code.length() != ErrorMessages.VERIFICATION_CODE_LENGTH) {
-            showError(ErrorMessages.WRONG_VER_CODE);
+            showError(Constants.MISSED_VER_CODE);
+        } else if (code.length() != Constants.VERIFICATION_CODE_LENGTH) {
+            showError(Constants.WRONG_VER_CODE);
         } else {
             errorVerificationCodeLabel.setVisible(false);
             frame.setView(new MapLogPage(frame));

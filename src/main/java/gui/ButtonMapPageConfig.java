@@ -23,8 +23,8 @@ public class ButtonMapPageConfig {
 
     public static ButtonMapPageConfig forGuestUser() {
         return new ButtonMapPageConfig(false, false, true,
-                ErrorMessages.LOGIN_REQUIRED_FAVORITES,
-                ErrorMessages.LOGIN_REQUIRED_LIST);
+                Constants.LOGIN_REQUIRED_FAVORITES,
+                Constants.LOGIN_REQUIRED_LIST);
     }
 
     // Getters

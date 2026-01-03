@@ -93,16 +93,33 @@ public class RegistrationPage extends BasePage {
     private void handleRegistration() throws SQLException {
         RegistrationController controller = new RegistrationController();
 
+        String userText = getUsernameRegistration();
+
         RegistrationResult result = controller.handleRegistration(
-                getUsernameRegistration(),
+                userText,
                 getEmailRegistration(),
                 getPasswordRegistration(),
                 getConfirmPasswordRegistration()
         );
 
         if (result.isSuccess()) {
-            errorLabel.setVisible(false);
-            frame.setView(PageFactory.createPage(PageType.MAP_LOGGED, frame));
+            Database db = new Database();
+            db.connect();
+
+            User newUser = db.getUserByUsername(userText);
+
+            if (newUser != null) {
+
+                UserSession.getInstance().login(newUser.getId(), newUser.getUsername());
+
+
+                errorLabel.setVisible(false);
+                frame.setView(PageFactory.createPage(PageType.MAP_LOGGED, frame));
+            } else {
+                showError("Registrazione avvenuta, ma errore nel login automatico.");
+            }
+
+
         } else {
             showError(result.getErrorMessage());
         }

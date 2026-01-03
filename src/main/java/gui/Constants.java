@@ -1,6 +1,7 @@
 package gui;
 
-public class ErrorMessages {
+public class Constants {
+
     public static final String USERNAME_REQUIRED = "Inserire uno username!";
     public static final String USERNAME_TOO_LONG = "Lo username deve contenere al massimo 12 caratteri!";
     public static final String EMAIL_REQUIRED = "Inserire una email per completare la registrazione!";
@@ -18,12 +19,24 @@ public class ErrorMessages {
     public static final String CONNECTION_ERROR_DATABASE = "Errore di connessione al database.";
     public static final String STOP_NOT_FOUND = "Fermata non trovata nel database.";
     public static final String WAYPOINT_ERROR = "Al momento non è possibile mostrare questa ricerca sulla mappa.";
+    public static final String DB_SEARCH_ERROR = "Errore nella ricerca nel database.";
+    public static final String RESULTS_HEADER = "Risultati per: ";
+    public static final String NO_RESULTS = "Nessun risultato trovato";
+    public static final String FAVORITES_HEADER = "I tuoi Preferiti";
+    public static final String NO_FAVORITES_SAVED = "Nessun preferito salvato.";
+    public static final String FAVORITES_RETRIEVAL_ERROR = "Errore nel recupero dei preferiti.";
+    public static final String NO_BUS_ARRIVING = "Nessun bus in arrivo";
+    public static final String DATA_RETRIEVAL_ERROR = "Errore nel recupero dati";
+    public static final String USER_NOT_FOUND = "Utente non trovato";
+    public static final String USER_RETRIEVAL_ERROR = "Errore nel recupero dell'utente.";
+    public static final String FAV_ADDED = "Aggiunto ai preferiti: ";
+    public static final String FAV_REMOVED = "Rimosso dai preferiti: ";
+    public static final String FAV_UPDATE_ERROR = "Errore nell'aggiornamento dei preferiti.";
 
 
     public static final int MAX_USERNAME_LENGTH = 12;
     public static final String SPECIAL_CHARS = "!$&@#";
     public static final int VERIFICATION_CODE_LENGTH = 6;
 
-    private ErrorMessages() {} // Impedisce istanziazione
+    private Constants() {} // Impedisce istanziazione
 }
-

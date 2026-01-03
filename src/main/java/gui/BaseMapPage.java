@@ -36,10 +36,9 @@ public abstract class BaseMapPage extends BasePage {
     protected BaseMapPage(MainFrame frame) {
         super(frame);
 
-        Database db = new Database();
-        db.connect();
-        this.db = db;
 
+        this.db = new Database();
+        this.db.connect();
 
         createTopPanel();
         createCenterPanel();
@@ -60,45 +59,61 @@ public abstract class BaseMapPage extends BasePage {
     protected abstract ButtonMapPageConfig getButtonConfig();
 
 
-
-
     private void createTopPanel() {
         topPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         ButtonMapPageConfig config = getButtonConfig();
 
-
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 
 
-        JButton regLoginButton = new JButton("Accedi o Registrati!");
-        regLoginButton.addActionListener(e ->
-                frame.setView(PageFactory.createPage(PageType.LOGIN, frame))
-        );
+        int leftWidth = 0;
+        int rightWidth = 0;
+        int maxHeight = 24;
 
-        JButton newsButton = new JButton("News");
 
         if (config.isShowRegLoginButton()) {
+            JButton regLoginButton = new JButton("Accedi o Registrati!");
+            regLoginButton.addActionListener(e ->
+                    frame.setView(PageFactory.createPage(PageType.LOGIN, frame))
+            );
             leftPanel.add(regLoginButton);
+
+            leftWidth = regLoginButton.getPreferredSize().width;
+            maxHeight = Math.max(maxHeight, regLoginButton.getPreferredSize().height);
+
+        } else {
+            UserSession session = UserSession.getInstance();
+            JButton profileButton = new JButton("👤 " + session.getUsername());
+
+            profileButton.addActionListener(e -> {
+                JPopupMenu popupMenu = createProfilePopupMenu(session);
+                popupMenu.show(profileButton, 0, profileButton.getHeight());
+            });
+
+            leftPanel.add(profileButton);
+
+            leftWidth = profileButton.getPreferredSize().width;
+            maxHeight = Math.max(maxHeight, profileButton.getPreferredSize().height);
         }
+
+
+        JButton newsButton = new JButton("News");
         rightPanel.add(newsButton);
 
+        rightWidth = newsButton.getPreferredSize().width;
+        maxHeight = Math.max(maxHeight, newsButton.getPreferredSize().height);
 
-        int leftButtonWidth = config.isShowRegLoginButton() ? regLoginButton.getPreferredSize().width : 0;
-        int rightButtonWidth = newsButton.getPreferredSize().width;
-        int sideWidth = Math.max(leftButtonWidth, rightButtonWidth) + 10;
-        int sideHeight = Math.max(
-                config.isShowRegLoginButton() ? regLoginButton.getPreferredSize().height : 0,
-                newsButton.getPreferredSize().height
-        );
 
-        Dimension sideSize = new Dimension(sideWidth, Math.max(sideHeight, 24));
-        leftPanel.setPreferredSize(sideSize);
-        rightPanel.setPreferredSize(sideSize);
+        int maxSideWidth = Math.max(leftWidth, rightWidth) + 10;
+        Dimension sidePanelSize = new Dimension(maxSideWidth, maxHeight);
 
+        leftPanel.setPreferredSize(sidePanelSize);
+        rightPanel.setPreferredSize(sidePanelSize);
+
+        
         JLabel mainLabel = new JLabel("Dove vuoi andare?", JLabel.CENTER);
-
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE; gbc.anchor = GridBagConstraints.WEST;
@@ -112,6 +127,51 @@ public abstract class BaseMapPage extends BasePage {
         gbc.fill = GridBagConstraints.NONE; gbc.anchor = GridBagConstraints.EAST;
         topPanel.add(rightPanel, gbc);
     }
+
+
+    private JPopupMenu createProfilePopupMenu(UserSession session) {
+        JPopupMenu menu = new JPopupMenu();
+
+
+        String userEmail = "...";
+        try {
+            User user = db.getUser(session.getUserId());
+            if (user != null) {
+                userEmail = user.getEmail();
+            }
+        } catch (SQLException ex) {
+            userEmail = "Non disponibile";
+        }
+
+
+        JLabel userLabel = new JLabel("Utente: " + session.getUsername());
+        JLabel emailLabel = new JLabel("Email: " + userEmail);
+
+
+        userLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
+        emailLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 5, 10));
+
+
+        Font infoFont = new Font("SansSerif", Font.PLAIN, 11);
+        emailLabel.setFont(infoFont);
+        emailLabel.setForeground(Color.GRAY);
+
+
+        JMenuItem logoutItem = new JMenuItem("Esci");
+        logoutItem.addActionListener(e -> {
+            session.logout();
+            frame.setView(PageFactory.createPage(PageType.LOGIN, frame));
+        });
+
+
+        menu.add(userLabel);
+        menu.add(emailLabel);
+        menu.add(new JSeparator());
+        menu.add(logoutItem);
+
+        return menu;
+    }
+
 
     private void createCenterPanel() {
         centerPanel = new JPanel();
@@ -137,11 +197,14 @@ public abstract class BaseMapPage extends BasePage {
         researchField.addActionListener(e -> {
             String search = getResearchField();
             if (search.isEmpty()) {
-                errorLabel.setText(ErrorMessages.MISSED_RESEARCH);
+                errorLabel.setText(Constants.MISSED_RESEARCH);
                 errorLabel.setVisible(true);
                 return;
             }
             performSearch(search);
+            // Rimuove il focus dalla barra di ricerca spostandolo sulla mappa
+            // in modo che i tasti + e - zoomino invece di scrivere
+            mapViewer.requestFocusInWindow();
         });
     }
 
@@ -180,6 +243,8 @@ public abstract class BaseMapPage extends BasePage {
                 errorLabel.setText(config.getViewFavoritesErrorMessage());
                 errorLabel.setVisible(true);
             });
+        } else {
+            checkFav.addActionListener(e -> showFavorites());
         }
         buttonsPanel.add(checkFav);
         return buttonsPanel;
@@ -215,7 +280,7 @@ public abstract class BaseMapPage extends BasePage {
 
         } catch (SQLException ex) {
             errorLabel.setForeground(Color.RED);
-            errorLabel.setText("Errore nella ricerca nel database.");
+            errorLabel.setText(Constants.DB_SEARCH_ERROR);
             errorLabel.setVisible(true);
 
         }
@@ -284,18 +349,56 @@ public abstract class BaseMapPage extends BasePage {
         mapViewer.repaint();
     }
 
+    private void showFavorites() {
+        errorLabel.setVisible(false);
+        resultsPanel.removeAll();
+        resultsPanel.add(createGeneralRow(Constants.FAVORITES_HEADER));
+
+        UserSession session = UserSession.getInstance();
+
+        if (!session.isLogged()) {
+            errorLabel.setForeground(Color.RED);
+            errorLabel.setText(Constants.LOGIN_REQUIRED_LIST);
+            errorLabel.setVisible(true);
+            resultsPanel.revalidate();
+            resultsPanel.repaint();
+            return;
+        }
+
+        try {
+            User user = db.getUser(session.getUserId());
+            List<Stop> favorites = db.getFavouriteStopsByUser(user);
+
+            if (favorites.isEmpty()) {
+                resultsPanel.add(createGeneralRow(Constants.NO_FAVORITES_SAVED, false));
+            } else {
+                for (Stop stop : favorites) {
+                    String text = stop.getId() + " " + stop.getName();
+                    resultsPanel.add(createGeneralRow(text));
+                }
+            }
+
+        } catch (SQLException ex) {
+            errorLabel.setForeground(Color.RED);
+            errorLabel.setText(Constants.FAVORITES_RETRIEVAL_ERROR);
+            errorLabel.setVisible(true);
+        }
+
+        resultsPanel.add(Box.createVerticalGlue());
+        resultsPanel.revalidate();
+        resultsPanel.repaint();
+    }
 
 
     private void showResults(String search, List<Stop> fermate, List<Route> linee) throws SQLException {
         resultsPanel.removeAll();
-        resultsPanel.add(createGeneralRow("Risultati per: " + search));
+        resultsPanel.add(createGeneralRow(Constants.RESULTS_HEADER + search));
 
         boolean foundSomething = false;
 
         if (!fermate.isEmpty()) {
             for (Stop fermata : fermate) {
-                String text = fermata.getId() + " " + fermata.getName();
-                resultsPanel.add(createGeneralRow(text));
+                resultsPanel.add(createRouteRow(route));
             }
             foundSomething = true;
         }
@@ -309,7 +412,7 @@ public abstract class BaseMapPage extends BasePage {
         }
 
         if (!foundSomething) {
-            resultsPanel.add(createGeneralRow("Nessun risultato trovato", false));
+            resultsPanel.add(createGeneralRow(Constants.NO_RESULTS, false));
         }
 
         resultsPanel.add(Box.createVerticalGlue());
@@ -334,7 +437,7 @@ public abstract class BaseMapPage extends BasePage {
         JLabel resultLabel = new JLabel(resultText);
         rowPanel.add(resultLabel, BorderLayout.CENTER);
 
-        if (resultText.startsWith("Risultati per:")) {
+        if (resultText.startsWith(Constants.RESULTS_HEADER) || resultText.equals(Constants.FAVORITES_HEADER)) {
             resultLabel.setFont(resultLabel.getFont().deriveFont(Font.BOLD));
             resultLabel.setForeground(new Color(60, 60, 60));
             return rowPanel;
@@ -393,12 +496,12 @@ public abstract class BaseMapPage extends BasePage {
                 BusInUnaFermataRecord prossimoBus = db.getProssimoArrivoInUnaFermata(stopId);
 
                 if (prossimoBus == null) {
-                    subList.add(createGeneralRow("Nessun bus in arrivo", false));
+                    subList.add(createGeneralRow(Constants.NO_BUS_ARRIVING, false));
                 } else {
                     subList.add(createBusRow(prossimoBus));
                 }
             } catch (SQLException e) {
-                subList.add(createGeneralRow("Errore nel recupero dati", false));
+                subList.add(createGeneralRow(Constants.DATA_RETRIEVAL_ERROR, false));
             }
 
             int index = findRowPos(parentRow);
@@ -446,23 +549,219 @@ public abstract class BaseMapPage extends BasePage {
         resultsPanel.revalidate(); resultsPanel.repaint();
     }
 
+    private JPanel createRouteRow(Route route) {
+        String resultText = route.getId() + " " + route.getShortName();
+
+        JPanel rowPanel = new JPanel(new BorderLayout());
+        rowPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
+        rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        rowPanel.setBackground(Color.WHITE);
+
+        JLabel resultLabel = new JLabel(resultText);
+        rowPanel.add(resultLabel, BorderLayout.CENTER);
+
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.X_AXIS));
+        leftPanel.setOpaque(false);
+
+        JButton arrowButton = getArrowButton();
+
+
+        arrowButton.addActionListener(e -> createSubRowsForRoute(rowPanel, route, arrowButton));
+
+
+        JButton mapButton = new JButton("📍");
+        mapButton.setPreferredSize(new Dimension(30, 25));
+        mapButton.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        mapButton.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+        mapButton.setBorderPainted(false);
+        mapButton.setContentAreaFilled(false);
+        mapButton.setFocusPainted(false);
+
+
+
+        leftPanel.add(arrowButton);
+        leftPanel.add(Box.createRigidArea(new Dimension(7, 0)));
+        leftPanel.add(mapButton);
+
+        rowPanel.add(leftPanel, BorderLayout.WEST);
+
+        JButton favButton = getFavButtonForRoute(route);
+        rowPanel.add(favButton, BorderLayout.EAST);
+
+        return rowPanel;
+    }
+
+    private void createSubRowsForRoute(JPanel parentRow, Route route, JButton arrowButton) {
+        boolean isOpen = expandedRows.containsKey(parentRow);
+
+        if (isOpen) {
+
+            JPanel subList = expandedRows.remove(parentRow);
+            resultsPanel.remove(subList);
+            arrowButton.setText("<html>▶</html>");
+        } else {
+
+            JPanel subList = new JPanel();
+            subList.setLayout(new BoxLayout(subList, BoxLayout.Y_AXIS));
+            subList.setBackground(new Color(240, 248, 255));
+            subList.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
+
+            try {
+                List<Stop> stops = db.getStopsByRoute(route);
+
+                if (stops.isEmpty()) {
+                    subList.add(createGeneralRow(Constants.NO_RESULTS, false));
+                } else {
+                    for (Stop stop : stops) {
+                        String text = stop.getId() + " " + stop.getName();
+
+
+                        JPanel stopRow = createGeneralRow(text);
+
+                        stopRow.setBackground(new Color(250, 250, 250));
+
+                        subList.add(stopRow);
+                    }
+                }
+
+            } catch (SQLException e) {
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setText(Constants.DATA_RETRIEVAL_ERROR);
+                errorLabel.setVisible(true);
+                subList.add(createGeneralRow("Errore database", false));
+            }
+
+
+            int index = findRowPos(parentRow);
+            if (index != -1) {
+                resultsPanel.add(subList, index + 1);
+            }
+
+            expandedRows.put(parentRow, subList);
+            arrowButton.setText("<html>▼</html>");
+        }
+
+        resultsPanel.revalidate();
+        resultsPanel.repaint();
+    }
+
+    private JButton getFavButtonForRoute(Route route) {
+        final String EMPTY_STAR = "<html>&#9734;</html>";
+        final String FILLED_STAR = "<html>&#9733;</html>";
+
+        String initialIcon = EMPTY_STAR;
+        UserSession session = UserSession.getInstance();
+
+
+        if (session.isLogged()) {
+            try {
+                User user = db.getUser(session.getUserId());
+                List<Route> userFavorites = db.getFavouriteRoutesByUser(user);
+
+                for (Route r : userFavorites) {
+                    if (r.getId().equals(route.getId())) {
+                        initialIcon = FILLED_STAR;
+                        break;
+                    }
+                }
+            } catch (SQLException e) {
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setText(Constants.FAVORITES_RETRIEVAL_ERROR);
+                errorLabel.setVisible(true);
+            }
+        }
+
+        JButton favButton = new JButton(initialIcon);
+        favButton.setPreferredSize(new Dimension(30, 25));
+        favButton.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        favButton.setBorderPainted(false);
+        favButton.setContentAreaFilled(false);
+        favButton.setFocusPainted(false);
+
+        ButtonMapPageConfig config = getButtonConfig();
+
+        favButton.addActionListener(e -> {
+            if (!session.isLogged()) {
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setText(Constants.LOGIN_REQUIRED_FAVORITES);
+                errorLabel.setVisible(true);
+                return;
+            }
+
+            if (!config.isFavoritesEnabled()) {
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setText(config.getFavoritesErrorMessage());
+                errorLabel.setVisible(true);
+                return;
+            }
+
+            try {
+                User user = db.getUser(session.getUserId());
+                if (user == null) throw new SQLException(Constants.USER_NOT_FOUND);
+
+                if (favButton.getText().contains("9734")) {
+                    db.addUserFavouriteRoute(user, route);
+                    favButton.setText(FILLED_STAR);
+                    errorLabel.setForeground(new Color(0, 100, 0));
+                    errorLabel.setText(Constants.FAV_ADDED + route.getShortName());
+                } else {
+                    db.removeUserFavoriteRoute(user, route);
+                    favButton.setText(EMPTY_STAR);
+                    errorLabel.setForeground(new Color(255, 140, 0));
+                    errorLabel.setText(Constants.FAV_REMOVED + route.getShortName());
+                }
+            } catch (SQLException ex) {
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setText(Constants.FAV_UPDATE_ERROR);
+                //ex.printStackTrace();
+            }
+            errorLabel.setVisible(true);
+        });
+
+        return favButton;
+    }
+
 
 
     private JButton getFavButton(Stop stop) {
         final String EMPTY_STAR = "<html>&#9734;</html>";
         final String FILLED_STAR = "<html>&#9733;</html>";
 
-        JButton favButton = new JButton(EMPTY_STAR);
+        String initialIcon = EMPTY_STAR;
+        UserSession session = UserSession.getInstance();
+
+        if (session.isLogged()) {
+            try {
+                User user = db.getUser(session.getUserId());
+                List<Stop> userFavorites = db.getFavouriteStopsByUser(user);
+
+                for (Stop s : userFavorites) {
+                    if (s.getId().equals(stop.getId())) {
+                        initialIcon = FILLED_STAR;
+                        break;
+                    }
+                }
+            } catch (SQLException e) {
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setText(Constants.FAVORITES_RETRIEVAL_ERROR);
+                errorLabel.setVisible(true);
+            }
+        }
+
+        JButton favButton = new JButton(initialIcon);
         favButton.setPreferredSize(new Dimension(30, 25));
         favButton.setFont(new Font("SansSerif", Font.PLAIN, 15));
 
-        UserSession session = UserSession.getInstance();
         ButtonMapPageConfig config = getButtonConfig();
 
         favButton.addActionListener(e -> {
             if (!session.isLogged()) {
                 errorLabel.setForeground(Color.RED);
-                errorLabel.setText("Effettuare l’accesso per accedere ai preferiti!");
+                errorLabel.setText(Constants.LOGIN_REQUIRED_FAVORITES);
                 errorLabel.setVisible(true);
                 return;
             }
@@ -476,13 +775,13 @@ public abstract class BaseMapPage extends BasePage {
             }
 
 
-            User user = null;
+            User user;
             try {
                 user = db.getUser(session.getUserId());
-                if (user == null) throw new SQLException("Utente non trovato");
+                if (user == null) throw new SQLException(Constants.USER_NOT_FOUND);
             } catch (SQLException ex) {
                 errorLabel.setForeground(Color.RED);
-                errorLabel.setText("Errore nel recupero dell'utente.");
+                errorLabel.setText(Constants.USER_RETRIEVAL_ERROR);
                 errorLabel.setVisible(true);
                 return;
             }
@@ -493,16 +792,16 @@ public abstract class BaseMapPage extends BasePage {
                     db.addUserFavouriteStop(user, stop);
                     favButton.setText(FILLED_STAR);
                     errorLabel.setForeground(new Color(0, 100, 0));
-                    errorLabel.setText("Aggiunto ai preferiti: " + stop.getName());
+                    errorLabel.setText(Constants.FAV_ADDED + stop.getName());
                 } else {
                     db.removeUserFavoriteStop(user, stop);
                     favButton.setText(EMPTY_STAR);
                     errorLabel.setForeground(new Color(255, 140, 0));
-                    errorLabel.setText("Rimosso dai preferiti: " + stop.getName());
+                    errorLabel.setText(Constants.FAV_REMOVED + stop.getName());
                 }
             } catch (SQLException ex) {
                 errorLabel.setForeground(Color.RED);
-                errorLabel.setText("Errore nell'aggiornamento dei preferiti.");
+                errorLabel.setText(Constants.FAV_UPDATE_ERROR);
 
             }
             errorLabel.setVisible(true);
@@ -539,12 +838,12 @@ public abstract class BaseMapPage extends BasePage {
                     rowSelected = rowPanel;
                 } else {
                     errorLabel.setForeground(Color.RED);
-                    errorLabel.setText(ErrorMessages.STOP_NOT_FOUND);
+                    errorLabel.setText(Constants.STOP_NOT_FOUND);
                     errorLabel.setVisible(true);
                 }
             } catch (Exception ex) {
                 errorLabel.setForeground(Color.RED);
-                errorLabel.setText(ErrorMessages.WAYPOINT_ERROR);
+                errorLabel.setText(Constants.WAYPOINT_ERROR);
                 errorLabel.setVisible(true);
             }
         });
