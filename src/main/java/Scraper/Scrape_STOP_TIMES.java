@@ -23,7 +23,6 @@ public class Scrape_STOP_TIMES {
     final private static int indexStopHeadsign = titles.indexOf("stop_headsign");
     final private static int indexShapeDistTraveled = titles.indexOf("shape_dist_traveled");
 
-
     private static String filePath = "/home/carmine/Scaricati/rome_static_gtfs/stop_times.txt";
 
 

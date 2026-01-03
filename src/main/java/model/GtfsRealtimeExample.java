@@ -3,7 +3,10 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Time;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -12,6 +15,7 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.FeedEntity;
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
 import com.sun.source.tree.YieldTree;
+import util.TimeComparator;
 import util.TimeManager;
 
 public class GtfsRealtimeExample {
@@ -22,9 +26,8 @@ public class GtfsRealtimeExample {
     private static Connection connection;
     private static String LINK = "https://romamobilita.it/sites/default/files/rome_rtgtfs_trip_updates_feed.pb";
 
-
-
-
+    public GtfsRealtimeExample() throws SQLException {
+    }
 
 
     public static void printUpdate(TripUpdate.StopTimeUpdate stopTimeUpdate) throws SQLException {
@@ -46,41 +49,27 @@ public class GtfsRealtimeExample {
 
     public static void main(String[] args) throws Exception {
 
-        db = new Database();
-        db.connect();
-
-
-
-        List<Stop> stops = db.getStopsByName("Bologna");
-        Stop bologna = stops.get(0);
-        User me = db.getUserByEmail("mickolsverde06@outlook.it");
-
-
-        List<Stop> fermatepreferite = db.getFavouriteStopsByUser(me);
-        for(Stop fermata : fermatepreferite){
-            System.out.println(fermata.getLongitude() + " " + fermata.getLatitude() + " " + fermata.getName() + " " + fermata.getId());
-        }
+        Database db = new Database();
 
         System.exit(0);
 
 
 
-        FeedMessage feedMessage;
 
-        try {
-            URL url = new URL(LINK);
-            feedMessage = FeedMessage.parseFrom(url.openStream());
-        }
-        catch(Exception e){
-            throw new Exception("Errore nella lettura del feed");
-        }
 
-        for(FeedEntity feedEntity : feedMessage.getEntityList()){
-            if(feedEntity.hasTripUpdate()){
-                updateBus(feedEntity.getTripUpdate());
-            }
 
-        }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     }
@@ -110,6 +99,9 @@ public class GtfsRealtimeExample {
         System.exit(0);
 
     }
+
+
+
 
 
 
