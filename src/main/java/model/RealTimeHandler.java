@@ -1,77 +1,77 @@
-package model; // O package util; a seconda di dove la metti
+package model;
 
 import com.google.transit.realtime.GtfsRealtime.FeedEntity;
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
-import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RealTimeHandler {
 
-    // URL ufficiale per i ritardi (Trip Updates)
-    private static final String REALTIME_URL = "https://romamobilita.it/sites/default/files/rome_rtgtfs_trip_updates_feed.pb";
+    private static final String URL_REALTIME = "https://romamobilita.it/sites/default/files/rome_rtgtfs_trip_updates_feed.pb";
 
-    // Cache: TripID -> Ritardo in secondi
-    private static Map<String, Integer> ritardiCache = new HashMap<>();
+    // Usiamo ConcurrentHashMap per evitare crash se più thread accedono insieme
+    private static final Map<String, Long> ritardiMap = new ConcurrentHashMap<>();
 
-    private static long ultimoAggiornamento = 0;
-    // Aggiorniamo ogni 30 secondi
-    private static final long TEMPO_REFRESH_MS = 30 * 1000;
+    private static long lastUpdate = 0;
+    private static final long REFRESH_RATE_MS = 30 * 1000; // 30 Secondi
 
     /**
-     * Ritorna il ritardo in secondi per un dato Trip ID.
-     * Ritorna NULL se il bus non ha dati realtime (es. GPS spento o viaggio non iniziato).
+     * Scarica i dati solo se sono vecchi, altrimenti usa la cache.
+     * Metodo sincronizzato per evitare download doppi.
      */
-    public static Optional<Integer> getRitardo(String tripId) {
-        aggiornaDatiSeNecessario();
-        return Optional.ofNullable(ritardiCache.get(tripId));
-    }
-
-    private static void aggiornaDatiSeNecessario() {
-        if (System.currentTimeMillis() - ultimoAggiornamento > TEMPO_REFRESH_MS) {
-            scaricaDati();
+    public static synchronized void refreshData() {
+        if (System.currentTimeMillis() - lastUpdate < REFRESH_RATE_MS) {
+            return; // Dati ancora freschi
         }
-    }
 
-    private static void scaricaDati() {
-        System.out.println("[RealTime] Download dati in corso...");
-
-        try (InputStream stream = new URL(REALTIME_URL).openStream()) {
-            // La libreria legge il formato binario Protocol Buffer
+        System.out.println("[RealTime] Scaricamento aggiornamenti...");
+        try (InputStream stream = new URL(URL_REALTIME).openStream()) {
             FeedMessage feed = FeedMessage.parseFrom(stream);
 
-            Map<String, Integer> nuovaMappa = new HashMap<>();
+            // Creiamo una mappa temporanea per non bloccare la lettura durante il parse
+            Map<String, Long> tempMap = new ConcurrentHashMap<>();
 
             for (FeedEntity entity : feed.getEntityList()) {
                 if (entity.hasTripUpdate()) {
-                    TripUpdate tripUpdate = entity.getTripUpdate();
-                    String tripId = tripUpdate.getTrip().getTripId();
+                    TripUpdate tu = entity.getTripUpdate();
+                    String tripId = tu.getTrip().getTripId();
 
-                    // Cerchiamo l'aggiornamento sulla fermata
-                    if (tripUpdate.getStopTimeUpdateCount() > 0) {
-                        StopTimeUpdate update = tripUpdate.getStopTimeUpdate(0);
-
-                        // Il ritardo può essere su "Arrival" o "Departure"
-                        if (update.hasArrival() && update.getArrival().hasDelay()) {
-                            nuovaMappa.put(tripId, update.getArrival().getDelay());
-                        } else if (update.hasDeparture() && update.getDeparture().hasDelay()) {
-                            nuovaMappa.put(tripId, update.getDeparture().getDelay());
+                    // Cerchiamo il ritardo nell'ultimo StopTimeUpdate disponibile
+                    // (Spesso il primo della lista è il prossimo evento)
+                    if (tu.getStopTimeUpdateCount() > 0) {
+                        TripUpdate.StopTimeUpdate stu = tu.getStopTimeUpdate(0);
+                        long delay = 0;
+                        if (stu.hasArrival() && stu.getArrival().hasDelay()) {
+                            delay = stu.getArrival().getDelay();
+                        } else if (stu.hasDeparture() && stu.getDeparture().hasDelay()) {
+                            delay = stu.getDeparture().getDelay();
                         }
+                        tempMap.put(tripId, delay);
                     }
                 }
             }
 
-            ritardiCache = nuovaMappa;
-            ultimoAggiornamento = System.currentTimeMillis();
-            System.out.println("[RealTime] Aggiornato. Bus monitorati: " + ritardiCache.size());
+            ritardiMap.clear();
+            ritardiMap.putAll(tempMap);
+            lastUpdate = System.currentTimeMillis();
+            System.out.println("[RealTime] Aggiornato. Bus trovati: " + ritardiMap.size());
 
         } catch (Exception e) {
-            System.err.println("[RealTime] Errore download: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Arricchisce il record con i dati realtime se presenti
+     */
+    public static void applicaRealTime(BusInUnaFermataRecord bus) {
+        refreshData(); // Controlla se serve aggiornare
+        if (ritardiMap.containsKey(bus.getTripId())) {
+            bus.setRitardoInSecondi(ritardiMap.get(bus.getTripId()));
         }
     }
 }
