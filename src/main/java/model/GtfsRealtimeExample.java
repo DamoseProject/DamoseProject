@@ -50,6 +50,14 @@ public class GtfsRealtimeExample {
     public static void main(String[] args) throws Exception {
 
         Database db = new Database();
+        List<Stop> direzione0 = db.getStopsByRouteByDirection("716", 0);
+        List<Stop> direzione1 = db.getStopsByRouteByDirection("716", 1);
+        List<Stop> totali = db.getStopsByRoute("716");
+
+        System.out.println(direzione0.size());
+        System.out.println(direzione1.size());
+        System.out.println(totali.size());
+
 
         System.exit(0);
 

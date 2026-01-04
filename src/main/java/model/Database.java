@@ -94,6 +94,8 @@ public class Database {
             // BUS (Flotta)
             stmt.execute("CREATE TABLE IF NOT EXISTS Bus (" +
                     "ID TEXT PRIMARY KEY, LABEL TEXT, LICENSE_PLATE TEXT)");
+
+
         }
     }
 
@@ -246,6 +248,39 @@ public class Database {
         }
         return stops;
     }
+
+
+    public List<Stop> getStopsByRouteByDirection(String routeId, int direction) throws SQLException {
+        List<Stop> stops = new ArrayList<>();
+        // Seleziona le fermate distinte collegate ai viaggi di quel percorso
+        String sql = "SELECT DISTINCT F.* " +
+                "FROM Fermata F " +
+                "INNER JOIN FERMATA_ORARIO FO ON F.ID = FO.FERMATA_ID " +
+                "INNER JOIN Viaggio V ON FO.VIAGGIO_ID = V.ID " +
+                "WHERE V.PERCORSO_ID = ? AND V.DIREZIONE = ?";
+
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, routeId);
+            pstmt.setInt(2, direction);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    stops.add(new Stop(
+                            rs.getString("ID"),
+                            rs.getString("CODICE"),
+                            rs.getString("NOME"),
+                            rs.getFloat("LATITUDINE"),
+                            rs.getFloat("LONGITUDINE")
+                    ));
+                }
+            }
+        }
+        return stops;
+    }
+
+
+
+
 
     public Route getRoute(String id) throws SQLException {
         String sql = "SELECT * FROM Percorso WHERE ID = ?";
