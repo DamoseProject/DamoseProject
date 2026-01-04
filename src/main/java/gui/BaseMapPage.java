@@ -413,10 +413,14 @@ public abstract class BaseMapPage extends BasePage {
         mapViewer.repaint();
     }
 
-    private void showRouteOnMap(Route route) throws SQLException {
-        List<Stop> fermate = db.getStopsByRoute(route.getId());
+    private void showRouteDirectionOnMap(Route route, int direction) throws SQLException {
+        List<Stop> fermate = db.getStopsByRouteByDirection(route.getId(), direction);
 
-        if (fermate.isEmpty()) return;
+        if (fermate.isEmpty()) {
+            errorLabel.setText("Nessun percorso trovato per questa direzione.");
+            errorLabel.setVisible(true);
+            return;
+        }
 
         currentWaypoints.clear();
         for (Stop fermata : fermate) {
@@ -427,6 +431,7 @@ public abstract class BaseMapPage extends BasePage {
         WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
         waypointPainter.setWaypoints(currentWaypoints);
         mapViewer.setOverlayPainter(waypointPainter);
+
 
         Stop firstStop = fermate.get(0);
         GeoPosition centerPos = new GeoPosition(firstStop.getLatitude(), firstStop.getLongitude());
@@ -473,10 +478,19 @@ public abstract class BaseMapPage extends BasePage {
 
             if (!favRoutes.isEmpty()) {
                 for (Route route : favRoutes) {
-                    resultsPanel.add(createRouteRow(route));
+                    JPanel rowDir0 = createRouteDirectionRow(route, 0);
+                    if (rowDir0 != null) {
+                        resultsPanel.add(rowDir0);
+                    }
+
+                    JPanel rowDir1 = createRouteDirectionRow(route, 1);
+                    if (rowDir1 != null) {
+                        resultsPanel.add(rowDir1);
+                    }
                 }
                 hasFavorites = true;
             }
+
 
             if (!hasFavorites) {
                 resultsPanel.add(createGeneralRow(Constants.NO_FAVORITES_SAVED, false));
@@ -509,12 +523,21 @@ public abstract class BaseMapPage extends BasePage {
             foundSomething = true;
         }
 
-
         if (!linee.isEmpty()) {
             for (Route route : linee) {
-                resultsPanel.add(createRouteRow(route));
+                JPanel rowDir0 = createRouteDirectionRow(route, 0);
+                if (rowDir0 != null) {
+                    resultsPanel.add(rowDir0);
+                    foundSomething = true;
+                }
+
+
+                JPanel rowDir1 = createRouteDirectionRow(route, 1);
+                if (rowDir1 != null) {
+                    resultsPanel.add(rowDir1);
+                    foundSomething = true;
+                }
             }
-            foundSomething = true;
         }
 
         if (!foundSomething) {
@@ -560,12 +583,14 @@ public abstract class BaseMapPage extends BasePage {
 
         String stopId = resultText.split(" ")[0];
         Stop stop;
-        JButton favButton;
+        JButton favButton = null;
         try {
             stop = db.getStop(stopId);
             favButton = getFavButton(stop);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            errorLabel.setForeground(Color.RED);
+            errorLabel.setText("Errore dati fermata.");
+            errorLabel.setVisible(true);
         }
 
         JPanel leftPanel = new JPanel();
@@ -576,7 +601,9 @@ public abstract class BaseMapPage extends BasePage {
         leftPanel.add(mapButton);
 
         rowPanel.add(leftPanel, BorderLayout.WEST);
-        rowPanel.add(favButton, BorderLayout.EAST);
+        if (favButton != null) {
+            rowPanel.add(favButton, BorderLayout.EAST);
+        }
 
         arrowButton.addActionListener(e -> createSubRows(rowPanel, resultText, arrowButton));
 
@@ -669,8 +696,29 @@ public abstract class BaseMapPage extends BasePage {
         resultsPanel.revalidate(); resultsPanel.repaint();
     }
 
-    private JPanel createRouteRow(Route route) {
-        String resultText = route.getId();
+
+    private JPanel createRouteDirectionRow(Route route, int direction) {
+        String directionName = String.valueOf(direction);
+
+        try {
+            List<Stop> stops = db.getStopsByRouteByDirection(route.getId(), direction);
+
+
+            if (stops.isEmpty()) {
+                return null;
+            }
+
+            Stop lastStop = stops.get(stops.size() - 1);
+            directionName = lastStop.getName();
+
+        } catch (SQLException e) {
+            errorLabel.setForeground(Color.RED);
+            errorLabel.setText("Errore nel recupero della direzione.");
+            errorLabel.setVisible(true);
+            return null;
+        }
+
+        String resultText = route.getId() + " - Direzione " + directionName;
 
         JPanel rowPanel = new JPanel(new BorderLayout());
         rowPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -689,9 +737,7 @@ public abstract class BaseMapPage extends BasePage {
 
         JButton arrowButton = getArrowButton();
 
-
-        arrowButton.addActionListener(e -> createSubRowsForRoute(rowPanel, route, arrowButton));
-
+        arrowButton.addActionListener(e -> createSubRowsForRouteDirection(rowPanel, route, direction, arrowButton));
 
         JButton mapButton = new JButton("📍");
         mapButton.setPreferredSize(new Dimension(30, 25));
@@ -703,13 +749,13 @@ public abstract class BaseMapPage extends BasePage {
 
         mapButton.addActionListener(e -> {
             try {
-                showRouteOnMap(db.getRoute(resultText));
+                showRouteDirectionOnMap(route, direction);
             } catch (SQLException ex) {
-                throw new RuntimeException(ex);
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setText("Errore visualizzazione mappa.");
+                errorLabel.setVisible(true);
             }
         });
-
-
 
         leftPanel.add(arrowButton);
         leftPanel.add(Box.createRigidArea(new Dimension(7, 0)));
@@ -723,35 +769,32 @@ public abstract class BaseMapPage extends BasePage {
         return rowPanel;
     }
 
-    private void createSubRowsForRoute(JPanel parentRow, Route route, JButton arrowButton) {
+
+    private void createSubRowsForRouteDirection(JPanel parentRow, Route route, int direction, JButton arrowButton) {
         boolean isOpen = expandedRows.containsKey(parentRow);
 
         if (isOpen) {
-
             JPanel subList = expandedRows.remove(parentRow);
             resultsPanel.remove(subList);
             arrowButton.setText("<html>▶</html>");
         } else {
-
             JPanel subList = new JPanel();
             subList.setLayout(new BoxLayout(subList, BoxLayout.Y_AXIS));
             subList.setBackground(new Color(240, 248, 255));
             subList.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
 
             try {
-                List<Stop> stops = db.getStopsByRoute(route.getId());
+                List<Stop> stops = db.getStopsByRouteByDirection(route.getId(), direction);
 
                 if (stops.isEmpty()) {
-                    subList.add(createGeneralRow(Constants.NO_RESULTS, false));
+                    subList.add(createGeneralRow("Nessuna fermata in questa direzione", false));
                 } else {
                     for (Stop stop : stops) {
                         String text = stop.getId() + " " + stop.getName();
 
 
                         JPanel stopRow = createGeneralRow(text);
-
                         stopRow.setBackground(new Color(250, 250, 250));
-
                         subList.add(stopRow);
                     }
                 }
@@ -762,7 +805,6 @@ public abstract class BaseMapPage extends BasePage {
                 errorLabel.setVisible(true);
                 subList.add(createGeneralRow("Errore database", false));
             }
-
 
             int index = findRowPos(parentRow);
             if (index != -1) {
