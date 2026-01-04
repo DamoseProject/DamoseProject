@@ -8,8 +8,8 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         setTitle("Damose!");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 600);
         setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setView(new LoginPage(this));
         setVisible(true);
     }
