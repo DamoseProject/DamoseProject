@@ -12,6 +12,7 @@ import javax.swing.event.MouseInputListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Point2D;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.List;
@@ -31,6 +32,25 @@ public abstract class BaseMapPage extends BasePage {
     private boolean searchConfirmed = false;
     private JPanel rowSelected = null;
     private final Map<JPanel, JPanel> expandedRows = new HashMap<>();
+
+    // NUOVO: Lista dei waypoint attualmente visibili
+    private Set<Waypoint> currentWaypoints = new HashSet<>();
+
+    // NUOVO: Classe custom per memorizzare i dati della fermata
+    private static class LabeledWaypoint extends DefaultWaypoint {
+        private final String id;
+        private final String name;
+
+        public LabeledWaypoint(GeoPosition coord, String id, String name) {
+            super(coord);
+            this.id = id;
+            this.name = name;
+        }
+
+        public String getLabel() {
+            return "<html><b>Fermata:</b> " + id + "<br><b>Nome:</b> " + name + "</html>";
+        }
+    }
 
 
     protected BaseMapPage(MainFrame frame) {
@@ -298,10 +318,54 @@ public abstract class BaseMapPage extends BasePage {
         mapViewer.setAddressLocation(roma);
         mapViewer.setPreferredSize(new Dimension(500, 400));
 
+        // Listener per muovere la mappa (Pan)
         MouseInputListener mil = new PanMouseInputListener(mapViewer);
         mapViewer.addMouseListener(mil);
         mapViewer.addMouseMotionListener(mil);
         mapViewer.addKeyListener(new PanKeyListener(mapViewer));
+
+
+        mapViewer.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                Rectangle rect = mapViewer.getViewportBounds();
+                Point clickPoint = e.getPoint();
+
+                for (Waypoint w : currentWaypoints) {
+                    if (w instanceof LabeledWaypoint) {
+                        // Converte GPS -> Pixel
+                        Point2D point = mapViewer.getTileFactory().geoToPixel(w.getPosition(), mapViewer.getZoom());
+
+                        // Calcola posizione relativa allo schermo visibile
+                        int x = (int) (point.getX() - rect.getX());
+                        int y = (int) (point.getY() - rect.getY());
+                        Point waypointPoint = new Point(x, y);
+
+                        // Se il click è vicino al waypoint (raggio 20px)
+                        if (clickPoint.distance(waypointPoint) < 20) {
+
+                            // Crea il Mini Menu (JPopupMenu)
+                            JPopupMenu popup = new JPopupMenu();
+                            popup.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+
+                            // Crea il contenuto (Label con HTML)
+                            JLabel infoLabel = new JLabel(((LabeledWaypoint) w).getLabel());
+                            infoLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+                            infoLabel.setBackground(Color.WHITE);
+                            infoLabel.setOpaque(true);
+
+                            popup.add(infoLabel);
+
+
+                            popup.show(mapViewer, e.getX(), e.getY());
+
+                            return;
+                        }
+                    }
+                }
+            }
+        });
+
 
         return mapViewer;
     }
@@ -338,12 +402,36 @@ public abstract class BaseMapPage extends BasePage {
         mapViewer.setAddressLocation(position);
         mapViewer.setZoom(2);
 
-        Set<Waypoint> waypoints = new HashSet<>();
-        waypoints.add(new DefaultWaypoint(position));
+        currentWaypoints.clear();
+        currentWaypoints.add(new LabeledWaypoint(position, stop.getId(), stop.getName()));
 
         WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
-        waypointPainter.setWaypoints(waypoints);
+        waypointPainter.setWaypoints(currentWaypoints);
         mapViewer.setOverlayPainter(waypointPainter);
+
+        mapViewer.revalidate();
+        mapViewer.repaint();
+    }
+
+    private void showRouteOnMap(Route route) throws SQLException {
+        List<Stop> fermate = db.getStopsByRoute(route.getId());
+
+        if (fermate.isEmpty()) return;
+
+        currentWaypoints.clear();
+        for (Stop fermata : fermate) {
+            GeoPosition pos = new GeoPosition(fermata.getLatitude(), fermata.getLongitude());
+            currentWaypoints.add(new LabeledWaypoint(pos, fermata.getId(), fermata.getName()));
+        }
+
+        WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
+        waypointPainter.setWaypoints(currentWaypoints);
+        mapViewer.setOverlayPainter(waypointPainter);
+
+        Stop firstStop = fermate.get(0);
+        GeoPosition centerPos = new GeoPosition(firstStop.getLatitude(), firstStop.getLongitude());
+        mapViewer.setAddressLocation(centerPos);
+        mapViewer.setZoom(5);
 
         mapViewer.revalidate();
         mapViewer.repaint();
@@ -375,6 +463,7 @@ public abstract class BaseMapPage extends BasePage {
 
             if (!favStops.isEmpty()) {
                 for (Stop stop : favStops) {
+                    if(stop == null) continue;
                     String text = stop.getId() + " " + stop.getName();
                     resultsPanel.add(createGeneralRow(text));
                 }
@@ -499,7 +588,12 @@ public abstract class BaseMapPage extends BasePage {
 
         if (isOpen) {
             JPanel subList = expandedRows.remove(parentRow);
-            resultsPanel.remove(subList);
+
+            Container parentContainer = subList.getParent();
+            if (parentContainer != null) {
+                parentContainer.remove(subList);
+            }
+
             arrowButton.setText("<html>▶</html>");
         } else {
             JPanel subList = new JPanel();
@@ -510,20 +604,33 @@ public abstract class BaseMapPage extends BasePage {
             String stopId = text.split(" ")[0];
 
             try {
-                BusInUnaFermataRecord prossimoBus = db.getProssimoArrivoInUnaFermata(stopId);
+                BusInUnaFermataRecord prossimiBus = db.getNextArrival(stopId, true);
 
-                if (prossimoBus == null) {
+                if (prossimiBus == null) {
                     subList.add(createGeneralRow(Constants.NO_BUS_ARRIVING, false));
                 } else {
-                    subList.add(createBusRow(prossimoBus));
+                    subList.add(createBusRow(prossimiBus));
                 }
             } catch (SQLException e) {
                 subList.add(createGeneralRow(Constants.DATA_RETRIEVAL_ERROR, false));
             }
 
-            int index = findRowPos(parentRow);
-            if (index != -1) {
-                resultsPanel.add(subList, index + 1);
+
+            Container parentContainer = parentRow.getParent();
+            int index = -1;
+
+            if (parentContainer != null) {
+                Component[] components = parentContainer.getComponents();
+                for (int i = 0; i < components.length; i++) {
+                    if (components[i] == parentRow) {
+                        index = i;
+                        break;
+                    }
+                }
+
+                if (index != -1) {
+                    parentContainer.add(subList, index + 1);
+                }
             }
 
             expandedRows.put(parentRow, subList);
@@ -537,12 +644,8 @@ public abstract class BaseMapPage extends BasePage {
     private JPanel createBusRow(BusInUnaFermataRecord bus) {
         String text = "🚌 " + bus.getRouteId() +
                 " → " + bus.getTextDestination() +
-                " | Arrivo: " + bus.getArrivalTime();
+                " | Arrivo: " + bus.getOrarioEffettivo();
 
-        if (bus.isRealTime()) {
-            long min = bus.getRitardoInSecondi() / 60;
-            text += " (+" + min + " min)";
-        }
 
         JPanel row = createGeneralRow(text, false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
@@ -567,7 +670,7 @@ public abstract class BaseMapPage extends BasePage {
     }
 
     private JPanel createRouteRow(Route route) {
-        String resultText = route.getId() + " " + route.getShortName();
+        String resultText = route.getId();
 
         JPanel rowPanel = new JPanel(new BorderLayout());
         rowPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -597,6 +700,14 @@ public abstract class BaseMapPage extends BasePage {
         mapButton.setBorderPainted(false);
         mapButton.setContentAreaFilled(false);
         mapButton.setFocusPainted(false);
+
+        mapButton.addActionListener(e -> {
+            try {
+                showRouteOnMap(db.getRoute(resultText));
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
 
 
 
@@ -628,7 +739,7 @@ public abstract class BaseMapPage extends BasePage {
             subList.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
 
             try {
-                List<Stop> stops = db.getStopsByRoute(route);
+                List<Stop> stops = db.getStopsByRoute(route.getId());
 
                 if (stops.isEmpty()) {
                     subList.add(createGeneralRow(Constants.NO_RESULTS, false));
@@ -757,6 +868,7 @@ public abstract class BaseMapPage extends BasePage {
                 List<Stop> userFavorites = db.getFavouriteStopsByUser(user);
 
                 for (Stop s : userFavorites) {
+                    if(s == null) continue;
                     if (s.getId().equals(stop.getId())) {
                         initialIcon = FILLED_STAR;
                         break;
@@ -811,7 +923,7 @@ public abstract class BaseMapPage extends BasePage {
                     errorLabel.setForeground(new Color(0, 100, 0));
                     errorLabel.setText(Constants.FAV_ADDED + stop.getName());
                 } else {
-                    db.removeUserFavoriteStop(user, stop);
+                    db.removeUserFavouriteStop(user, stop);
                     favButton.setText(EMPTY_STAR);
                     errorLabel.setForeground(new Color(255, 140, 0));
                     errorLabel.setText(Constants.FAV_REMOVED + stop.getName());
@@ -847,12 +959,23 @@ public abstract class BaseMapPage extends BasePage {
                     errorLabel.setVisible(false);
 
                     for (Component comp : resultsPanel.getComponents()) {
-                        if (comp instanceof JPanel) {
+                        if (comp instanceof JPanel && !expandedRows.containsValue(comp)) {
                             comp.setBackground(Color.WHITE);
+                        }
+                    }
+
+                    for (JPanel subList : expandedRows.values()) {
+                        subList.setBackground(new Color(240, 248, 255));
+
+                        for (Component subRow : subList.getComponents()) {
+                            if (subRow instanceof JPanel) {
+                                subRow.setBackground(new Color(250, 250, 250));
+                            }
                         }
                     }
                     rowPanel.setBackground(Color.LIGHT_GRAY);
                     rowSelected = rowPanel;
+
                 } else {
                     errorLabel.setForeground(Color.RED);
                     errorLabel.setText(Constants.STOP_NOT_FOUND);
