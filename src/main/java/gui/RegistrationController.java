@@ -41,10 +41,7 @@ public class RegistrationController {
             }
 
             User newUser = new User( "", "", username, email, password);
-
-
             int result = db.addUser(newUser);
-
 
             if (result == 0) {
                 return RegistrationResult.success();

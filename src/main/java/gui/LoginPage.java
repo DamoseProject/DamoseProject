@@ -29,13 +29,20 @@ public class LoginPage extends BasePage {
     }
 
     private void createTopPanel() {
-        topPanel = new JPanel(new BorderLayout());
+        topPanel = new JPanel(new GridLayout(1, 3));
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
         JButton infoButton = new JButton("Info");
         infoButton.addActionListener(e -> frame.setView(PageFactory.createPage(PageType.HELP, frame)));
-        JLabel loginLabel = new JLabel("Login!", JLabel.CENTER);
-        topPanel.add(infoButton, BorderLayout.WEST);
-        topPanel.add(loginLabel, BorderLayout.CENTER);
-        topPanel.add(Box.createHorizontalStrut(infoButton.getPreferredSize().width), BorderLayout.EAST);
+
+        leftPanel.add(infoButton);
+        JLabel loginLabel = new JLabel("Login!", SwingConstants.CENTER);
+
+        JPanel rightPanel = new JPanel();
+
+        topPanel.add(leftPanel);
+        topPanel.add(loginLabel);
+        topPanel.add(rightPanel);
     }
 
     private void createCenterPanel() {
@@ -48,6 +55,7 @@ public class LoginPage extends BasePage {
 
         passwordField = new JPasswordField(20);
         JPanel passwordPanel = createFieldPanel("Password: ", passwordField);
+        passwordField.putClientProperty("JPasswordField.showRevealButton", true);
 
 
         ActionListener actionListener = e -> handleLogin();
@@ -124,7 +132,7 @@ public class LoginPage extends BasePage {
         contentPanel.add(registerPanel);
         contentPanel.add(Box.createVerticalGlue());
 
-        centerPanel.setLayout(new GridBagLayout());
+        centerPanel.setLayout(new GridBagLayout()); //per centrare di default il contentPanel
         centerPanel.add(contentPanel, new GridBagConstraints());
 
 
