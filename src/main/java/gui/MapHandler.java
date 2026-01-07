@@ -22,10 +22,10 @@ import java.awt.BasicStroke;
 
 public class MapHandler {
 
-    private JXMapViewer mapViewer;
-    private Set<Waypoint> currentWaypoints = new HashSet<>();
-    private Database db;
-    private JLabel errorLabel;
+    private final JXMapViewer mapViewer;
+    private final Set<Waypoint> currentWaypoints = new HashSet<>();
+    private final Database db;
+    private final JLabel errorLabel;
 
     private static class LabeledWaypoint extends DefaultWaypoint {
         private final String id;
@@ -216,7 +216,7 @@ public class MapHandler {
         CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>(Arrays.asList(routePainter, waypointPainter));
         mapViewer.setOverlayPainter(compoundPainter);
 
-        Stop firstStop = fermate.get(0);
+        Stop firstStop = fermate.getFirst();
         GeoPosition centerPos = new GeoPosition(firstStop.getLatitude(), firstStop.getLongitude());
         mapViewer.setAddressLocation(centerPos);
         mapViewer.setZoom(5);

@@ -1,6 +1,5 @@
 package gui;
 
-import model.Database;
 import model.User;
 
 import java.sql.SQLException;
@@ -30,17 +29,20 @@ public class RegistrationController {
             return RegistrationResult.failure(Constants.PASSWORD_WEAK);
         }
 
-
         try {
-            Database db = new Database();
-            db.connect();
+            var db = DatabaseConnection.getInstance().getDatabase();
+
+            if (db == null) {
+                return RegistrationResult.failure(Constants.CONNECTION_ERROR_DATABASE);
+            }
+
             UserAuth userAuth = new UserAuth(db);
 
             if (userAuth.isUsernameTaken(username)) {
                 return RegistrationResult.failure(Constants.USERNAME_TAKEN);
             }
 
-            User newUser = new User( "", "", username, email, password);
+            User newUser = new User("", "", username, email, password);
             int result = db.addUser(newUser);
 
             if (result == 0) {
@@ -50,7 +52,6 @@ public class RegistrationController {
             }
 
         } catch (SQLException ex) {
-            //ex.printStackTrace();
             return RegistrationResult.failure(Constants.REGISTRATION_ERROR);
         }
     }

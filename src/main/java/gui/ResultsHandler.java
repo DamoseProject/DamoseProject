@@ -10,11 +10,11 @@ import java.util.List;
 
 public class ResultsHandler {
 
-    private JPanel resultsPanel;
-    private Database db;
-    private JLabel errorLabel;
-    private MapHandler mapManager;
-    private ButtonMapPageConfig config;
+    private final JPanel resultsPanel;
+    private final Database db;
+    private final JLabel errorLabel;
+    private final MapHandler mapManager;
+    private final ButtonMapPageConfig config;
     private final Map<JPanel, JPanel> expandedRows = new HashMap<>();
     private JPanel rowSelected = null;
 

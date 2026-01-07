@@ -16,7 +16,7 @@ public abstract class BaseMapPage extends BasePage {
     private JTextField researchField;
     private JPanel resultsPanel;
     private JLabel errorLabel;
-    private Database db;
+    private final Database db;
 
     private boolean searchConfirmed = false;
 
@@ -25,9 +25,16 @@ public abstract class BaseMapPage extends BasePage {
 
     protected BaseMapPage(MainFrame frame) {
         super(frame);
-
-        this.db = new Database();
-        this.db.connect();
+        this.db = DatabaseConnection.getInstance().getDatabase();
+        if (this.db == null) {
+            JOptionPane.showMessageDialog(
+                    frame,
+                    "Errore: connessione al database non disponibile.",
+                    "Errore",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
 
         createTopPanel();
         createCenterPanel();
