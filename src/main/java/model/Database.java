@@ -1,10 +1,15 @@
 package model;
 
+import Scraper.UpdateData;
+
 import java.sql.*;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.io.File;
+import java.util.Optional;
+
 
 public class Database {
 
@@ -21,9 +26,24 @@ public class Database {
     public void connect() {
         try {
             Class.forName("org.sqlite.JDBC");
+
+
+            File file = new File("RomeBusDatabase.db");
+            boolean isFirstRun = false;
+            if (!file.exists())
+                isFirstRun = true;
+
+
+
+
             connection = DriverManager.getConnection(DATABASE_LINK);
             createNewDatabaseStructure();
             System.out.println("Connection to SQLite has been established.");
+            if (isFirstRun) {
+                System.out.println("Database created.");
+                UpdateData.updateIfNew();
+            }
+
         } catch (SQLException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -94,6 +114,14 @@ public class Database {
             // BUS (Flotta)
             stmt.execute("CREATE TABLE IF NOT EXISTS Bus (" +
                     "ID TEXT PRIMARY KEY, LABEL TEXT, LICENSE_PLATE TEXT)");
+
+
+            stmt.execute("CREATE TABLE IF NOT EXISTS STORICO_PERFORMANCE (" +
+                    "ROUTE_ID TEXT, " +
+                    "STOP_ID TEXT, " +
+                    "RITARDO_RILEVATO INTEGER, " + // in secondi
+                    "CORSA_SALTATA INTEGER, " +    // 0 = passata, 1 = saltata
+                    "DATA_OSSERVAZIONE DATE DEFAULT CURRENT_DATE)");
 
 
         }
@@ -230,7 +258,7 @@ public class Database {
                 "FROM Fermata F " +
                 "INNER JOIN FERMATA_ORARIO FO ON F.ID = FO.FERMATA_ID " +
                 "INNER JOIN Viaggio V ON FO.VIAGGIO_ID = V.ID " +
-                "WHERE V.PERCORSO_ID = ?";
+                "WHERE V.ID IN(SELECT ID FROM VIAGGIO WHERE PERCORSO_ID = ? AND DIREZIONE = 0 LIMIT 1 ) OR V.ID IN(SELECT ID FROM VIAGGIO WHERE PERCORSO_ID = ? AND DIREZIONE = 1 LIMIT 1)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, routeId);
@@ -257,7 +285,7 @@ public class Database {
                 "FROM Fermata F " +
                 "INNER JOIN FERMATA_ORARIO FO ON F.ID = FO.FERMATA_ID " +
                 "INNER JOIN Viaggio V ON FO.VIAGGIO_ID = V.ID " +
-                "WHERE V.PERCORSO_ID = ? AND V.DIREZIONE = ?";
+                "WHERE V.ID IN(SELECT ID FROM VIAGGIO WHERE PERCORSO_ID = ? AND V.DIREZIONE = ? LIMIT 1)";
 
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -395,7 +423,7 @@ public class Database {
         for (BusInUnaFermataRecord bus : list) {
             bus.setRealTime(false);
             bus.setRitardoInSecondi(0);
-            LocalTime scheduled = bus.getOrarioEffettivo();
+            LocalTime scheduled = bus.getOrarioEffettivo(); // Se ritardo è 0, ritorna lo statico
             if (scheduled.isAfter(now)) {
                 result.add(bus);
             }
@@ -408,22 +436,47 @@ public class Database {
 
     public List<BusInUnaFermataRecord> getRealTimeArrivals(String stopId) throws SQLException {
         List<BusInUnaFermataRecord> rawList = fetchRawArrivals(stopId, null);
-        return filterAndSortDynamic(rawList);
+        return filterAndSortDynamic(rawList, stopId);
     }
 
     public List<BusInUnaFermataRecord> getRealTimeArrivalsByRoute(String stopId, String routeId) throws SQLException {
         List<BusInUnaFermataRecord> rawList = fetchRawArrivals(stopId, routeId);
-        return filterAndSortDynamic(rawList);
+        return filterAndSortDynamic(rawList, stopId);
     }
 
-    private List<BusInUnaFermataRecord> filterAndSortDynamic(List<BusInUnaFermataRecord> list) {
+    private List<BusInUnaFermataRecord> filterAndSortDynamic(List<BusInUnaFermataRecord> list, String stopId) throws SQLException {
         LocalTime now = LocalTime.now();
         List<BusInUnaFermataRecord> result = new ArrayList<>();
+
+        // Se non c'è internet, questo metodo cattura l'eccezione internamente e non fa nulla
+        // Le mappe di ritardi rimarranno vuote (o vecchie)
         RealTimeHandler.refreshData();
 
         for (BusInUnaFermataRecord bus : list) {
+            // 1. Prova a mettere il RealTime. Se offline, ritardo resta 0
             RealTimeHandler.applicaRealTime(bus);
+
+            // 2. Se ritardo è 0 (o perché bus puntuale, o perché OFFLINE, o perché manca segnale GPS)
+            if (bus.getDelayInSeconds() == 0) {
+
+                // Interroghiamo lo storico locale (che funziona anche Offline!)
+                double[] stats = getStatisticheStoriche(bus.getRouteId(), stopId);
+                long ritardoStorico = (long) stats[0];
+
+                // Se c'è uno storico significativo (> 60 secondi di media)
+                if (Math.abs(ritardoStorico) > 60) {
+                    bus.setRitardoInSecondi(ritardoStorico);
+                    bus.setIsSmartPredicted(true); // Flag per indicare che è una stima storica
+                }
+            } else {
+                // Se ritardo > 0 dal RealTimeHandler, allora è REAL TIME vero
+                bus.setRealTime(true);
+            }
+
+            // Nota: getOrarioEffettivo calcola "OrarioDB + Ritardo".
+            // L'orario DB (stringa) rimane intatto dentro l'oggetto.
             LocalTime effective = bus.getOrarioEffettivo();
+
             if (effective.isAfter(now.minusSeconds(30))) {
                 result.add(bus);
             }
@@ -431,6 +484,13 @@ public class Database {
         Collections.sort(result);
         return result;
     }
+
+
+    public Optional<PosizioneTrip> getRealTimePosition(Trip trip){
+        return Optional.ofNullable(RealTimeHandler.getPosizioneTrip(trip));
+    }
+
+
 
     // --- CORE QUERY ---
 
@@ -606,4 +666,39 @@ public class Database {
             pstmt.executeUpdate();
         }
     }
+
+
+    // ==================================================================================
+    // 7. Gestione qualità del servizio
+    // ==================================================================================
+
+
+    public void salvaOsservazioneStorica(String routeId, String stopId, int ritardo, boolean saltata) throws SQLException {
+        String sql = "INSERT INTO STORICO_PERFORMANCE (ROUTE_ID, STOP_ID, RITARDO_RILEVATO, CORSA_SALTATA) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, routeId);
+            pstmt.setString(2, stopId);
+            pstmt.setInt(3, ritardo);
+            pstmt.setInt(4, saltata ? 1 : 0);
+            pstmt.executeUpdate();
+        }
+    }
+
+
+    public double[] getStatisticheStoriche(String routeId, String stopId) throws SQLException {
+        String sql = "SELECT AVG(RITARDO_RILEVATO) as media_ritardo, " +
+                "AVG(CORSA_SALTATA) * 100 as percentuale_saltate " +
+                "FROM STORICO_PERFORMANCE WHERE ROUTE_ID = ? AND STOP_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, routeId);
+            pstmt.setString(2, stopId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return new double[]{rs.getDouble("media_ritardo"), rs.getDouble("percentuale_saltate")};
+            }
+        }
+        return new double[]{0.0, 0.0};
+    }
+
 }
