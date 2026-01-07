@@ -11,19 +11,108 @@ import java.util.List;
 public class ResultsHandler {
 
     private final JPanel resultsPanel;
-    private final Database db;
     private final JLabel errorLabel;
     private final MapHandler mapManager;
     private final ButtonMapPageConfig config;
     private final Map<JPanel, JPanel> expandedRows = new HashMap<>();
     private JPanel rowSelected = null;
 
-    public ResultsHandler(JPanel resultsPanel, Database db, JLabel errorLabel, MapHandler mapManager, ButtonMapPageConfig config) {
+    public ResultsHandler(JPanel resultsPanel, JLabel errorLabel, MapHandler mapManager, ButtonMapPageConfig config) {
         this.resultsPanel = resultsPanel;
-        this.db = db;
         this.errorLabel = errorLabel;
         this.mapManager = mapManager;
         this.config = config;
+    }
+
+    private Database getDatabase() {
+        return DatabaseConnection.getInstance().getDatabase();
+    }
+
+    private void createSubRows(JPanel parentRow, String text, JButton arrowButton) {
+        boolean isOpen = expandedRows.containsKey(parentRow);
+        String stopId = text.split(" ")[0];
+
+        Database db = getDatabase();
+
+        if (isOpen) {
+            JPanel subList = expandedRows.remove(parentRow);
+
+            Container parentContainer = subList.getParent();
+            if (parentContainer != null) {
+                parentContainer.remove(subList);
+            }
+
+            arrowButton.setText("<html>▶</html>");
+
+            if (db != null) {
+                try {
+                    Stop stop = db.getStop(stopId);
+                    if (stop != null) {
+                        mapManager.showStopOnMap(stop);
+                    }
+                } catch (SQLException e) {
+                    errorLabel.setForeground(Color.RED);
+                    errorLabel.setText("Impossibile mostrare le fermate sulla mappa.");
+                    errorLabel.setVisible(true);
+                }
+            }
+
+        } else {
+            JPanel subList = new JPanel();
+            subList.setLayout(new BoxLayout(subList, BoxLayout.Y_AXIS));
+            subList.setBackground(new Color(245, 245, 245));
+            subList.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
+
+            try {
+                BusInUnaFermataRecord prossimoBus = (db != null) ? db.getNextArrival(stopId, true) : null;
+                Stop stop = (db != null) ? db.getStop(stopId) : null;
+
+                if (prossimoBus == null) {
+                    subList.add(createGeneralRow(Constants.NO_BUS_ARRIVING, false));
+                    if (stop != null) mapManager.showStopOnMap(stop);
+                } else {
+                    subList.add(createBusRow(prossimoBus));
+
+                    if (stop != null) {
+                        int direction = 1;
+                        List<Stop> stopsDir0 = db.getStopsByRouteByDirection(prossimoBus.getRouteId(), 0);
+
+                        for (Stop s : stopsDir0) {
+                            if (s.getId().equals(stop.getId())) {
+                                direction = 0;
+                                break;
+                            }
+                        }
+                        mapManager.showRouteWithBus(prossimoBus.getRouteId(), direction, prossimoBus, stop);
+                    }
+                }
+            } catch (SQLException e) {
+                subList.add(createGeneralRow(Constants.DATA_RETRIEVAL_ERROR, false));
+            }
+
+            Container parentContainer = parentRow.getParent();
+            int index = -1;
+
+            if (parentContainer != null) {
+                Component[] components = parentContainer.getComponents();
+                for (int i = 0; i < components.length; i++) {
+                    if (components[i] == parentRow) {
+                        index = i;
+                        break;
+                    }
+                }
+
+                if (index != -1) {
+                    parentContainer.add(subList, index + 1);
+                }
+            }
+
+            expandedRows.put(parentRow, subList);
+            arrowButton.setText("<html>▼</html>");
+        }
+
+        resultsPanel.revalidate();
+        resultsPanel.repaint();
     }
 
     public void showResults(String search, List<Stop> fermate, List<Route> linee) throws SQLException {
@@ -82,6 +171,9 @@ public class ResultsHandler {
         }
 
         try {
+            Database db = getDatabase();
+            if (db == null) throw new SQLException("Connessione persa");
+
             User user = db.getUser(session.getUserId());
             List<Stop> favStops = db.getFavouriteStopsByUser(user);
             List<Route> favRoutes = db.getFavouriteRoutesByUser(user);
@@ -181,8 +273,11 @@ public class ResultsHandler {
         Stop stop;
         JButton favButton = null;
         try {
-            stop = db.getStop(stopId);
-            favButton = getFavButton(stop);
+            Database db = getDatabase();
+            if(db != null) {
+                stop = db.getStop(stopId);
+                favButton = getFavButton(stop);
+            }
         } catch (SQLException e) {
             errorLabel.setForeground(Color.RED);
             errorLabel.setText("Errore dati fermata.");
@@ -206,63 +301,6 @@ public class ResultsHandler {
         return rowPanel;
     }
 
-    private void createSubRows(JPanel parentRow, String text, JButton arrowButton) {
-        boolean isOpen = expandedRows.containsKey(parentRow);
-
-        if (isOpen) {
-            JPanel subList = expandedRows.remove(parentRow);
-
-            Container parentContainer = subList.getParent();
-            if (parentContainer != null) {
-                parentContainer.remove(subList);
-            }
-
-            arrowButton.setText("<html>▶</html>");
-        } else {
-            JPanel subList = new JPanel();
-            subList.setLayout(new BoxLayout(subList, BoxLayout.Y_AXIS));
-            subList.setBackground(new Color(245, 245, 245));
-            subList.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
-
-            String stopId = text.split(" ")[0];
-
-            try {
-                BusInUnaFermataRecord prossimiBus = db.getNextArrival(stopId, true);
-
-                if (prossimiBus == null) {
-                    subList.add(createGeneralRow(Constants.NO_BUS_ARRIVING, false));
-                } else {
-                    subList.add(createBusRow(prossimiBus));
-                }
-            } catch (SQLException e) {
-                subList.add(createGeneralRow(Constants.DATA_RETRIEVAL_ERROR, false));
-            }
-
-            Container parentContainer = parentRow.getParent();
-            int index = -1;
-
-            if (parentContainer != null) {
-                Component[] components = parentContainer.getComponents();
-                for (int i = 0; i < components.length; i++) {
-                    if (components[i] == parentRow) {
-                        index = i;
-                        break;
-                    }
-                }
-
-                if (index != -1) {
-                    parentContainer.add(subList, index + 1);
-                }
-            }
-
-            expandedRows.put(parentRow, subList);
-            arrowButton.setText("<html>▼</html>");
-        }
-
-        resultsPanel.revalidate();
-        resultsPanel.repaint();
-    }
-
     private JPanel createBusRow(BusInUnaFermataRecord bus) {
         String text = "🚌 " + bus.getRouteId() +
                 " → " + bus.getTextDestination() +
@@ -277,6 +315,8 @@ public class ResultsHandler {
         String directionName = String.valueOf(direction);
 
         try {
+            Database db = getDatabase();
+            if (db == null) {return null;}
             List<Stop> stops = db.getStopsByRouteByDirection(route.getId(), direction);
 
             if (stops.isEmpty()) {
@@ -358,20 +398,22 @@ public class ResultsHandler {
             subList.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 0));
 
             try {
-                List<Stop> stops = db.getStopsByRouteByDirection(route.getId(), direction);
+                Database db = getDatabase();
+                if (db != null) {
+                    List<Stop> stops = db.getStopsByRouteByDirection(route.getId(), direction);
 
-                if (stops.isEmpty()) {
-                    subList.add(createGeneralRow("Nessuna fermata in questa direzione", false));
-                } else {
-                    for (Stop stop : stops) {
-                        String text = stop.getId() + " " + stop.getName();
+                    if (stops.isEmpty()) {
+                        subList.add(createGeneralRow("Nessuna fermata in questa direzione", false));
+                    } else {
+                        for (Stop stop : stops) {
+                            String text = stop.getId() + " " + stop.getName();
 
-                        JPanel stopRow = createGeneralRow(text);
-                        stopRow.setBackground(new Color(250, 250, 250));
-                        subList.add(stopRow);
+                            JPanel stopRow = createGeneralRow(text);
+                            stopRow.setBackground(new Color(250, 250, 250));
+                            subList.add(stopRow);
+                        }
                     }
                 }
-
             } catch (SQLException e) {
                 errorLabel.setForeground(Color.RED);
                 errorLabel.setText(Constants.DATA_RETRIEVAL_ERROR);
@@ -401,13 +443,16 @@ public class ResultsHandler {
 
         if (session.isLogged()) {
             try {
-                User user = db.getUser(session.getUserId());
-                List<Route> userFavorites = db.getFavouriteRoutesByUser(user);
+                Database db = getDatabase();
+                if (db != null) {
+                    User user = db.getUser(session.getUserId());
+                    List<Route> userFavorites = db.getFavouriteRoutesByUser(user);
 
-                for (Route r : userFavorites) {
-                    if (r.getId().equals(route.getId())) {
-                        initialIcon = FILLED_STAR;
-                        break;
+                    for (Route r : userFavorites) {
+                        if (r.getId().equals(route.getId())) {
+                            initialIcon = FILLED_STAR;
+                            break;
+                        }
                     }
                 }
             } catch (SQLException e) {
@@ -440,6 +485,8 @@ public class ResultsHandler {
             }
 
             try {
+                Database db = getDatabase();
+                if (db == null) throw new SQLException("Connessione non trovata.");
                 User user = db.getUser(session.getUserId());
                 if (user == null) throw new SQLException(Constants.USER_NOT_FOUND);
 
@@ -473,14 +520,17 @@ public class ResultsHandler {
 
         if (session.isLogged()) {
             try {
-                User user = db.getUser(session.getUserId());
-                List<Stop> userFavorites = db.getFavouriteStopsByUser(user);
+                Database db = getDatabase();
+                if (db != null) {
+                    User user = db.getUser(session.getUserId());
+                    List<Stop> userFavorites = db.getFavouriteStopsByUser(user);
 
-                for (Stop s : userFavorites) {
-                    if(s == null) continue;
-                    if (s.getId().equals(stop.getId())) {
-                        initialIcon = FILLED_STAR;
-                        break;
+                    for (Stop s : userFavorites) {
+                        if(s == null) continue;
+                        if (s.getId().equals(stop.getId())) {
+                            initialIcon = FILLED_STAR;
+                            break;
+                        }
                     }
                 }
             } catch (SQLException e) {
@@ -511,16 +561,11 @@ public class ResultsHandler {
 
             User user;
             try {
+                Database db = getDatabase();
+                if (db == null) throw new SQLException("Connessione persa");
                 user = db.getUser(session.getUserId());
                 if (user == null) throw new SQLException(Constants.USER_NOT_FOUND);
-            } catch (SQLException ex) {
-                errorLabel.setForeground(Color.RED);
-                errorLabel.setText(Constants.USER_RETRIEVAL_ERROR);
-                errorLabel.setVisible(true);
-                return;
-            }
 
-            try {
                 if (favButton.getText().contains("9734")) {
                     db.addUserFavouriteStop(user, stop);
                     favButton.setText(FILLED_STAR);
@@ -535,8 +580,8 @@ public class ResultsHandler {
             } catch (SQLException ex) {
                 errorLabel.setForeground(Color.RED);
                 errorLabel.setText(Constants.FAV_UPDATE_ERROR);
+                errorLabel.setVisible(true);
             }
-            errorLabel.setVisible(true);
         });
 
         favButton.setBorderPainted(false);
@@ -555,34 +600,38 @@ public class ResultsHandler {
             try {
                 String[] parts = resultText.split(" ");
                 String stopId = parts[0];
-                Stop stop = db.getStop(stopId);
 
-                if (stop != null) {
-                    mapManager.showStopOnMap(stop);
-                    errorLabel.setVisible(false);
+                Database db = getDatabase();
+                if(db != null) {
+                    Stop stop = db.getStop(stopId);
 
-                    for (Component comp : resultsPanel.getComponents()) {
-                        if (comp instanceof JPanel && !expandedRows.containsValue(comp)) {
-                            comp.setBackground(Color.WHITE);
-                        }
-                    }
+                    if (stop != null) {
+                        mapManager.showStopOnMap(stop);
+                        errorLabel.setVisible(false);
 
-                    for (JPanel subList : expandedRows.values()) {
-                        subList.setBackground(new Color(240, 248, 255));
-
-                        for (Component subRow : subList.getComponents()) {
-                            if (subRow instanceof JPanel) {
-                                subRow.setBackground(new Color(250, 250, 250));
+                        for (Component comp : resultsPanel.getComponents()) {
+                            if (comp instanceof JPanel && !expandedRows.containsValue(comp)) {
+                                comp.setBackground(Color.WHITE);
                             }
                         }
-                    }
-                    rowPanel.setBackground(Color.LIGHT_GRAY);
-                    rowSelected = rowPanel;
 
-                } else {
-                    errorLabel.setForeground(Color.RED);
-                    errorLabel.setText(Constants.STOP_NOT_FOUND);
-                    errorLabel.setVisible(true);
+                        for (JPanel subList : expandedRows.values()) {
+                            subList.setBackground(new Color(240, 248, 255));
+
+                            for (Component subRow : subList.getComponents()) {
+                                if (subRow instanceof JPanel) {
+                                    subRow.setBackground(new Color(250, 250, 250));
+                                }
+                            }
+                        }
+                        rowPanel.setBackground(Color.LIGHT_GRAY);
+                        rowSelected = rowPanel;
+
+                    } else {
+                        errorLabel.setForeground(Color.RED);
+                        errorLabel.setText(Constants.STOP_NOT_FOUND);
+                        errorLabel.setVisible(true);
+                    }
                 }
             } catch (Exception ex) {
                 errorLabel.setForeground(Color.RED);

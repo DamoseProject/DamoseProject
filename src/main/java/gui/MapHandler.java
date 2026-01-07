@@ -24,7 +24,6 @@ public class MapHandler {
 
     private final JXMapViewer mapViewer;
     private final Set<Waypoint> currentWaypoints = new HashSet<>();
-    private final Database db;
     private final JLabel errorLabel;
 
     private static class LabeledWaypoint extends DefaultWaypoint {
@@ -39,6 +38,19 @@ public class MapHandler {
 
         public String getLabel() {
             return "<html><b>Fermata:</b> " + id + "<br><b>Nome:</b> " + name + "</html>";
+        }
+    }
+
+    private static class BusWaypoint extends DefaultWaypoint {
+        private final String routeId;
+
+        public BusWaypoint(GeoPosition coord, String routeId) {
+            super(coord);
+            this.routeId = routeId;
+        }
+
+        public String getLabel() {
+            return "<html><b>Bus:</b> " + routeId + "</html>";
         }
     }
 
@@ -76,8 +88,7 @@ public class MapHandler {
         }
     }
 
-    public MapHandler(Database db, JLabel errorLabel) {
-        this.db = db;
+    public MapHandler(JLabel errorLabel) {
         this.errorLabel = errorLabel;
         this.mapViewer = createMapViewer();
     }
@@ -106,32 +117,27 @@ public class MapHandler {
                 Point clickPoint = e.getPoint();
 
                 for (Waypoint w : currentWaypoints) {
-                    if (w instanceof LabeledWaypoint) {
-                        Point2D point = mapViewer.getTileFactory().geoToPixel(w.getPosition(), mapViewer.getZoom());
+                    Point2D point = mapViewer.getTileFactory().geoToPixel(w.getPosition(), mapViewer.getZoom());
+                    int x = (int) (point.getX() - rect.getX());
+                    int y = (int) (point.getY() - rect.getY());
 
-                        int x = (int) (point.getX() - rect.getX());
-                        int y = (int) (point.getY() - rect.getY());
-                        Point waypointPoint = new Point(x, y);
+                    if (clickPoint.distance(new Point(x, y)) < 20) {
+                        JPopupMenu popup = new JPopupMenu();
+                        String labelHtml = "";
+                        if (w instanceof LabeledWaypoint) labelHtml = ((LabeledWaypoint) w).getLabel();
+                        else if (w instanceof BusWaypoint) labelHtml = ((BusWaypoint) w).getLabel();
 
-                        if (clickPoint.distance(waypointPoint) < 20) {
-                            JPopupMenu popup = new JPopupMenu();
-                            popup.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-
-                            JLabel infoLabel = new JLabel(((LabeledWaypoint) w).getLabel());
-                            infoLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-                            infoLabel.setBackground(Color.WHITE);
-                            infoLabel.setOpaque(true);
-
-                            popup.add(infoLabel);
+                        if (!labelHtml.isEmpty()) {
+                            JLabel info = new JLabel(labelHtml);
+                            info.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+                            popup.add(info);
                             popup.show(mapViewer, e.getX(), e.getY());
-
-                            return;
                         }
+                        return;
                     }
                 }
             }
         });
-
         return mapViewer;
     }
 
@@ -141,25 +147,9 @@ public class MapHandler {
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, 0), "zoomIn");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0), "zoomOut");
-
-        actionMap.put("zoomIn", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                mapViewer.setZoom(mapViewer.getZoom() - 1);
-            }
-        });
-
-        actionMap.put("zoomOut", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                mapViewer.setZoom(mapViewer.getZoom() + 1);
-            }
-        });
-
-        mapViewer.addMouseWheelListener(e -> {
-            int notches = e.getWheelRotation();
-            mapViewer.setZoom(mapViewer.getZoom() - notches);
-        });
+        actionMap.put("zoomIn", new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { mapViewer.setZoom(mapViewer.getZoom() - 1); } });
+        actionMap.put("zoomOut", new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { mapViewer.setZoom(mapViewer.getZoom() + 1); } });
+        mapViewer.addMouseWheelListener(e -> mapViewer.setZoom(mapViewer.getZoom() - e.getWheelRotation()));
     }
 
     public void showStopOnMap(Stop stop) {
@@ -177,21 +167,16 @@ public class MapHandler {
             g.setFont(new Font("SansSerif", Font.PLAIN, 40));
             g.drawString("📍", (int)p.getX() - 10, (int)p.getY());
         });
-
         mapViewer.setOverlayPainter(waypointPainter);
-
-        mapViewer.revalidate();
         mapViewer.repaint();
     }
 
-    public void showRouteDirectionOnMap(Route route, int direction) throws SQLException {
-        List<Stop> fermate = db.getStopsByRouteByDirection(route.getId(), direction);
+    public void showRouteWithBus(String routeId, int direction, BusInUnaFermataRecord bus, Stop currentStop) throws SQLException {
+        Database db = DatabaseConnection.getInstance().getDatabase();
+        if (db == null) return;
 
-        if (fermate.isEmpty()) {
-            errorLabel.setText("Nessun percorso trovato per questa direzione.");
-            errorLabel.setVisible(true);
-            return;
-        }
+        List<Stop> fermate = db.getStopsByRouteByDirection(routeId, direction);
+        if (fermate.isEmpty()) return;
 
         currentWaypoints.clear();
         List<GeoPosition> track = new ArrayList<>();
@@ -202,30 +187,56 @@ public class MapHandler {
             currentWaypoints.add(new LabeledWaypoint(pos, fermata.getId(), fermata.getName()));
         }
 
-        RoutePainter routePainter = new RoutePainter(track);
+        //GeoPosition busPos = new GeoPosition(bus.getLatitude(), bus.getLongitude());
+        //currentWaypoints.add(new BusWaypoint(busPos, bus.getRouteId()));
 
+        RoutePainter routePainter = new RoutePainter(track);
         WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
         waypointPainter.setWaypoints(currentWaypoints);
 
         waypointPainter.setRenderer((g, map, wp) -> {
             Point2D p = map.getTileFactory().geoToPixel(wp.getPosition(), map.getZoom());
             g.setFont(new Font("SansSerif", Font.PLAIN, 40));
-            g.drawString("📍", (int)p.getX() - 10, (int)p.getY());
+            if (wp instanceof BusWaypoint) g.drawString("🚌", (int)p.getX() - 15, (int)p.getY());
+            else g.drawString("📍", (int)p.getX() - 10, (int)p.getY());
         });
 
         CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>(Arrays.asList(routePainter, waypointPainter));
         mapViewer.setOverlayPainter(compoundPainter);
 
-        Stop firstStop = fermate.getFirst();
-        GeoPosition centerPos = new GeoPosition(firstStop.getLatitude(), firstStop.getLongitude());
-        mapViewer.setAddressLocation(centerPos);
-        mapViewer.setZoom(5);
-
+        //mapViewer.setAddressLocation(busPos);
+        mapViewer.setZoom(3);
         mapViewer.revalidate();
         mapViewer.repaint();
     }
 
-    public JXMapViewer getMapViewer() {
-        return mapViewer;
+    public void showRouteDirectionOnMap(Route route, int direction) throws SQLException {
+        Database db = DatabaseConnection.getInstance().getDatabase();
+        if(db == null) return;
+        List<Stop> fermate = db.getStopsByRouteByDirection(route.getId(), direction);
+        if (fermate.isEmpty()) return;
+
+        currentWaypoints.clear();
+        List<GeoPosition> track = new ArrayList<>();
+        for (Stop fermata : fermate) {
+            GeoPosition pos = new GeoPosition(fermata.getLatitude(), fermata.getLongitude());
+            track.add(pos);
+            currentWaypoints.add(new LabeledWaypoint(pos, fermata.getId(), fermata.getName()));
+        }
+        RoutePainter routePainter = new RoutePainter(track);
+        WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
+        waypointPainter.setWaypoints(currentWaypoints);
+        waypointPainter.setRenderer((g, map, wp) -> {
+            Point2D p = map.getTileFactory().geoToPixel(wp.getPosition(), map.getZoom());
+            g.setFont(new Font("SansSerif", Font.PLAIN, 40));
+            g.drawString("📍", (int)p.getX() - 10, (int)p.getY());
+        });
+        CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>(Arrays.asList(routePainter, waypointPainter));
+        mapViewer.setOverlayPainter(compoundPainter);
+        mapViewer.setAddressLocation(new GeoPosition(fermate.get(0).getLatitude(), fermate.get(0).getLongitude()));
+        mapViewer.setZoom(5);
+        mapViewer.repaint();
     }
+
+    public JXMapViewer getMapViewer() { return mapViewer; }
 }

@@ -159,7 +159,7 @@ public abstract class BaseMapPage extends BasePage {
         mapAndResultsPanel.setLayout(new BoxLayout(mapAndResultsPanel, BoxLayout.X_AXIS));
         mapAndResultsPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
 
-        mapManager = new MapHandler(db, errorLabel);
+        mapManager = new MapHandler(errorLabel);
         mapManager.setupKeyboardZoom();
 
         JPanel mapContainer = new JPanel(new BorderLayout());
@@ -169,7 +169,7 @@ public abstract class BaseMapPage extends BasePage {
         resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
         resultsPanel.setBackground(Color.WHITE);
 
-        resultsManager = new ResultsHandler(resultsPanel, db, errorLabel, mapManager, getButtonConfig());
+        resultsManager = new ResultsHandler(resultsPanel, errorLabel, mapManager, getButtonConfig());
 
         JScrollPane resultsScroll = new JScrollPane(resultsPanel);
         resultsScroll.setPreferredSize(new Dimension(450, 400));
