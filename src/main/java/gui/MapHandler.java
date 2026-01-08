@@ -1,5 +1,6 @@
 package gui;
 
+import com.google.transit.realtime.GtfsRealtime;
 import model.*;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
@@ -187,8 +188,11 @@ public class MapHandler {
             currentWaypoints.add(new LabeledWaypoint(pos, fermata.getId(), fermata.getName()));
         }
 
-        //GeoPosition busPos = new GeoPosition(bus.getLatitude(), bus.getLongitude());
-        //currentWaypoints.add(new BusWaypoint(busPos, bus.getRouteId()));
+        Trip trip = db.getTrip(bus.getTripId());
+        Optional<PosizioneTrip> busPos = db.getRealTimePosition(trip);
+        GtfsRealtime.Position pos = busPos.get().getPosition();
+        GeoPosition busPosition = new GeoPosition(pos.getLatitude(), pos.getLongitude());
+        currentWaypoints.add(new BusWaypoint(busPosition, bus.getRouteId()));
 
         RoutePainter routePainter = new RoutePainter(track);
         WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
@@ -204,7 +208,7 @@ public class MapHandler {
         CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>(Arrays.asList(routePainter, waypointPainter));
         mapViewer.setOverlayPainter(compoundPainter);
 
-        //mapViewer.setAddressLocation(busPos);
+        mapViewer.setAddressLocation(busPosition);
         mapViewer.setZoom(3);
         mapViewer.revalidate();
         mapViewer.repaint();
