@@ -37,9 +37,7 @@ public class RegistrationAuth {
     }
 
     public boolean validatePasswordMatch() {
-            return password != null && confirmPassword != null &&
-                    !password.isEmpty() && !confirmPassword.isEmpty() &&
-                    password.equals(confirmPassword);
+            return validatePresencePassword() && validatePresenceConfirmPassword() && password.equals(confirmPassword);
     }
 
     public boolean validatePasswordStrength() {
@@ -63,9 +61,5 @@ public class RegistrationAuth {
         }
 
         return hasUppercase && hasDigit && hasSpecialChar;
-    }
-
-    public boolean validate() {
-        return validatePresenceUsername() && validateLengthUsername() && validatePresenceEmail() && validatePasswordMatch() && validatePasswordStrength();
     }
 }

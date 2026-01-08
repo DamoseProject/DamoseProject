@@ -1,6 +1,5 @@
 package gui;
 
-import model.Database;
 import model.User;
 
 import javax.swing.*;
@@ -13,7 +12,6 @@ import java.sql.SQLException;
 public class LoginPage extends BasePage {
     private JPanel topPanel;
     private JPanel centerPanel;
-    //private JPanel bottomPanel;
     private JLabel errorAccessLabel;
     private JTextField usernameField;
     private JPasswordField passwordField;
@@ -25,17 +23,23 @@ public class LoginPage extends BasePage {
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
         mainPanel.add(centerPanel, BorderLayout.CENTER);
-
     }
 
     private void createTopPanel() {
-        topPanel = new JPanel(new BorderLayout());
+        topPanel = new JPanel(new GridLayout(1, 3));
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
         JButton infoButton = new JButton("Info");
         infoButton.addActionListener(e -> frame.setView(PageFactory.createPage(PageType.HELP, frame)));
-        JLabel loginLabel = new JLabel("Login!", JLabel.CENTER);
-        topPanel.add(infoButton, BorderLayout.WEST);
-        topPanel.add(loginLabel, BorderLayout.CENTER);
-        topPanel.add(Box.createHorizontalStrut(infoButton.getPreferredSize().width), BorderLayout.EAST);
+
+        leftPanel.add(infoButton);
+        JLabel loginLabel = new JLabel("Login!", SwingConstants.CENTER);
+
+        JPanel rightPanel = new JPanel();
+
+        topPanel.add(leftPanel);
+        topPanel.add(loginLabel);
+        topPanel.add(rightPanel);
     }
 
     private void createCenterPanel() {
@@ -48,7 +52,7 @@ public class LoginPage extends BasePage {
 
         passwordField = new JPasswordField(20);
         JPanel passwordPanel = createFieldPanel("Password: ", passwordField);
-
+        passwordField.putClientProperty("JPasswordField.showRevealButton", true);
 
         ActionListener actionListener = e -> handleLogin();
 
@@ -61,11 +65,10 @@ public class LoginPage extends BasePage {
         accessButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         accessButton.addActionListener(e -> handleLogin());
 
-
         JLabel registerLabel = new JLabel("Non hai un account? Registrati ", JLabel.CENTER);
         JLabel registerButtonLabel = new JLabel("qui ", JLabel.CENTER);
         registerButtonLabel.setForeground(Color.BLUE);
-        registerButtonLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));// diventa la manina
+        registerButtonLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         JLabel registerLabel2 = new JLabel("o ", JLabel.CENTER);
         JLabel guestButtonLabel = new JLabel("entra come Ospite!", JLabel.CENTER);
@@ -73,14 +76,13 @@ public class LoginPage extends BasePage {
         guestButtonLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         registerButtonLabel.addMouseListener(new MouseAdapter() {
-
             @Override
             public void mouseClicked(MouseEvent e) {
                 frame.setView(PageFactory.createPage(PageType.REGISTRATION, frame));
             }
 
             public void mouseEntered(MouseEvent e) {
-                registerButtonLabel.setText("<html><u>qui </u><html>");
+                registerButtonLabel.setText("<html><u>qui </u></html>");
             }
 
             public void mouseExited(MouseEvent e) {
@@ -89,14 +91,13 @@ public class LoginPage extends BasePage {
         });
 
         guestButtonLabel.addMouseListener(new MouseAdapter() {
-
             @Override
             public void mouseClicked(MouseEvent e) {
                 frame.setView(PageFactory.createPage(PageType.MAP_GUEST, frame));
             }
 
             public void mouseEntered(MouseEvent e) {
-                guestButtonLabel.setText("<html><u>entra come Ospite!</u><html>");
+                guestButtonLabel.setText("<html><u>entra come Ospite!</u></html>");
             }
 
             public void mouseExited(MouseEvent e) {
@@ -110,7 +111,6 @@ public class LoginPage extends BasePage {
         registerPanel.add(registerButtonLabel);
         registerPanel.add(registerLabel2);
         registerPanel.add(guestButtonLabel);
-
 
         contentPanel.add(Box.createVerticalGlue());
         contentPanel.add(usernamePanel);
@@ -126,15 +126,18 @@ public class LoginPage extends BasePage {
 
         centerPanel.setLayout(new GridBagLayout());
         centerPanel.add(contentPanel, new GridBagConstraints());
-
-
     }
 
-
     private void handleLogin() {
+        var db = DatabaseConnection.getInstance().getDatabase();
+
+        if (db == null) {
+            errorAccessLabel.setText(Constants.CONNECTION_ERROR_DATABASE);
+            errorAccessLabel.setVisible(true);
+            return;
+        }
+
         try {
-            Database db = new Database();
-            db.connect();
             UserAuth auth = new UserAuth(db);
             User user = auth.login(getUsernameLogin(), getPasswordLogin());
 
@@ -153,6 +156,11 @@ public class LoginPage extends BasePage {
         }
     }
 
-    public String getUsernameLogin() { return usernameField.getText().trim(); }
-    public String getPasswordLogin() { return new String(passwordField.getPassword()); }
+    public String getUsernameLogin() {
+        return usernameField.getText().trim();
+    }
+
+    public String getPasswordLogin() {
+        return new String(passwordField.getPassword());
+    }
 }
