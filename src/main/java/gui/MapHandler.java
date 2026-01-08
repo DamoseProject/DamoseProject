@@ -172,6 +172,10 @@ public class MapHandler {
         mapViewer.repaint();
     }
 
+    /**
+     * Mostra la linea e il bus (se disponibile).
+     * Gestisce l'Optional per evitare crash se il GPS manca.
+     */
     public void showRouteWithBus(String routeId, int direction, BusInUnaFermataRecord bus, Stop currentStop) throws SQLException {
         Database db = DatabaseConnection.getInstance().getDatabase();
         if (db == null) return;
@@ -182,6 +186,7 @@ public class MapHandler {
         currentWaypoints.clear();
         List<GeoPosition> track = new ArrayList<>();
 
+        // Crea il percorso (Linea Blu)
         for (Stop fermata : fermate) {
             GeoPosition pos = new GeoPosition(fermata.getLatitude(), fermata.getLongitude());
             track.add(pos);
@@ -190,9 +195,31 @@ public class MapHandler {
 
         Trip trip = db.getTrip(bus.getTripId());
         Optional<PosizioneTrip> busPos = db.getRealTimePosition(trip);
-        GtfsRealtime.Position pos = busPos.get().getPosition();
-        GeoPosition busPosition = new GeoPosition(pos.getLatitude(), pos.getLongitude());
-        currentWaypoints.add(new BusWaypoint(busPosition, bus.getRouteId()));
+
+        GeoPosition centerPosition; // Dove centreremo la mappa
+
+        // --- GESTIONE OPTIONAL SICURA ---
+        if (busPos.isPresent()) {
+            // Caso 1: Abbiamo il GPS del Bus
+            GtfsRealtime.Position pos = busPos.get().getPosition();
+            GeoPosition busGeoPos = new GeoPosition(pos.getLatitude(), pos.getLongitude());
+
+            // Aggiungiamo il Bus ai Waypoints
+            currentWaypoints.add(new BusWaypoint(busGeoPos, bus.getRouteId()));
+
+            // Centriamo la mappa sul Bus
+            centerPosition = busGeoPos;
+        } else {
+            // Caso 2: GPS mancante (offline o errore RealTime)
+            // Centriamo sulla fermata selezionata dall'utente (se c'è), altrimenti all'inizio della linea
+            if (currentStop != null) {
+                centerPosition = new GeoPosition(currentStop.getLatitude(), currentStop.getLongitude());
+            } else {
+                centerPosition = track.get(0);
+            }
+            System.out.println("DEBUG: Posizione GPS non disponibile per il bus " + bus.getRouteId());
+        }
+        // --------------------------------
 
         RoutePainter routePainter = new RoutePainter(track);
         WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
@@ -201,15 +228,18 @@ public class MapHandler {
         waypointPainter.setRenderer((g, map, wp) -> {
             Point2D p = map.getTileFactory().geoToPixel(wp.getPosition(), map.getZoom());
             g.setFont(new Font("SansSerif", Font.PLAIN, 40));
-            if (wp instanceof BusWaypoint) g.drawString("🚌", (int)p.getX() - 15, (int)p.getY());
-            else g.drawString("📍", (int)p.getX() - 10, (int)p.getY());
+            if (wp instanceof BusWaypoint) {
+                g.drawString("🚌", (int)p.getX() - 15, (int)p.getY());
+            } else {
+                g.drawString("📍", (int)p.getX() - 10, (int)p.getY());
+            }
         });
 
         CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>(Arrays.asList(routePainter, waypointPainter));
         mapViewer.setOverlayPainter(compoundPainter);
 
-        mapViewer.setAddressLocation(busPosition);
-        mapViewer.setZoom(3);
+        mapViewer.setAddressLocation(centerPosition);
+        mapViewer.setZoom(3); // Zoom un po' più lontano per vedere il contesto
         mapViewer.revalidate();
         mapViewer.repaint();
     }
