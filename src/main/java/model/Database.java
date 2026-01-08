@@ -281,11 +281,15 @@ public class Database {
     public List<Stop> getStopsByRouteByDirection(String routeId, int direction) throws SQLException {
         List<Stop> stops = new ArrayList<>();
         // Seleziona le fermate distinte collegate ai viaggi di quel percorso
-        String sql = "SELECT DISTINCT F.* " +
+        String sql = "SELECT F.* " +
                 "FROM Fermata F " +
                 "INNER JOIN FERMATA_ORARIO FO ON F.ID = FO.FERMATA_ID " +
-                "INNER JOIN Viaggio V ON FO.VIAGGIO_ID = V.ID " +
-                "WHERE V.ID IN(SELECT ID FROM VIAGGIO WHERE PERCORSO_ID = ? AND V.DIREZIONE = ? LIMIT 1)";
+                "WHERE FO.VIAGGIO_ID = (" +
+                "    SELECT ID FROM VIAGGIO " +
+                "    WHERE PERCORSO_ID = ? AND DIREZIONE = ? " +
+                "    LIMIT 1" +
+                ") " +
+                "ORDER BY FERMATA_SEQUENZA";
 
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
