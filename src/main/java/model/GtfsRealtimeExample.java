@@ -5,10 +5,7 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
@@ -50,13 +47,23 @@ public class GtfsRealtimeExample {
     public static void main(String[] args) throws Exception {
 
         Database db = new Database();
-        List<Stop> direzione0 = db.getStopsByRouteByDirection("716", 0);
-        List<Stop> direzione1 = db.getStopsByRouteByDirection("716", 1);
-        List<Stop> totali = db.getStopsByRoute("716");
+        db.connect();
 
-        System.out.println(direzione0.size());
-        System.out.println(direzione1.size());
-        System.out.println(totali.size());
+
+
+        List<Stop> stops = db.getStopsByName("Termini");
+
+        for(Stop stop : stops){
+            BusInUnaFermataRecord bus = db.getNextArrival(stop.getId(), true);
+
+            Trip trip = db.getTrip(bus.getTripId());
+            Optional<PosizioneTrip> posizione = db.getRealTimePosition(trip);
+
+            if(posizione.isEmpty()) continue;
+            System.out.println(posizione.get().getPosition());
+
+        }
+
 
 
         System.exit(0);
