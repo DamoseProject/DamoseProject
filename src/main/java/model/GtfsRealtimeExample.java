@@ -49,12 +49,23 @@ public class GtfsRealtimeExample {
         Database db = new Database();
         db.connect();
 
+        List<Stop> stopsss = db.getStopsByRouteByDirection("716", 0);
+        for(Stop stop : stopsss){
+            System.out.println(stop.getName());
+        }
+
+
 
 
         List<Stop> stops = db.getStopsByName("Termini");
 
         for(Stop stop : stops){
             BusInUnaFermataRecord bus = db.getNextArrival(stop.getId(), true);
+
+
+
+           if(bus == null)
+               continue;
 
             Trip trip = db.getTrip(bus.getTripId());
             Optional<PosizioneTrip> posizione = db.getRealTimePosition(trip);
