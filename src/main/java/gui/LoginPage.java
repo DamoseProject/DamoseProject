@@ -63,6 +63,7 @@ public class LoginPage extends BasePage {
 
         JButton accessButton = new JButton("Accedi!");
         accessButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        accessButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         accessButton.addActionListener(e -> handleLogin());
 
         JLabel registerLabel = new JLabel("Non hai un account? Registrati ", JLabel.CENTER);

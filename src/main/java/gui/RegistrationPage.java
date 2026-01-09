@@ -27,6 +27,7 @@ public class RegistrationPage extends BasePage {
     private void createTopPanel() {
         topPanel = new JPanel(new BorderLayout());
         BackButton backButton = new BackButton(frame, () -> frame.setView(PageFactory.createPage(PageType.LOGIN, frame)));
+        backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         JLabel registrationLabel = new JLabel("Registrati!", JLabel.CENTER);
         topPanel.add(backButton, BorderLayout.WEST);
         topPanel.add(registrationLabel, BorderLayout.CENTER);
@@ -60,6 +61,7 @@ public class RegistrationPage extends BasePage {
 
         JButton registerButton = new JButton("Registrati!");
         registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        registerButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         registerButton.addActionListener(e -> handleRegistration());
 
         centerPanel.add(Box.createVerticalGlue());

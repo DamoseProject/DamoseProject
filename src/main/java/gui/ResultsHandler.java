@@ -7,8 +7,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.List;
+
 
 public class ResultsHandler {
 
@@ -54,19 +56,52 @@ public class ResultsHandler {
                 List<BusInUnaFermataRecord> prossimiBus = (db != null) ? db.getRealTimeArrivals(stopId) : null;
                 Stop stop = (db != null) ? db.getStop(stopId) : null;
 
-                if (prossimiBus == null) {
+                if (prossimiBus == null || prossimiBus.isEmpty()) {
                     subList.add(createGeneralRow(Constants.NO_BUS_ARRIVING, false));
                 } else {
-                    HashMap<String, Integer> busIds = new HashMap<>();
-                    for(BusInUnaFermataRecord prossimoBus : prossimiBus) {
-                        if(prossimoBus != null) {
-                            if (busIds.getOrDefault(prossimoBus.getRouteId(), 0) <= 2) {
-                                subList.add(createBusRow(prossimoBus, stop));
-                                busIds.put(prossimoBus.getRouteId(), busIds.getOrDefault(prossimoBus.getRouteId(), 0) + 1);
+                    prossimiBus.sort((b1, b2) -> {
+                        int p1 = b1.isRealTime() ? 1 : (b1.getIsSmartPredicted() ? 2 : 3);
+                        int p2 = b2.isRealTime() ? 1 : (b2.getIsSmartPredicted() ? 2 : 3);
+
+                        if (p1 != p2) {
+                            return Integer.compare(p1, p2);
+                        } else {
+                            LocalTime t1 = (b1.getOrarioEffettivo() != null) ? b1.getOrarioEffettivo() : b1.getOrarioStatico();
+                            LocalTime t2 = (b2.getOrarioEffettivo() != null) ? b2.getOrarioEffettivo() : b2.getOrarioStatico();
+                            return t1.compareTo(t2);
+                        }
+                    });
+
+                    HashMap<String, Integer> busCountsPerRoute = new HashMap<>();
+                    Set<String> addedBusInfo = new HashSet<>();
+                    for (BusInUnaFermataRecord prossimoBus : prossimiBus) {
+                        if (prossimoBus != null) {
+                            String routeId = prossimoBus.getRouteId();
+
+                            LocalTime timeToCheck = prossimoBus.getOrarioEffettivo();
+                            if (timeToCheck == null) {
+                                timeToCheck = prossimoBus.getOrarioStatico();
+                            }
+                            String uniqueKey = routeId + "_" + timeToCheck;
+
+                            if(addedBusInfo.contains(uniqueKey)) {
+                                continue;
+                            }
+
+                            int currentCount = busCountsPerRoute.getOrDefault(routeId, 0);
+                            if (currentCount < 3) {
+                                JPanel busRow = createBusRow(prossimoBus, stop);
+                                if (busRow != null) {
+                                    subList.add(busRow);
+                                    busCountsPerRoute.put(routeId, currentCount + 1);
+                                    addedBusInfo.add(uniqueKey);
+                                }
                             }
                         }
                     }
-
+                    if (subList.getComponentCount() == 0) {
+                        subList.add(createGeneralRow(Constants.NO_BUS_ARRIVING, false));
+                    }
                 }
 
             } catch (SQLException e) {
@@ -97,12 +132,7 @@ public class ResultsHandler {
         resultsPanel.repaint();
     }
 
-    /**
-     * Crea la riga del BUS (Interamente cliccabile).
-     */
-    /**
-     * Crea la riga del BUS (Interamente cliccabile).
-     */
+
     private JPanel createBusRow(BusInUnaFermataRecord bus, Stop currentStop) {
         JPanel rowPanel = new JPanel(new BorderLayout());
 
@@ -118,10 +148,48 @@ public class ResultsHandler {
         rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         rowPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        String infoText = "<html><nobr><b>🚌 " + bus.getRouteId() + "</b> → " + bus.getTextDestination() +
-                " <span style='color:gray'>| Arrivo: " +
-                bus.getOrarioEffettivo().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) +
-                "</span></nobr></html>";
+
+
+        java.time.format.DateTimeFormatter timeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+        String infoText = "";
+
+        if (bus.isRealTime()) {
+            LocalTime orarioEffettivo = bus.getOrarioEffettivo();
+            LocalTime now = LocalTime.now();
+            long timeRemaining = java.time.temporal.ChronoUnit.MINUTES.between(now, orarioEffettivo);
+            if (timeRemaining < 0) {
+                return null;
+            }
+
+            String labelGrigia;
+            String valoreVerde;
+
+            if (timeRemaining == 0) {
+                labelGrigia = "In arrivo: ";
+                valoreVerde = "Ora";
+            } else {
+                labelGrigia = "Arrivo: ";
+                valoreVerde = timeRemaining + " min";
+            }
+            infoText = "<html><nobr><b>🚌 " + bus.getRouteId() + "</b> → " + bus.getTextDestination() +
+                    " <span style='color:gray'>| " + labelGrigia + "</span>" +
+                    "<span style='color:green'><b>" + valoreVerde + "</b></span>" +
+                    "</nobr></html>";
+
+        } else if (bus.getIsSmartPredicted()) {
+            LocalTime orarioPredetto = bus.getOrarioEffettivo();
+            LocalTime orarioProgrammato = bus.getOrarioStatico();
+            infoText = "<html><nobr><b>🚌 " + bus.getRouteId() + "</b> → " + bus.getTextDestination() +
+                    " <span style='color:gray'>| Arrivo programmato: " + orarioProgrammato.format(timeFormatter) + "</span>" +
+                    " <span style='color:#0044CC'>| Previsione: " + orarioPredetto.format(timeFormatter) + "</span>" +
+                    "</nobr></html>";
+
+        } else {
+            LocalTime orarioStatico = bus.getOrarioStatico();
+            infoText = "<html><nobr><b>🚌 " + bus.getRouteId() + "</b> → " + bus.getTextDestination() +
+                    " <span style='color:gray'>| Arrivo programmato: " + orarioStatico.format(timeFormatter) + "</span>" +
+                    "</nobr></html>";
+        }
 
         JLabel label = new JLabel(infoText);
         label.setFont(new Font("SansSerif", Font.PLAIN, 13));
@@ -153,7 +221,6 @@ public class ResultsHandler {
                 } catch (Exception ex) {
                     errorLabel.setText("Errore caricamento percorso.");
                     errorLabel.setVisible(true);
-                    ex.printStackTrace();
                 }
             }
 
@@ -261,10 +328,7 @@ public class ResultsHandler {
 
     private JPanel createGeneralRow(String resultText) { return createGeneralRow(resultText, true); }
 
-    /**
-     * Crea la riga generica (Fermata o Intestazione).
-     * QUI c'è la logica del bottone stella.
-     */
+
     private JPanel createGeneralRow(String resultText, boolean isStopRow) {
         JPanel rowPanel = new JPanel(new BorderLayout());
         rowPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -355,6 +419,7 @@ public class ResultsHandler {
         mapButton.setFont(new Font("SansSerif", Font.PLAIN, 15));
         mapButton.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
         mapButton.setContentAreaFilled(false);
+        mapButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         mapButton.addActionListener(e -> {
             try { mapManager.showRouteDirectionOnMap(route, direction); } catch (Exception ex) {}
         });
@@ -430,6 +495,7 @@ public class ResultsHandler {
         favButton.setBorderPainted(false);
         favButton.setContentAreaFilled(false);
         favButton.setFocusPainted(false);
+        favButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         favButton.addActionListener(e -> {
             if (!session.isLogged()) {
@@ -508,6 +574,8 @@ public class ResultsHandler {
         favButton.setBorderPainted(false);
         favButton.setContentAreaFilled(false);
         favButton.setFocusPainted(false);
+        favButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
 
         favButton.addActionListener(e -> {
             if (!session.isLogged()) {
@@ -559,6 +627,7 @@ public class ResultsHandler {
         mapButton.setFont(new Font("SansSerif", Font.PLAIN, 15));
         mapButton.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
         mapButton.setContentAreaFilled(false);
+        mapButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         mapButton.addActionListener(e -> {
             try {
                 String stopId = resultText.split(" ")[0];
@@ -601,6 +670,7 @@ public class ResultsHandler {
         arrowButton.setContentAreaFilled(false);
         arrowButton.setBorderPainted(false);
         arrowButton.setFocusPainted(false);
+        arrowButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return arrowButton;
     }
 
