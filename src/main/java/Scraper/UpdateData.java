@@ -11,7 +11,6 @@ import java.sql.Statement;
 
 public class UpdateData {
 
-    // === 1. PERCORSI FILE ===
     private static final String BASE_PATH = GtfsDownloader.DOWNLOAD_DIR;
 
     private static final String PATH_ROUTES = BASE_PATH + "routes.txt";
@@ -19,7 +18,6 @@ public class UpdateData {
     private static final String PATH_TRIPS = BASE_PATH + "trips.txt";
     private static final String PATH_STOP_TIMES = BASE_PATH + "stop_times.txt";
 
-    // === 2. QUERY SQL ===
 
     // Tabella: Percorso
     private static final String SQL_INSERT_ROUTE =
@@ -221,6 +219,9 @@ public class UpdateData {
 
         }
     }
+
+
+
 
     public static void main(String[] args) {
         updateIfNew();
