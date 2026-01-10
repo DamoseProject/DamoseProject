@@ -20,7 +20,7 @@ public class RegistrationAuth {
 
     public boolean validateLengthUsername() {
 
-        return username.length() <= ErrorMessages.MAX_USERNAME_LENGTH;
+        return username.length() <= Constants.MAX_USERNAME_LENGTH;
     }
 
     public boolean validatePresenceEmail() {
@@ -37,9 +37,7 @@ public class RegistrationAuth {
     }
 
     public boolean validatePasswordMatch() {
-            return password != null && confirmPassword != null &&
-                    !password.isEmpty() && !confirmPassword.isEmpty() &&
-                    password.equals(confirmPassword);
+            return validatePresencePassword() && validatePresenceConfirmPassword() && password.equals(confirmPassword);
     }
 
     public boolean validatePasswordStrength() {
@@ -48,7 +46,7 @@ public class RegistrationAuth {
         boolean hasDigit = false;
         boolean hasSpecialChar = false;
 
-        String specialChars = ErrorMessages.SPECIAL_CHARS;
+        String specialChars = Constants.SPECIAL_CHARS;
 
         for (int i = 0; i < password.length(); i++) {
             char c = password.charAt(i);
@@ -63,9 +61,5 @@ public class RegistrationAuth {
         }
 
         return hasUppercase && hasDigit && hasSpecialChar;
-    }
-
-    public boolean validate() {
-        return validatePresenceUsername() && validateLengthUsername() && validatePresenceEmail() && validatePasswordMatch() && validatePasswordStrength();
     }
 }

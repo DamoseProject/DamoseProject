@@ -2,14 +2,17 @@ package model;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Objects;
+import java.sql.Time;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 import com.google.transit.realtime.GtfsRealtime;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.FeedEntity;
 import com.google.transit.realtime.GtfsRealtime.FeedMessage;
 import com.sun.source.tree.YieldTree;
+import util.TimeComparator;
 import util.TimeManager;
 
 public class GtfsRealtimeExample {
@@ -20,9 +23,8 @@ public class GtfsRealtimeExample {
     private static Connection connection;
     private static String LINK = "https://romamobilita.it/sites/default/files/rome_rtgtfs_trip_updates_feed.pb";
 
-
-
-
+    public GtfsRealtimeExample() throws SQLException {
+    }
 
 
     public static void printUpdate(TripUpdate.StopTimeUpdate stopTimeUpdate) throws SQLException {
@@ -44,57 +46,90 @@ public class GtfsRealtimeExample {
 
     public static void main(String[] args) throws Exception {
 
-        db = new Database();
+        Database db = new Database();
         db.connect();
-//
-//        ArrayList<Bus> busList = db.getBusList();
-//        ArrayList<String> busIds = db.getIdBusList();
-//        ArrayList<Stop> stopsList = db.getStops();
 
-
-        URL url = new URL(LINK);
-        FeedMessage feed = FeedMessage.parseFrom(url.openStream());
-
-        boolean userRegistered = db.isUserRegistered("Carmine0660");
-        System.out.println("User registered: " + userRegistered);
-
-        boolean emailRegistered = db.isEmailRegistered("mickolsverde05@outlook.it");
-        System.out.println("Email registered: " + emailRegistered);
-
-
-        System.exit(0);
-
-        for (FeedEntity entity : feed.getEntityList()) {
-            if (entity.hasTripUpdate()) {
-                TripUpdate entityData = entity.getTripUpdate();
-                String tripID = entityData.getTrip().getTripId();
-                String routeID = entityData.getTrip().getRouteId();
-                String startTime = entityData.getTrip().getStartDate();
-                String startDate = entityData.getTrip().getStartDate();
-                int directionID = entityData.getTrip().getDirectionId();
-
-                //List<TripUpdate.StopTimeUpdate> stopTimeUpdates = entityData.getStopTimeUpdateList();
-
-                if((db.getRoute(routeID) == null || !Objects.equals(db.getRoute(routeID).getShortName(), "20"))){
-                    continue;
-                }
-                System.out.println("AUTOBUS " + db.getRoute(routeID).getShortName());
-
-                TripUpdate.StopTimeUpdate lastUpdate = entityData.getStopTimeUpdate(entityData.getStopTimeUpdateCount() - 1);
-                printUpdate(lastUpdate);
+        List<Stop> stopsss = db.getStopsByRouteByDirection("716", 0);
+        for(Stop stop : stopsss){
+            System.out.println(stop.getName());
+        }
 
 
 
 
-                //System.out.println(entity.getAllFields());
-                System.out.println(tripID);
-                //System.exit(0);
-                System.out.println("\n\n");
+        List<Stop> stops = db.getStopsByName("Termini");
 
-            }
+        for(Stop stop : stops){
+            BusInUnaFermataRecord bus = db.getNextArrival(stop.getId(), true);
+
+
+
+           if(bus == null)
+               continue;
+
+            Trip trip = db.getTrip(bus.getTripId());
+            Optional<PosizioneTrip> posizione = db.getRealTimePosition(trip);
+
+            if(posizione.isEmpty()) continue;
+            System.out.println(posizione.get().getPosition());
 
         }
 
 
+
+        System.exit(0);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
+
+
+    public static void updateBus(TripUpdate entity) throws SQLException {
+        String tripId = entity.getTrip().getTripId();
+        List<TripUpdate.StopTimeUpdate> aggiornamentiFermate = entity.getStopTimeUpdateList();
+        int delay = entity.getDelay();
+        String routeId = entity.getTrip().getRouteId();
+        System.out.println(tripId + " " + aggiornamentiFermate.size() + " " + routeId);
+
+
+
+        //Aggiornamenti fermate
+        for(TripUpdate.StopTimeUpdate aggiornamentoFermata : aggiornamentiFermate){
+            String nextStopId = aggiornamentoFermata.getStopId();
+
+            TripUpdate.StopTimeEvent arrivo = aggiornamentoFermata.getArrival();
+            long arrivoOra = arrivo.getTime();
+
+
+            System.out.println(db.getStop(nextStopId).getName());
+            System.out.println("Arrivo: " + TimeManager.getDate(arrivoOra, "hh:mm"));
+
+        }
+        System.exit(0);
+
+    }
+
+
+
+
+
+
+
 }

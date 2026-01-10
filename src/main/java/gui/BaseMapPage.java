@@ -1,121 +1,126 @@
 package gui;
 
-import model.Database;
-import model.Stop;
-import org.jxmapviewer.JXMapViewer;
-import org.jxmapviewer.OSMTileFactoryInfo;
-import org.jxmapviewer.input.PanKeyListener;
-import org.jxmapviewer.input.PanMouseInputListener;
-import org.jxmapviewer.viewer.DefaultTileFactory;
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.TileFactoryInfo;
+import model.*;
 
 import javax.swing.*;
-import javax.swing.event.MouseInputListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.sql.SQLException;
+import java.util.*;
 import java.util.List;
 
 public abstract class BaseMapPage extends BasePage {
+
     private JPanel topPanel;
     private JPanel centerPanel;
     private JPanel mapAndResultsPanel;
     private JTextField researchField;
     private JPanel resultsPanel;
-    private JXMapViewer mapViewer;
     private JLabel errorLabel;
-    private Database db;
+    private final Database db;
 
-    // FLAG per gestire il comportamento del JTextField
     private boolean searchConfirmed = false;
 
+    private MapHandler mapManager;
+    private ResultsHandler resultsManager;
 
     protected BaseMapPage(MainFrame frame) {
         super(frame);
-
-        Database db = new Database();
-        db.connect();
-
-        this.db = db;
-
+        this.db = DatabaseConnection.getInstance().getDatabase();
+        if (this.db == null) {
+            JOptionPane.showMessageDialog(
+                    frame,
+                    "Errore: connessione al database non disponibile.",
+                    "Errore",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
 
         createTopPanel();
         createCenterPanel();
         createMapAndResultsPanel();
 
-        mainPanel.add(topPanel, BorderLayout.NORTH);
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
-        mainPanel.add(mapAndResultsPanel, BorderLayout.SOUTH);
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.add(centerPanel, BorderLayout.NORTH);
+        contentPanel.add(mapAndResultsPanel, BorderLayout.CENTER);
 
-        setupKeyboardZoom();
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
     }
 
+    protected abstract ButtonMapPageConfig getButtonConfig();
+
     private void createTopPanel() {
-        topPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
+        topPanel = new JPanel(new GridLayout(1, 3));
 
         ButtonMapPageConfig config = getButtonConfig();
 
-
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-
-        JButton regLoginButton = new JButton("Accedi o Registrati!");
-        regLoginButton.addActionListener(e ->
-                frame.setView(PageFactory.createPage(PageType.LOGIN, frame))
-        );
-
-        JButton newsButton = new JButton("News");
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         if (config.isShowRegLoginButton()) {
+            JButton regLoginButton = new JButton("Accedi o Registrati!");
+            regLoginButton.addActionListener(e ->
+                    frame.setView(PageFactory.createPage(PageType.LOGIN, frame))
+            );
             leftPanel.add(regLoginButton);
+        } else {
+            UserSession session = UserSession.getInstance();
+            JButton profileButton = new JButton("👤 " + session.getUsername());
+            profileButton.addActionListener(e -> {
+                JPopupMenu popupMenu = createProfilePopupMenu(session);
+                popupMenu.show(profileButton, 0, profileButton.getHeight());
+            });
+            leftPanel.add(profileButton);
         }
-        rightPanel.add(newsButton);
-
-
-        int leftButtonWidth = config.isShowRegLoginButton() ? regLoginButton.getPreferredSize().width : 0;
-        int rightButtonWidth = newsButton.getPreferredSize().width;
-        int sideWidth = Math.max(leftButtonWidth, rightButtonWidth) + 10;
-
-
-        int sideHeight = Math.max(
-                config.isShowRegLoginButton() ? regLoginButton.getPreferredSize().height : 0,
-                newsButton.getPreferredSize().height
-        );
-
-        Dimension sideSize = new Dimension(sideWidth, Math.max(sideHeight, 24));
-        leftPanel.setPreferredSize(sideSize);
-        rightPanel.setPreferredSize(sideSize);
 
         JLabel mainLabel = new JLabel("Dove vuoi andare?", JLabel.CENTER);
+        mainLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
 
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton newsButton = new JButton("News");
+        rightPanel.add(newsButton);
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.WEST;
-        topPanel.add(leftPanel, gbc);
-
-
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.CENTER;
-        topPanel.add(mainLabel, gbc);
-
-
-        gbc.gridx = 2;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.EAST;
-        topPanel.add(rightPanel, gbc);
+        topPanel.add(leftPanel);
+        topPanel.add(mainLabel);
+        topPanel.add(rightPanel);
     }
 
+    private JPopupMenu createProfilePopupMenu(UserSession session) {
+        JPopupMenu menu = new JPopupMenu();
 
+        String userEmail = "...";
+        try {
+            User user = db.getUser(session.getUserId());
+            if (user != null) {
+                userEmail = user.getEmail();
+            }
+        } catch (SQLException ex) {
+            userEmail = "Non disponibile";
+        }
 
+        JLabel userLabel = new JLabel("Utente: " + session.getUsername());
+        JLabel emailLabel = new JLabel("Email: " + userEmail);
+
+        userLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
+        emailLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 5, 10));
+
+        Font infoFont = new Font("SansSerif", Font.PLAIN, 11);
+        emailLabel.setFont(infoFont);
+        emailLabel.setForeground(Color.GRAY);
+
+        JMenuItem logoutItem = new JMenuItem("Esci");
+        logoutItem.addActionListener(e -> {
+            session.logout();
+            frame.setView(PageFactory.createPage(PageType.LOGIN, frame));
+        });
+
+        menu.add(userLabel);
+        menu.add(emailLabel);
+        menu.add(new JSeparator());
+        menu.add(logoutItem);
+
+        return menu;
+    }
 
     private void createCenterPanel() {
         centerPanel = new JPanel();
@@ -127,7 +132,6 @@ public abstract class BaseMapPage extends BasePage {
 
         JPanel researchFieldPanel = createFieldPanel("Inserisci n. Fermata o nome della Linea: ", researchField);
         errorLabel = createErrorLabel();
-
         JPanel buttonPanel = createButtonPanel();
 
         centerPanel.add(Box.createVerticalStrut(10));
@@ -138,52 +142,48 @@ public abstract class BaseMapPage extends BasePage {
         centerPanel.add(buttonPanel);
         centerPanel.add(Box.createVerticalStrut(10));
 
-        // Gestione Invio
         researchField.addActionListener(e -> {
             String search = getResearchField();
-
-            List<Stop> fermate = null;
-            try {
-                fermate = db.getStopsByName(search);
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
-            for(var fermata:fermate){
-                System.out.println(fermata.getName());
-            }
-            if (search.length() == 0) {
-                errorLabel.setText(ErrorMessages.MISSED_RESEARCH);
+            if (search.isEmpty()) {
+                errorLabel.setText(Constants.MISSED_RESEARCH);
                 errorLabel.setVisible(true);
-            } else {
-                errorLabel.setVisible(false);
-                try {
-                    performSearch(search);
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
-                }
-                searchConfirmed = true; // testo confermato, rimane nel campo
-                researchField.getParent().requestFocusInWindow();
+                return;
             }
+            performSearch(search);
+            mapManager.getMapViewer().requestFocusInWindow();
         });
-
-        researchField.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyPressed(java.awt.event.KeyEvent e) {
-                if (searchConfirmed) {
-                    researchField.setText("");
-                    searchConfirmed = false;
-                }
-            }
-        });
-
     }
 
-    protected abstract ButtonMapPageConfig getButtonConfig();
+    private void createMapAndResultsPanel() {
+        mapAndResultsPanel = new JPanel();
+        mapAndResultsPanel.setLayout(new BoxLayout(mapAndResultsPanel, BoxLayout.X_AXIS));
+        mapAndResultsPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
+
+        mapManager = new MapHandler(errorLabel);
+        mapManager.setupKeyboardZoom();
+
+        JPanel mapContainer = new JPanel(new BorderLayout());
+        mapContainer.add(mapManager.getMapViewer(), BorderLayout.CENTER);
+
+        resultsPanel = new JPanel();
+        resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
+        resultsPanel.setBackground(Color.WHITE);
+
+        resultsManager = new ResultsHandler(resultsPanel, errorLabel, mapManager, getButtonConfig());
+
+        JScrollPane resultsScroll = new JScrollPane(resultsPanel);
+        resultsScroll.setPreferredSize(new Dimension(450, 400));
+        resultsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        resultsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+        mapAndResultsPanel.add(mapContainer);
+        mapAndResultsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        mapAndResultsPanel.add(resultsScroll);
+    }
 
     protected JPanel createButtonPanel() {
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
-
         ButtonMapPageConfig config = getButtonConfig();
 
         JButton checkFav = new JButton("Preferiti!");
@@ -193,178 +193,52 @@ public abstract class BaseMapPage extends BasePage {
                 errorLabel.setText(config.getViewFavoritesErrorMessage());
                 errorLabel.setVisible(true);
             });
+        } else {
+            checkFav.addActionListener(e -> resultsManager.showFavorites());
         }
         buttonsPanel.add(checkFav);
         return buttonsPanel;
     }
 
-    private void createMapAndResultsPanel() {
-        mapAndResultsPanel = new JPanel();
-        mapAndResultsPanel.setLayout(new BoxLayout(mapAndResultsPanel, BoxLayout.X_AXIS));
-        mapAndResultsPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
+    protected void performSearch(String search) {
+        errorLabel.setVisible(false);
+        searchConfirmed = false;
 
-        mapViewer = createMapViewer();
-        JPanel mapContainer = new JPanel(new BorderLayout());
-        mapContainer.add(mapViewer, BorderLayout.CENTER);
+        try {
+            List<Stop> fermate = new ArrayList<>();
+            List<Route> linee = new ArrayList<>();
 
-
-        resultsPanel = new JPanel();
-        resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
-        resultsPanel.setBackground(Color.WHITE);
-
-        JScrollPane resultsScroll = new JScrollPane(resultsPanel);
-        resultsScroll.setPreferredSize(new Dimension(250, 400));
-        resultsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        resultsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-
-        mapAndResultsPanel.add(mapContainer);
-        mapAndResultsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        mapAndResultsPanel.add(resultsScroll);
-    }
-
-    private JXMapViewer createMapViewer() {
-        TileFactoryInfo info = new OSMTileFactoryInfo("OpenStreetMap", "https://tile.openstreetmap.org");
-        DefaultTileFactory tileFactory = new DefaultTileFactory(info);
-
-        JXMapViewer mapViewer = new JXMapViewer();
-        mapViewer.setTileFactory(tileFactory);
-
-        GeoPosition roma = new GeoPosition(41.9028, 12.4964);
-        mapViewer.setZoom(5);
-        mapViewer.setAddressLocation(roma);
-        mapViewer.setPreferredSize(new Dimension(500, 400));
-
-
-        MouseInputListener mil = new PanMouseInputListener(mapViewer);
-        mapViewer.addMouseListener(mil);
-        mapViewer.addMouseMotionListener(mil);
-        mapViewer.addKeyListener(new PanKeyListener(mapViewer));
-
-        return mapViewer;
-    }
-
-    private JPanel createResultRow(String resultText) {
-        JPanel rowPanel = new JPanel(new BorderLayout());
-        rowPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-        ));
-        rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        rowPanel.setBackground(Color.WHITE);
-
-        JLabel resultLabel = new JLabel(resultText);
-        rowPanel.add(resultLabel, BorderLayout.CENTER);
-
-        if (!resultText.startsWith("Risultati per:")) {
-            JButton addButton = getJButton(resultText);
-            rowPanel.add(addButton, BorderLayout.EAST);
-        } else {
-            resultLabel.setFont(resultLabel.getFont().deriveFont(Font.BOLD));
-            resultLabel.setForeground(new Color(60, 60, 60));
-        }
-
-        return rowPanel;
-    }
-
-    private JButton getJButton(String resultText) {
-        JButton addButton = new JButton("+");
-        addButton.setPreferredSize(new Dimension(30, 25));
-
-
-        ButtonMapPageConfig config = getButtonConfig();
-        if (!config.isFavoritesEnabled()) {
-            addButton.addActionListener(e -> {
-                errorLabel.setForeground(Color.RED);
-                errorLabel.setText(config.getFavoritesErrorMessage());
-                errorLabel.setVisible(true);
-            });
-        } else {
-            addButton.addActionListener(e -> {
-                errorLabel.setForeground(Color.GREEN);
-                errorLabel.setText("Aggiunto ai preferiti: " + resultText);
-                errorLabel.setVisible(true);
-
-            });
-        }
-        return addButton;
-    }
-
-    private void setupKeyboardZoom() {
-        InputMap inputMap = mapViewer.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = mapViewer.getActionMap();
-
-        // Zoom in con +
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, 0), "zoomIn");
-
-        // Zoom out con -
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0), "zoomOut");
-
-        actionMap.put("zoomIn", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                mapViewer.setZoom(mapViewer.getZoom() - 1);
+            if (Character.isDigit(search.charAt(0)) && search.length() == 5) {
+                Stop stop = db.getStop(search);
+                if (stop != null) fermate.add(stop);
+            } else {
+                fermate = db.getStopsByName(search);
             }
-        });
 
-        actionMap.put("zoomOut", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                mapViewer.setZoom(mapViewer.getZoom() + 1);
-            }
-        });
+            Route route = db.getRoute(search);
+            if (route != null) linee.add(route);
+
+            resultsManager.showResults(search, fermate, linee);
+
+            searchConfirmed = true;
+
+        } catch (SQLException ex) {
+            errorLabel.setForeground(Color.RED);
+            errorLabel.setText(Constants.DB_SEARCH_ERROR);
+            errorLabel.setVisible(true);
+        }
     }
-
 
     protected void setResults(String text) {
-        resultsPanel.removeAll();
-
-        if (text.isEmpty()) {
-            resultsPanel.revalidate();
-            resultsPanel.repaint();
-            return;
-        }
-
-
-        String[] lines = text.split("\n");
-
-        for (String line : lines) {
-            if (!line.trim().isEmpty()) {
-                JPanel resultRow = createResultRow(line.trim());
-                resultsPanel.add(resultRow);
-            }
-        }
-
-        // Aggiungo uno spazio flessibile alla fine per spingere i risultati in alto
-        resultsPanel.add(Box.createVerticalGlue());
-
-        resultsPanel.revalidate();
-        resultsPanel.repaint();
+        resultsManager.setResults(text);
     }
 
-    public String getResearchField() {
-        String text = researchField.getText().trim();
-        return text;
-
+    protected String getResearchField() {
+        return researchField.getText().trim();
     }
-
 
     protected void clearResearchField() {
         researchField.setText("");
-    }
-
-    protected void performSearch(String search) throws SQLException {
-        errorLabel.setVisible(false);
-
-
-
-        List<Stop> fermate = db.getStopsByName(search);
-
-        String fermateRecord = "";
-        for(var fermata:fermate){
-            fermateRecord += fermata.getId() + " " + fermata.getName() + "\n";
-        }
-
-
-        setResults("Risultati per: " + search + "\n" + fermateRecord);
+        searchConfirmed = false;
     }
 }

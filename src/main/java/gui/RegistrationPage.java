@@ -1,10 +1,10 @@
 package gui;
 
-import model.Database;
 import model.User;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.sql.SQLException;
 
 public class RegistrationPage extends BasePage {
@@ -49,17 +49,18 @@ public class RegistrationPage extends BasePage {
         confirmPasswordField = new JPasswordField(20);
         JPanel confirmPasswordPanel = createFieldPanel("Conferma Password: ", confirmPasswordField);
 
+        ActionListener actionListener = e -> handleRegistration();
+
+        usernameField.addActionListener(actionListener);
+        emailField.addActionListener(actionListener);
+        passwordField.addActionListener(actionListener);
+        confirmPasswordField.addActionListener(actionListener);
+
         errorLabel = createErrorLabel();
 
         JButton registerButton = new JButton("Registrati!");
         registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        registerButton.addActionListener(e -> {
-            try {
-                handleRegistration();
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
+        registerButton.addActionListener(e -> handleRegistration());
 
         centerPanel.add(Box.createVerticalGlue());
         centerPanel.add(usernamePanel);
@@ -76,19 +77,39 @@ public class RegistrationPage extends BasePage {
         centerPanel.add(Box.createVerticalGlue());
     }
 
-    private void handleRegistration() throws SQLException {
+    private void handleRegistration() {
         RegistrationController controller = new RegistrationController();
 
+        String userText = getUsernameRegistration();
+
         RegistrationResult result = controller.handleRegistration(
-                getUsernameRegistration(),
+                userText,
                 getEmailRegistration(),
                 getPasswordRegistration(),
                 getConfirmPasswordRegistration()
         );
 
         if (result.isSuccess()) {
-            errorLabel.setVisible(false);
-            frame.setView(PageFactory.createPage(PageType.EMAIL_VERIFICATION, frame));
+            var db = DatabaseConnection.getInstance().getDatabase();
+
+            if (db == null) {
+                showError(Constants.CONNECTION_ERROR_DATABASE);
+                return;
+            }
+
+            try {
+                User newUser = db.getUserByUsername(userText);
+
+                if (newUser != null) {
+                    UserSession.getInstance().login(newUser.getId(), newUser.getUsername());
+                    errorLabel.setVisible(false);
+                    frame.setView(PageFactory.createPage(PageType.MAP_LOGGED, frame));
+                } else {
+                    showError("Registrazione avvenuta, ma errore nel login automatico.");
+                }
+            } catch (SQLException ex) {
+                showError(Constants.CONNECTION_ERROR_DATABASE);
+            }
         } else {
             showError(result.getErrorMessage());
         }
