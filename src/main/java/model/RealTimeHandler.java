@@ -18,13 +18,11 @@ public class RealTimeHandler {
 
     private static final Map<String, Long> ritardiMap = new ConcurrentHashMap<>();
     private static final Map<String, GtfsRealtime.Position> posizioniMap = new ConcurrentHashMap<>();
+    private static final Map<String, VehiclePosition.OccupancyStatus> occupancyMap = new ConcurrentHashMap<>();
 
     private static long lastUpdate = 0;
     private static final long REFRESH_RATE_MS = 30 * 1000; // 30 Secondi
 
-    /**
-     * Scarica i dati da entrambi i feed (Ritardi e Posizioni)
-     */
     public static synchronized void refreshData() {
         if (System.currentTimeMillis() - lastUpdate < REFRESH_RATE_MS) {
             return;
@@ -32,14 +30,13 @@ public class RealTimeHandler {
 
         System.out.println("[RealTime] Inizio aggiornamento dati (Trip Updates + Vehicle Positions)...");
 
-        // 1. Aggiorna i Ritardi (Trip Updates)
         updateTripUpdates();
-
-        // 2. Aggiorna le Posizioni (Vehicle Positions)
         updateVehiclePositions();
 
         lastUpdate = System.currentTimeMillis();
-        System.out.println("[RealTime] Aggiornamento completato. Ritardi: " + ritardiMap.size() + ", Posizioni: " + posizioniMap.size());
+        System.out.println("[RealTime] Aggiornamento completato. Ritardi: " + ritardiMap.size() +
+                ", Posizioni: " + posizioniMap.size() +
+                ", Affollamento: " + occupancyMap.size());
     }
 
     private static void updateTripUpdates() {
@@ -75,38 +72,75 @@ public class RealTimeHandler {
         try (InputStream stream = new URL(URL_VEHICLE_POSITIONS).openStream()) {
             FeedMessage feed = FeedMessage.parseFrom(stream);
             Map<String, GtfsRealtime.Position> tempPosizioni = new ConcurrentHashMap<>();
+            Map<String, VehiclePosition.OccupancyStatus> tempOccupancy = new ConcurrentHashMap<>();
 
             for (FeedEntity entity : feed.getEntityList()) {
                 if (entity.hasVehicle()) {
                     VehiclePosition vp = entity.getVehicle();
-                    // Usiamo il tripId come chiave per far combaciare i dati con i ritardi
+
                     if (vp.hasTrip() && vp.getTrip().hasTripId()) {
                         String tripId = vp.getTrip().getTripId();
+
                         if (vp.hasPosition()) {
                             tempPosizioni.put(tripId, vp.getPosition());
+                        }
+
+                        if (vp.hasOccupancyStatus()) {
+                            tempOccupancy.put(tripId, vp.getOccupancyStatus());
                         }
                     }
                 }
             }
             posizioniMap.clear();
             posizioniMap.putAll(tempPosizioni);
+
+            occupancyMap.clear();
+            occupancyMap.putAll(tempOccupancy);
+
         } catch (Exception e) {
             System.err.println("[RealTime] Errore nel download delle Vehicle Positions: " + e.getMessage());
         }
     }
 
     /**
-     * Arricchisce il record con i dati di ritardo
+     * Arricchisce il record con i dati di ritardo e affollamento
      */
     public static void applicaRealTime(BusInUnaFermataRecord bus) {
         refreshData();
+
         if (ritardiMap.containsKey(bus.getTripId())) {
             bus.setRitardoInSecondi(ritardiMap.get(bus.getTripId()));
+        }
+
+        if (occupancyMap.containsKey(bus.getTripId())) {
+            VehiclePosition.OccupancyStatus status = occupancyMap.get(bus.getTripId());
+            bus.setAffollamento(traduciOccupancy(status));
+        } else {
+            bus.setAffollamento("DATO NON DISPONIBILE");
         }
     }
 
     /**
-     * Restituisce la posizione GPS per un determinato Trip
+     * Traduce l'enum di GTFS in una stringa leggibile per l'utente
+     */
+    private static String traduciOccupancy(VehiclePosition.OccupancyStatus status) {
+        switch (status) {
+            case EMPTY: return "Posti: VUOTO";
+            case MANY_SEATS_AVAILABLE: return "Posti: MOLTI DISPONIBILI";
+            case FEW_SEATS_AVAILABLE: return "Posti: POCHI DISPONIBILI";
+            case STANDING_ROOM_ONLY: return "Posti: SOLO IN PIEDI";
+            case CRUSHED_STANDING_ROOM_ONLY: return "Posti: PIENO DA SCOPPIARE";
+            case FULL: return "Posti: COMPLETO";
+            case NOT_ACCEPTING_PASSENGERS: return "Posti: NON ACCETTA PASSEGGERI";
+            case NOT_BOARDABLE: return "Posti: IMPOSSIBILE SALIRE";
+            default: return "DATO NON DISPONIBILE";
+        }
+    }
+
+
+    /**
+     * Restituisce la posizione di un trip
+     * @param trip
      */
     public static PosizioneTrip getPosizioneTrip(Trip trip) {
         refreshData();
