@@ -4,6 +4,7 @@ import model.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.List;
@@ -44,6 +45,13 @@ public abstract class BaseMapPage extends BasePage {
         contentPanel.add(centerPanel, BorderLayout.NORTH);
         contentPanel.add(mapAndResultsPanel, BorderLayout.CENTER);
 
+        mainPanel.setFocusable(true);
+        mainPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                centerPanel.requestFocusInWindow();
+            }
+        });
         mainPanel.add(topPanel, BorderLayout.NORTH);
         mainPanel.add(contentPanel, BorderLayout.CENTER);
     }
@@ -59,6 +67,7 @@ public abstract class BaseMapPage extends BasePage {
 
         if (config.isShowRegLoginButton()) {
             JButton regLoginButton = new JButton("Accedi o Registrati!");
+            regLoginButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             regLoginButton.addActionListener(e ->
                     frame.setView(PageFactory.createPage(PageType.LOGIN, frame))
             );
@@ -66,6 +75,7 @@ public abstract class BaseMapPage extends BasePage {
         } else {
             UserSession session = UserSession.getInstance();
             JButton profileButton = new JButton("👤 " + session.getUsername());
+            profileButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             profileButton.addActionListener(e -> {
                 JPopupMenu popupMenu = createProfilePopupMenu(session);
                 popupMenu.show(profileButton, 0, profileButton.getHeight());
@@ -76,8 +86,15 @@ public abstract class BaseMapPage extends BasePage {
         JLabel mainLabel = new JLabel("Dove vuoi andare?", JLabel.CENTER);
         mainLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
 
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton newsButton = new JButton("News");
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 5));
+        JButton newsButton = new JButton("\u003F\u20DD");
+        newsButton.setBorderPainted(false);
+        newsButton.setContentAreaFilled(false);
+        newsButton.setFocusPainted(false);
+        newsButton.setMargin(new Insets(0, 0, 0, 0));
+        newsButton.setFont(new Font("SansSerif", Font.PLAIN, 20));
+        newsButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         rightPanel.add(newsButton);
 
         topPanel.add(leftPanel);
@@ -109,6 +126,7 @@ public abstract class BaseMapPage extends BasePage {
         emailLabel.setForeground(Color.GRAY);
 
         JMenuItem logoutItem = new JMenuItem("Esci");
+        logoutItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         logoutItem.addActionListener(e -> {
             session.logout();
             frame.setView(PageFactory.createPage(PageType.LOGIN, frame));
@@ -175,6 +193,12 @@ public abstract class BaseMapPage extends BasePage {
         resultsScroll.setPreferredSize(new Dimension(450, 400));
         resultsScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         resultsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        resultsScroll.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                resultsScroll.requestFocusInWindow();
+            }
+        });
 
         mapAndResultsPanel.add(mapContainer);
         mapAndResultsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -187,6 +211,7 @@ public abstract class BaseMapPage extends BasePage {
         ButtonMapPageConfig config = getButtonConfig();
 
         JButton checkFav = new JButton("Preferiti!");
+        checkFav.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         if (!config.isViewFavoritesEnabled()) {
             checkFav.addActionListener(e -> {

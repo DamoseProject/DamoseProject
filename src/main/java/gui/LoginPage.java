@@ -23,16 +23,34 @@ public class LoginPage extends BasePage {
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
         mainPanel.add(centerPanel, BorderLayout.CENTER);
+        mainPanel.setFocusable(true);
+        mainPanel.requestFocusInWindow();
     }
 
     private void createTopPanel() {
         topPanel = new JPanel(new GridLayout(1, 3));
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        JButton infoButton = new JButton("Info");
-        infoButton.addActionListener(e -> frame.setView(PageFactory.createPage(PageType.HELP, frame)));
+        JLabel infoLabel = new JLabel("Q&A");
+        infoLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        infoLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                infoLabel.setText("<html><u>Q&A</u></html>");
+            }
 
-        leftPanel.add(infoButton);
+            public void mouseExited(MouseEvent e) {
+                infoLabel.setText("Q&A");
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                frame.setView(PageFactory.createPage(PageType.HELP, frame));
+            }
+
+        });
+
+        leftPanel.add(infoLabel);
         JLabel loginLabel = new JLabel("Login!", SwingConstants.CENTER);
 
         JPanel rightPanel = new JPanel();
@@ -63,6 +81,7 @@ public class LoginPage extends BasePage {
 
         JButton accessButton = new JButton("Accedi!");
         accessButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        accessButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         accessButton.addActionListener(e -> handleLogin());
 
         JLabel registerLabel = new JLabel("Non hai un account? Registrati ", JLabel.CENTER);
