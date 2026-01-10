@@ -5,6 +5,7 @@ public class Constants {
     public static final String USERNAME_REQUIRED = "Inserire uno username!";
     public static final String USERNAME_TOO_LONG = "Lo username deve contenere al massimo 12 caratteri!";
     public static final String EMAIL_REQUIRED = "Inserire una email per completare la registrazione!";
+    public static final String INVALID_EMAIL = "Inserire una email valida!";
     public static final String PASSWORD_MISMATCH = "Le password non coincidono!";
     public static final String PASSWORD_WEAK = "La password deve contenere almeno: una lettera maiuscola, un numero e un carattere speciale tra: !,$,&,@,#.";
     public static final String PASSWORD_REQUIRED = "Inserire la password e la conferma password!";
