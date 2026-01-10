@@ -95,12 +95,116 @@ public abstract class BaseMapPage extends BasePage {
         newsButton.setFont(new Font("SansSerif", Font.PLAIN, 20));
         newsButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
+        newsButton.addActionListener(e -> {
+            String searchText = getResearchField();
+            if (searchText.isEmpty()) {
+                errorLabel.setText(Constants.MISSED_RESEARCH_DASHBOARD);
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setVisible(true);
+                return;
+            }
+            showStatisticsPopup(newsButton, searchText);
+        });
+
         rightPanel.add(newsButton);
 
         topPanel.add(leftPanel);
         topPanel.add(mainLabel);
         topPanel.add(rightPanel);
     }
+
+    private void showStatisticsPopup(Component invoker, String searchText) {
+        JPopupMenu popupMenu = new JPopupMenu();
+        String text = "";
+
+        try {
+            boolean found = false;
+            Route route = db.getRoute(searchText);
+
+            if (route != null) {
+                found = true;
+                text += "STATISTICHE PER LINEA: " + route.getId() + "\n\n";
+
+                List<Stop> fermate = db.getStopsByRoute(route.getId());
+                for (Stop fermata : fermate) {
+                    double[] stats = db.getStatisticheStoriche(route.getId(), fermata.getId());
+                    text += "Fermata: " + fermata.getId() + " - " + fermata.getName() + "\n";
+                    text += "   Media ritardo: " + String.format("%.2f", stats[0]) + " min\n";
+                    text += "   Corse saltate: " + String.format("%.2f", stats[1]) + "%\n";
+                    text += "--------------------------------------------------\n";
+                }
+            } else {
+                List<Stop> fermateTrovate = new ArrayList<>();
+
+                if (Character.isDigit(searchText.charAt(0)) && searchText.length() == 5) {
+                    Stop s = db.getStop(searchText);
+                    if (s != null) fermateTrovate.add(s);
+                } else {
+                    fermateTrovate = db.getStopsByName(searchText);
+                }
+
+                if (!fermateTrovate.isEmpty()) {
+                    found = true;
+                    text += "STATISTICHE PER FERMATA/E TROVATE:\n";
+                    text += "(Basate sulle linee attualmente in arrivo)\n\n";
+
+                    for (Stop stop : fermateTrovate) {
+                        text += "FERMATA: " + stop.getName() + " (" + stop.getId() + ")\n";
+
+                        List<BusInUnaFermataRecord> arrivi = db.getRealTimeArrivals(stop.getId());
+
+                        Set<String> lineeProcessate = new HashSet<>();
+                        boolean autobusTrovati = false;
+
+                        if (arrivi != null) {
+                            for (BusInUnaFermataRecord bus : arrivi) {
+                                String routeId = bus.getRouteId();
+
+                                if (lineeProcessate.contains(routeId)) {
+                                    continue;
+                                }
+
+                                double[] stats = db.getStatisticheStoriche(routeId, stop.getId());
+
+                                text += "   Linea " + routeId + ":\n";
+                                text += "      Media ritardo: " + String.format("%.2f", stats[0]) + " min\n";
+                                text += "      Corse saltate: " + String.format("%.2f", stats[1]) + "%\n";
+
+                                lineeProcessate.add(routeId);
+                                autobusTrovati = true;
+                            }
+                        }
+
+                        if (!autobusTrovati) {
+                            text += "   Nessun autobus in arrivo al momento.\n";
+                        }
+
+                        text += "--------------------------------------------------\n";
+                    }
+                }
+            }
+
+            if (!found) {
+                text += "Nessuna linea o fermata trovata per: " + searchText;
+            }
+
+        } catch (SQLException ex) {
+            text += "Errore durante il recupero delle statistiche: " + ex.getMessage();
+        }
+
+        JTextArea textArea = new JTextArea(text);
+        textArea.setEditable(false);
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        textArea.setMargin(new Insets(10, 10, 10, 10));
+
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new Dimension(400, 300));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+        popupMenu.add(scrollPane);
+        popupMenu.show(invoker, -200, invoker.getHeight());
+    }
+
 
     private JPopupMenu createProfilePopupMenu(UserSession session) {
         JPopupMenu menu = new JPopupMenu();

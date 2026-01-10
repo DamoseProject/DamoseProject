@@ -1,5 +1,6 @@
 package gui;
 
+import Scraper.GtfsDownloader;
 import Scraper.UpdateData;
 
 import javax.swing.*;
@@ -16,9 +17,25 @@ public class MainFrame extends JFrame {
             System.exit(0);
             return;
         }
-        
-        setView(new LoginPage(this));
-        setVisible(true);
+
+        if (GtfsDownloader.checkForUpdates()) {
+
+            DatabaseConnection.showUpdateAndLoginSequential(
+                    () -> {
+                        UpdateData.updateIfNew();
+                    },
+                    () -> {
+                        setView(new LoginPage(this));
+                        setVisible(true);
+                    }
+            );
+
+        } else {
+            setView(new LoginPage(this));
+            setVisible(true);
+        }
+
+
     }
 
     private boolean initializeDatabaseConnection() {

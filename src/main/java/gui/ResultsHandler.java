@@ -173,7 +173,7 @@ public class ResultsHandler {
             }
             infoText = "<html><nobr><b>🚌 " + bus.getRouteId() + "</b> → " + bus.getTextDestination() +
                     " <span style='color:gray'>| " + labelGrigia + "</span>" +
-                    "<span style='color:green'><b>" + valoreVerde + "</b></span>" +
+                    "<span style='color:green'><b>" + valoreVerde + " <span style='color:gray'>| Posti: "+ bus.getAffollamento() + "</b></span>" +
                     "</nobr></html>";
 
         } else if (bus.getIsSmartPredicted()) {

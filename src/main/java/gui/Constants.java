@@ -14,6 +14,7 @@ public class Constants {
     public static final String LOGIN_REQUIRED_FAVORITES = "Effettuare il login per aggiungere la ricerca ai Preferiti!";
     public static final String LOGIN_REQUIRED_LIST = "Effettuare il login per avere accesso alla lista dei Preferiti!";
     public static final String MISSED_RESEARCH = "Inserire una ricerca da effettuare!";
+    public static final String MISSED_RESEARCH_DASHBOARD = "Inserire una ricerca da effettuare, per accedere alla dashboard!";
     public static final String MISSED_VER_CODE = "Inserire il codice di verifica a 6 cifre";
     public static final String WRONG_VER_CODE = "Il codice inserito è errato!";
     public static final String CONNECTION_ERROR_DATABASE = "Errore di connessione al database.";

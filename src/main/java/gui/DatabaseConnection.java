@@ -33,7 +33,6 @@ public class DatabaseConnection {
             return true;
         } catch (Exception e) {
             connected = false;
-            //e.printStackTrace();
             return false;
         }
     }
@@ -62,5 +61,43 @@ public class DatabaseConnection {
         );
 
         return choice == JOptionPane.YES_OPTION;
+    }
+
+    public static void showUpdateAndLoginSequential(Runnable updateTask, Runnable onLoginAction) {
+        JButton btnProceed = new JButton("Vai al Login");
+        btnProceed.setEnabled(false);
+
+        JLabel messageLabel = new JLabel("Caricamento dati in corso! Attendere.");
+
+        JOptionPane pane = new JOptionPane(
+                messageLabel,
+                JOptionPane.INFORMATION_MESSAGE,
+                JOptionPane.DEFAULT_OPTION,
+                null,
+                new Object[]{btnProceed},
+                btnProceed
+        );
+
+        JDialog dialog = pane.createDialog("Aggiornamento Database");
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.setModal(false);
+        dialog.setVisible(true);
+        dialog.paint(dialog.getGraphics());
+
+        try {
+            updateTask.run();
+            messageLabel.setText("Aggiornamento completato!");
+            btnProceed.setEnabled(true);
+
+            btnProceed.addActionListener(e -> {
+                dialog.dispose();
+                onLoginAction.run();
+            });
+            dialog.repaint();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Errore critico: " + e.getMessage());
+            System.exit(1);
+        }
     }
 }
