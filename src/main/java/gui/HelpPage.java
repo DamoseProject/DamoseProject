@@ -47,6 +47,12 @@ public class HelpPage extends BasePage {
                 + "Per effettuare lo zoom sulla mappa si possono utilizzare i tasti + e - presenti sulla propria tastiera o"
                 + "<br>"
                 + "la rotellina del mouse."
+                + "<br>"
+                + "<br>"
+                + "<br>"
+                + "<u>Come effettuare il refresh della posizione dei bus sulla mappa e il loro tempo di arrivo?</u><br>"
+                + "<br>"
+                + "Per ottenere il refresh dei dati occorre eseguire nuovamente la ricerca (i dati si aggiornano ogni 30 secondi circa)."
                 + "</div></html>";
     }
 }

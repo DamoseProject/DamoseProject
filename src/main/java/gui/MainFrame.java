@@ -1,5 +1,7 @@
 package gui;
 
+import Scraper.UpdateData;
+
 import javax.swing.*;
 
 public class MainFrame extends JFrame {
@@ -14,7 +16,7 @@ public class MainFrame extends JFrame {
             System.exit(0);
             return;
         }
-
+        
         setView(new LoginPage(this));
         setVisible(true);
     }
