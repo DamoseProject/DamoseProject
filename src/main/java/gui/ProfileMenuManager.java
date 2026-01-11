@@ -1,0 +1,62 @@
+package gui;
+
+import model.Database;
+import model.User;
+
+import javax.swing.*;
+import java.awt.*;
+import java.sql.SQLException;
+
+public class ProfileMenuManager {
+
+    private final Database db;
+    private final MainFrame frame;
+
+    public ProfileMenuManager(Database db, MainFrame frame) {
+        this.db = db;
+        this.frame = frame;
+    }
+
+    public JPopupMenu createProfilePopupMenu(UserSession session) {
+        JPopupMenu menu = new JPopupMenu();
+
+        String userEmail = getUserEmail(session);
+
+        JLabel userLabel = new JLabel("Utente: " + session.getUsername());
+        JLabel emailLabel = new JLabel("Email: " + userEmail);
+
+        userLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
+        emailLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 5, 10));
+
+        Font infoFont = new Font("SansSerif", Font.PLAIN, 11);
+        emailLabel.setFont(infoFont);
+        emailLabel.setForeground(Color.GRAY);
+
+        JMenuItem logoutItem = new JMenuItem("Esci");
+        logoutItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        logoutItem.addActionListener(e -> {
+            session.logout();
+            frame.setView(PageFactory.createPage(PageType.LOGIN, frame));
+        });
+
+        menu.add(userLabel);
+        menu.add(emailLabel);
+        menu.add(new JSeparator());
+        menu.add(logoutItem);
+
+        return menu;
+    }
+
+    private String getUserEmail(UserSession session) {
+        String userEmail = "...";
+        try {
+            User user = db.getUser(session.getUserId());
+            if (user != null) {
+                userEmail = user.getEmail();
+            }
+        } catch (SQLException ex) {
+            userEmail = "Non disponibile";
+        }
+        return userEmail;
+    }
+}

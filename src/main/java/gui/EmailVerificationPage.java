@@ -3,7 +3,6 @@ package gui;
 import javax.swing.*;
 import java.awt.*;
 
-
 public class EmailVerificationPage extends BasePage {
     private JPanel topPanel;
     private JPanel centerPanel;
@@ -20,12 +19,7 @@ public class EmailVerificationPage extends BasePage {
     }
 
     private void createTopPanel() {
-        topPanel = new JPanel(new BorderLayout());
-        BackButton backButton = new BackButton(frame, () -> frame.setView(PageFactory.createPage(PageType.REGISTRATION, frame)));
-        JLabel completeRegistrationLabel = new JLabel("Completa la tua registrazione!", JLabel.CENTER);
-        topPanel.add(backButton, BorderLayout.WEST);
-        topPanel.add(completeRegistrationLabel, BorderLayout.CENTER);
-        topPanel.add(Box.createHorizontalStrut(backButton.getPreferredSize().width), BorderLayout.EAST);
+        topPanel = createTopPanelWithBackButton("Completa la tua registrazione!", PageType.REGISTRATION);
     }
 
     private void createCenterPanel() {
@@ -35,8 +29,7 @@ public class EmailVerificationPage extends BasePage {
         createVerificationCodePanel();
         errorVerificationCodeLabel = createErrorLabel();
 
-        JButton submitButton = new JButton("Fine!");
-        submitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JButton submitButton = createStyledButton("Fine!");
         submitButton.addActionListener(e -> handleSubmit());
 
         centerPanel.add(Box.createVerticalGlue());
@@ -66,19 +59,16 @@ public class EmailVerificationPage extends BasePage {
         String code = getVerificationCode();
 
         if (code.isEmpty()) {
-            showError(Constants.MISSED_VER_CODE);
+            showError(errorVerificationCodeLabel, Constants.MISSED_VER_CODE);
         } else if (code.length() != Constants.VERIFICATION_CODE_LENGTH) {
-            showError(Constants.WRONG_VER_CODE);
+            showError(errorVerificationCodeLabel, Constants.WRONG_VER_CODE);
         } else {
             errorVerificationCodeLabel.setVisible(false);
             frame.setView(new MapLogPage(frame));
         }
     }
 
-    private void showError(String message) {
-        errorVerificationCodeLabel.setText(message);
-        errorVerificationCodeLabel.setVisible(true);
+    public String getVerificationCode() {
+        return verificationCodeField.getText().trim();
     }
-
-    public String getVerificationCode() { return verificationCodeField.getText().trim(); }
 }
