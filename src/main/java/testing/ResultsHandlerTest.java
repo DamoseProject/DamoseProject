@@ -1,9 +1,11 @@
-package gui;
+package testing;
 
+import gui.*;
 import model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import javax.swing.*;
+import java.awt.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;

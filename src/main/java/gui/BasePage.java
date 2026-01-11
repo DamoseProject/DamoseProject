@@ -15,14 +15,14 @@ public abstract class BasePage implements GeneralPanel{
     /**
      * Metodo se le sotto-classi non volessero utilizzare BorderLayout in mainPanel
      */
-    protected void setLayout(LayoutManager layout) {
+    public void setLayout(LayoutManager layout) {
         mainPanel.setLayout(layout);
     }
 
     /**
      * Crea un pannello con etichetta sopra e campo centrato.
      */
-    protected JPanel createFieldPanel(String labelName, JComponent field) {
+    public JPanel createFieldPanel(String labelName, JComponent field) {
         JPanel fieldPanel = new JPanel();
         fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
 
@@ -41,7 +41,7 @@ public abstract class BasePage implements GeneralPanel{
     /**
      * Crea un'etichetta di errore rossa e invisibile di default.
      */
-    protected JLabel createErrorLabel() {
+    public JLabel createErrorLabel() {
         JLabel label = new JLabel("");
         label.setForeground(Color.RED);
         label.setAlignmentX(Component.CENTER_ALIGNMENT);

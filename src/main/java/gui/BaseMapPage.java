@@ -358,15 +358,15 @@ public abstract class BaseMapPage extends BasePage {
         }
     }
 
-    protected void setResults(String text) {
+    public void setResults(String text) {
         resultsManager.setResults(text);
     }
 
-    protected String getResearchField() {
+    public String getResearchField() {
         return researchField.getText().trim();
     }
 
-    protected void clearResearchField() {
+    public void clearResearchField() {
         researchField.setText("");
         searchConfirmed = false;
     }
