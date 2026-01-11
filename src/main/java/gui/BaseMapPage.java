@@ -252,7 +252,7 @@ public abstract class BaseMapPage extends BasePage {
         researchField = new JTextField(30);
         researchField.setMaximumSize(new Dimension(Integer.MAX_VALUE, researchField.getPreferredSize().height));
 
-        JPanel researchFieldPanel = createFieldPanel("Inserisci n. Fermata o nome della Linea: ", researchField);
+        JPanel researchFieldPanel = createFieldPanel("Inserisci n. Fermata o nome della Linea e premi Invio: ", researchField);
         errorLabel = createErrorLabel();
         JPanel buttonPanel = createButtonPanel();
 
