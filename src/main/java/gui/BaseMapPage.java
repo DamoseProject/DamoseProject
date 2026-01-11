@@ -23,6 +23,8 @@ public abstract class BaseMapPage extends BasePage {
 
     private MapHandler mapManager;
     private ResultsHandler resultsManager;
+    private StatisticsManager statisticsManager;
+    private ProfileMenuManager profileMenuManager;
 
     protected BaseMapPage(MainFrame frame) {
         super(frame);
@@ -36,6 +38,9 @@ public abstract class BaseMapPage extends BasePage {
             );
             return;
         }
+
+        this.statisticsManager = new StatisticsManager(db);
+        this.profileMenuManager = new ProfileMenuManager(db, frame);
 
         createTopPanel();
         createCenterPanel();
@@ -63,6 +68,17 @@ public abstract class BaseMapPage extends BasePage {
 
         ButtonMapPageConfig config = getButtonConfig();
 
+        JPanel leftPanel = createLeftPanel(config);
+        JLabel mainLabel = new JLabel("Dove vuoi andare?", JLabel.CENTER);
+        mainLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        JPanel rightPanel = createRightPanel();
+
+        topPanel.add(leftPanel);
+        topPanel.add(mainLabel);
+        topPanel.add(rightPanel);
+    }
+
+    private JPanel createLeftPanel(ButtonMapPageConfig config) {
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
         if (config.isShowRegLoginButton()) {
@@ -77,15 +93,16 @@ public abstract class BaseMapPage extends BasePage {
             JButton profileButton = new JButton("👤 " + session.getUsername());
             profileButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             profileButton.addActionListener(e -> {
-                JPopupMenu popupMenu = createProfilePopupMenu(session);
+                JPopupMenu popupMenu = profileMenuManager.createProfilePopupMenu(session);
                 popupMenu.show(profileButton, 0, profileButton.getHeight());
             });
             leftPanel.add(profileButton);
         }
 
-        JLabel mainLabel = new JLabel("Dove vuoi andare?", JLabel.CENTER);
-        mainLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        return leftPanel;
+    }
 
+    private JPanel createRightPanel() {
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 5));
         JButton newsButton = new JButton("\u003F\u20DD");
         newsButton.setBorderPainted(false);
@@ -103,145 +120,11 @@ public abstract class BaseMapPage extends BasePage {
                 errorLabel.setVisible(true);
                 return;
             }
-            showStatisticsPopup(newsButton, searchText);
+            statisticsManager.showStatisticsPopup(newsButton, searchText);
         });
 
         rightPanel.add(newsButton);
-
-        topPanel.add(leftPanel);
-        topPanel.add(mainLabel);
-        topPanel.add(rightPanel);
-    }
-
-    private void showStatisticsPopup(Component invoker, String searchText) {
-        JPopupMenu popupMenu = new JPopupMenu();
-        String text = "";
-
-        try {
-            boolean found = false;
-            Route route = db.getRoute(searchText);
-
-            if (route != null) {
-                found = true;
-                text += "STATISTICHE PER LINEA: " + route.getId() + "\n\n";
-
-                List<Stop> fermate = db.getStopsByRoute(route.getId());
-                for (Stop fermata : fermate) {
-                    double[] stats = db.getStatisticheStoriche(route.getId(), fermata.getId());
-                    text += "Fermata: " + fermata.getId() + " - " + fermata.getName() + "\n";
-                    text += "   Media ritardo: " + String.format("%.2f", stats[0]) + " min\n";
-                    text += "   Corse saltate: " + String.format("%.2f", stats[1]) + "%\n";
-                    text += "--------------------------------------------------\n";
-                }
-            } else {
-                List<Stop> fermateTrovate = new ArrayList<>();
-
-                if (Character.isDigit(searchText.charAt(0)) && searchText.length() == 5) {
-                    Stop s = db.getStop(searchText);
-                    if (s != null) fermateTrovate.add(s);
-                } else {
-                    fermateTrovate = db.getStopsByName(searchText);
-                }
-
-                if (!fermateTrovate.isEmpty()) {
-                    found = true;
-                    text += "STATISTICHE PER FERMATA/E TROVATE:\n";
-                    text += "(Basate sulle linee attualmente in arrivo)\n\n";
-
-                    for (Stop stop : fermateTrovate) {
-                        text += "FERMATA: " + stop.getName() + " (" + stop.getId() + ")\n";
-
-                        List<BusInUnaFermataRecord> arrivi = db.getRealTimeArrivals(stop.getId());
-
-                        Set<String> lineeProcessate = new HashSet<>();
-                        boolean autobusTrovati = false;
-
-                        if (arrivi != null) {
-                            for (BusInUnaFermataRecord bus : arrivi) {
-                                String routeId = bus.getRouteId();
-
-                                if (lineeProcessate.contains(routeId)) {
-                                    continue;
-                                }
-
-                                double[] stats = db.getStatisticheStoriche(routeId, stop.getId());
-
-                                text += "   Linea " + routeId + ":\n";
-                                text += "      Media ritardo: " + String.format("%.2f", stats[0]) + " min\n";
-                                text += "      Corse saltate: " + String.format("%.2f", stats[1]) + "%\n";
-
-                                lineeProcessate.add(routeId);
-                                autobusTrovati = true;
-                            }
-                        }
-
-                        if (!autobusTrovati) {
-                            text += "   Nessun autobus in arrivo al momento.\n";
-                        }
-
-                        text += "--------------------------------------------------\n";
-                    }
-                }
-            }
-
-            if (!found) {
-                text += "Nessuna linea o fermata trovata per: " + searchText;
-            }
-
-        } catch (SQLException ex) {
-            text += "Errore durante il recupero delle statistiche: " + ex.getMessage();
-        }
-
-        JTextArea textArea = new JTextArea(text);
-        textArea.setEditable(false);
-        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        textArea.setMargin(new Insets(10, 10, 10, 10));
-
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setPreferredSize(new Dimension(400, 300));
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-
-        popupMenu.add(scrollPane);
-        popupMenu.show(invoker, -200, invoker.getHeight());
-    }
-
-
-    private JPopupMenu createProfilePopupMenu(UserSession session) {
-        JPopupMenu menu = new JPopupMenu();
-
-        String userEmail = "...";
-        try {
-            User user = db.getUser(session.getUserId());
-            if (user != null) {
-                userEmail = user.getEmail();
-            }
-        } catch (SQLException ex) {
-            userEmail = "Non disponibile";
-        }
-
-        JLabel userLabel = new JLabel("Utente: " + session.getUsername());
-        JLabel emailLabel = new JLabel("Email: " + userEmail);
-
-        userLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
-        emailLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 5, 10));
-
-        Font infoFont = new Font("SansSerif", Font.PLAIN, 11);
-        emailLabel.setFont(infoFont);
-        emailLabel.setForeground(Color.GRAY);
-
-        JMenuItem logoutItem = new JMenuItem("Esci");
-        logoutItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        logoutItem.addActionListener(e -> {
-            session.logout();
-            frame.setView(PageFactory.createPage(PageType.LOGIN, frame));
-        });
-
-        menu.add(userLabel);
-        menu.add(emailLabel);
-        menu.add(new JSeparator());
-        menu.add(logoutItem);
-
-        return menu;
+        return rightPanel;
     }
 
     private void createCenterPanel() {
@@ -252,7 +135,7 @@ public abstract class BaseMapPage extends BasePage {
         researchField = new JTextField(30);
         researchField.setMaximumSize(new Dimension(Integer.MAX_VALUE, researchField.getPreferredSize().height));
 
-        JPanel researchFieldPanel = createFieldPanel("Inserisci n. Fermata o nome della Linea: ", researchField);
+        JPanel researchFieldPanel = createFieldPanel("Inserisci n. Fermata o nome della Linea e premi Invio: ", researchField);
         errorLabel = createErrorLabel();
         JPanel buttonPanel = createButtonPanel();
 
@@ -334,18 +217,8 @@ public abstract class BaseMapPage extends BasePage {
         searchConfirmed = false;
 
         try {
-            List<Stop> fermate = new ArrayList<>();
-            List<Route> linee = new ArrayList<>();
-
-            if (Character.isDigit(search.charAt(0)) && search.length() == 5) {
-                Stop stop = db.getStop(search);
-                if (stop != null) fermate.add(stop);
-            } else {
-                fermate = db.getStopsByName(search);
-            }
-
-            Route route = db.getRoute(search);
-            if (route != null) linee.add(route);
+            List<Stop> fermate = findStops(search);
+            List<Route> linee = findRoutes(search);
 
             resultsManager.showResults(search, fermate, linee);
 
@@ -356,6 +229,26 @@ public abstract class BaseMapPage extends BasePage {
             errorLabel.setText(Constants.DB_SEARCH_ERROR);
             errorLabel.setVisible(true);
         }
+    }
+
+    private List<Stop> findStops(String search) throws SQLException {
+        List<Stop> fermate = new ArrayList<>();
+
+        if (Character.isDigit(search.charAt(0)) && search.length() == 5) {
+            Stop stop = db.getStop(search);
+            if (stop != null) fermate.add(stop);
+        } else {
+            fermate = db.getStopsByName(search);
+        }
+
+        return fermate;
+    }
+
+    private List<Route> findRoutes(String search) throws SQLException {
+        List<Route> linee = new ArrayList<>();
+        Route route = db.getRoute(search);
+        if (route != null) linee.add(route);
+        return linee;
     }
 
     public void setResults(String text) {

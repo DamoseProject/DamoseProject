@@ -25,13 +25,7 @@ public class RegistrationPage extends BasePage {
     }
 
     private void createTopPanel() {
-        topPanel = new JPanel(new BorderLayout());
-        BackButton backButton = new BackButton(frame, () -> frame.setView(PageFactory.createPage(PageType.LOGIN, frame)));
-        backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        JLabel registrationLabel = new JLabel("Registrati!", JLabel.CENTER);
-        topPanel.add(backButton, BorderLayout.WEST);
-        topPanel.add(registrationLabel, BorderLayout.CENTER);
-        topPanel.add(Box.createHorizontalStrut(backButton.getPreferredSize().width), BorderLayout.EAST);
+        topPanel = createTopPanelWithBackButton("Registrati!", PageType.LOGIN);
     }
 
     private void createCenterPanel() {
@@ -59,9 +53,7 @@ public class RegistrationPage extends BasePage {
 
         errorLabel = createErrorLabel();
 
-        JButton registerButton = new JButton("Registrati!");
-        registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        registerButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        JButton registerButton = createStyledButton("Registrati!");
         registerButton.addActionListener(e -> handleRegistration());
 
         centerPanel.add(Box.createVerticalGlue());
@@ -95,7 +87,7 @@ public class RegistrationPage extends BasePage {
             var db = DatabaseConnection.getInstance().getDatabase();
 
             if (db == null) {
-                showError(Constants.CONNECTION_ERROR_DATABASE);
+                showError(errorLabel, Constants.CONNECTION_ERROR_DATABASE);
                 return;
             }
 
@@ -107,30 +99,28 @@ public class RegistrationPage extends BasePage {
                     errorLabel.setVisible(false);
                     frame.setView(PageFactory.createPage(PageType.MAP_LOGGED, frame));
                 } else {
-                    showError("Registrazione avvenuta, ma errore nel login automatico.");
+                    showError(errorLabel, "Registrazione avvenuta, ma errore nel login automatico.");
                 }
             } catch (SQLException ex) {
-                showError(Constants.CONNECTION_ERROR_DATABASE);
+                showError(errorLabel, Constants.CONNECTION_ERROR_DATABASE);
             }
         } else {
-            showError(result.getErrorMessage());
+            showError(errorLabel, result.getErrorMessage());
         }
-    }
-
-    private void showError(String message) {
-        errorLabel.setText(message);
-        errorLabel.setVisible(true);
     }
 
     public String getUsernameRegistration() {
         return usernameField.getText().trim();
     }
+
     public String getEmailRegistration() {
         return emailField.getText().trim();
     }
+
     public String getPasswordRegistration() {
         return new String(passwordField.getPassword());
     }
+
     public String getConfirmPasswordRegistration() {
         return new String(confirmPasswordField.getPassword());
     }

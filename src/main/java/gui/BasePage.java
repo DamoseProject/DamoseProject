@@ -2,8 +2,10 @@ package gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-public abstract class BasePage implements GeneralPanel{
+public abstract class BasePage implements GeneralPanel {
     protected final MainFrame frame;
     protected final JPanel mainPanel;
 
@@ -12,16 +14,10 @@ public abstract class BasePage implements GeneralPanel{
         this.mainPanel = new JPanel(new BorderLayout());
     }
 
-    /**
-     * Metodo se le sotto-classi non volessero utilizzare BorderLayout in mainPanel
-     */
     public void setLayout(LayoutManager layout) {
         mainPanel.setLayout(layout);
     }
 
-    /**
-     * Crea un pannello con etichetta sopra e campo centrato.
-     */
     public JPanel createFieldPanel(String labelName, JComponent field) {
         JPanel fieldPanel = new JPanel();
         fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.Y_AXIS));
@@ -38,9 +34,6 @@ public abstract class BasePage implements GeneralPanel{
         return fieldPanel;
     }
 
-    /**
-     * Crea un'etichetta di errore rossa e invisibile di default.
-     */
     public JLabel createErrorLabel() {
         JLabel label = new JLabel("");
         label.setForeground(Color.RED);
@@ -49,9 +42,65 @@ public abstract class BasePage implements GeneralPanel{
         return label;
     }
 
+    protected JPanel createTopPanelWithBackButton(String centerText, PageType backPageType) {
+        JPanel topPanel = new JPanel(new BorderLayout());
+        BackButton backButton = new BackButton(frame, () -> frame.setView(PageFactory.createPage(backPageType, frame)));
+        backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        JLabel centerLabel = new JLabel(centerText, JLabel.CENTER);
+        topPanel.add(backButton, BorderLayout.WEST);
+        topPanel.add(centerLabel, BorderLayout.CENTER);
+        topPanel.add(Box.createHorizontalStrut(backButton.getPreferredSize().width), BorderLayout.EAST);
+        return topPanel;
+    }
+
+    protected JButton createStyledButton(String text) {
+        JButton button = new JButton(text);
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return button;
+    }
+
+    protected JLabel createClickableLabel(String text, Color color, Runnable onClick) {
+        JLabel label = new JLabel(text, JLabel.CENTER);
+        label.setForeground(color);
+        label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                onClick.run();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                label.setText("<html><u>" + text + "</u></html>");
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                label.setText(text);
+            }
+        });
+
+        return label;
+    }
+
+    protected JPanel createCenteredContentPanel() {
+        JPanel centerPanel = new JPanel();
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        centerPanel.setLayout(new GridBagLayout());
+        centerPanel.add(contentPanel, new GridBagConstraints());
+        return centerPanel;
+    }
+
+    protected void showError(JLabel errorLabel, String message) {
+        errorLabel.setText(message);
+        errorLabel.setVisible(true);
+    }
+
     @Override
     public JPanel getPanel() {
         return mainPanel;
     }
 }
-
