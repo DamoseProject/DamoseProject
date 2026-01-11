@@ -69,8 +69,10 @@ public abstract class BaseMapPage extends BasePage {
         ButtonMapPageConfig config = getButtonConfig();
 
         JPanel leftPanel = createLeftPanel(config);
-        JLabel mainLabel = new JLabel("Dove vuoi andare?", JLabel.CENTER);
+
+        JLabel mainLabel = UIComponentFactory.createLabel("Dove vuoi andare?", JLabel.CENTER);
         mainLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+
         JPanel rightPanel = createRightPanel();
 
         topPanel.add(leftPanel);
@@ -79,19 +81,17 @@ public abstract class BaseMapPage extends BasePage {
     }
 
     private JPanel createLeftPanel(ButtonMapPageConfig config) {
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel leftPanel = UIComponentFactory.createHorizontalPanel(FlowLayout.LEFT);
 
         if (config.isShowRegLoginButton()) {
-            JButton regLoginButton = new JButton("Accedi o Registrati!");
-            regLoginButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            JButton regLoginButton = UIComponentFactory.createStyledButton("Accedi o Registrati!");
             regLoginButton.addActionListener(e ->
                     frame.setView(PageFactory.createPage(PageType.LOGIN, frame))
             );
             leftPanel.add(regLoginButton);
         } else {
             UserSession session = UserSession.getInstance();
-            JButton profileButton = new JButton("👤 " + session.getUsername());
-            profileButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            JButton profileButton = UIComponentFactory.createStyledButton("👤 " + session.getUsername());
             profileButton.addActionListener(e -> {
                 JPopupMenu popupMenu = profileMenuManager.createProfilePopupMenu(session);
                 popupMenu.show(profileButton, 0, profileButton.getHeight());
@@ -128,15 +128,16 @@ public abstract class BaseMapPage extends BasePage {
     }
 
     private void createCenterPanel() {
-        centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel = UIComponentFactory.createVerticalPanel();
         centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 10, 10));
 
         researchField = new JTextField(30);
         researchField.setMaximumSize(new Dimension(Integer.MAX_VALUE, researchField.getPreferredSize().height));
 
         JPanel researchFieldPanel = createFieldPanel("Inserisci n. Fermata o nome della Linea e premi Invio: ", researchField);
-        errorLabel = createErrorLabel();
+
+        errorLabel = UIComponentFactory.createErrorLabel();
+
         JPanel buttonPanel = createButtonPanel();
 
         centerPanel.add(Box.createVerticalStrut(10));
@@ -170,8 +171,7 @@ public abstract class BaseMapPage extends BasePage {
         JPanel mapContainer = new JPanel(new BorderLayout());
         mapContainer.add(mapManager.getMapViewer(), BorderLayout.CENTER);
 
-        resultsPanel = new JPanel();
-        resultsPanel.setLayout(new BoxLayout(resultsPanel, BoxLayout.Y_AXIS));
+        resultsPanel = UIComponentFactory.createVerticalPanel();
         resultsPanel.setBackground(Color.WHITE);
 
         resultsManager = new ResultsHandler(resultsPanel, errorLabel, mapManager, getButtonConfig());
@@ -193,12 +193,12 @@ public abstract class BaseMapPage extends BasePage {
     }
 
     protected JPanel createButtonPanel() {
-        JPanel buttonsPanel = new JPanel();
+        JPanel buttonsPanel = UIComponentFactory.createHorizontalPanel(FlowLayout.CENTER);
+        buttonsPanel = new JPanel();
         buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
-        ButtonMapPageConfig config = getButtonConfig();
 
-        JButton checkFav = new JButton("Preferiti!");
-        checkFav.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        ButtonMapPageConfig config = getButtonConfig();
+        JButton checkFav = UIComponentFactory.createStyledButton("Preferiti!");
 
         if (!config.isViewFavoritesEnabled()) {
             checkFav.addActionListener(e -> {

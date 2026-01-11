@@ -7,6 +7,8 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
 
+import static gui.UIComponentFactory.*;
+
 public class RegistrationPage extends BasePage {
     private JPanel topPanel;
     private JPanel centerPanel;
@@ -29,8 +31,7 @@ public class RegistrationPage extends BasePage {
     }
 
     private void createCenterPanel() {
-        centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel = UIComponentFactory.createVerticalPanel();
 
         usernameField = new JTextField(20);
         JPanel usernamePanel = createFieldPanel("Username: ", usernameField);

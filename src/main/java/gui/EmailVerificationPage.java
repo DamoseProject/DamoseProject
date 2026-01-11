@@ -23,13 +23,12 @@ public class EmailVerificationPage extends BasePage {
     }
 
     private void createCenterPanel() {
-        centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel = UIComponentFactory.createVerticalPanel();
 
         createVerificationCodePanel();
-        errorVerificationCodeLabel = createErrorLabel();
+        errorVerificationCodeLabel = UIComponentFactory.createErrorLabel();
 
-        JButton submitButton = createStyledButton("Fine!");
+        JButton submitButton = UIComponentFactory.createStyledButton("Fine!");
         submitButton.addActionListener(e -> handleSubmit());
 
         centerPanel.add(Box.createVerticalGlue());

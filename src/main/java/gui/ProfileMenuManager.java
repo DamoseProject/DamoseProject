@@ -22,8 +22,8 @@ public class ProfileMenuManager {
 
         String userEmail = getUserEmail(session);
 
-        JLabel userLabel = new JLabel("Utente: " + session.getUsername());
-        JLabel emailLabel = new JLabel("Email: " + userEmail);
+        JLabel userLabel = UIComponentFactory.createLabel("Utente: " + session.getUsername(), JLabel.LEFT);
+        JLabel emailLabel = UIComponentFactory.createLabel("Email: " + userEmail, JLabel.LEFT);
 
         userLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
         emailLabel.setBorder(BorderFactory.createEmptyBorder(2, 10, 5, 10));

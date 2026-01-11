@@ -16,8 +16,8 @@ public class ResultsHandler {
     private final ButtonMapPageConfig config;
     private final Map<JPanel, JPanel> expandedRows = new HashMap<>();
     private JPanel rowSelected = null;
-    private FavoritesManager favoritesManager;
-    private BusRowFactory busRowFactory;
+    private final FavoritesManager favoritesManager;
+    private final BusRowFactory busRowFactory;
 
     public ResultsHandler(JPanel resultsPanel, JLabel errorLabel, MapHandler mapManager, ButtonMapPageConfig config) {
         this.resultsPanel = resultsPanel;
@@ -287,7 +287,8 @@ public class ResultsHandler {
         rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         rowPanel.setBackground(Color.WHITE);
 
-        JLabel resultLabel = new JLabel(resultText);
+        // Utilizzo UIComponentFactory per coerenza
+        JLabel resultLabel = UIComponentFactory.createLabel(resultText, JLabel.LEFT);
         rowPanel.add(resultLabel, BorderLayout.CENTER);
 
         if (resultText.startsWith(Constants.RESULTS_HEADER) || resultText.equals(Constants.FAVORITES_HEADER)) {
@@ -328,6 +329,7 @@ public class ResultsHandler {
                 rowPanel.add(favButton, BorderLayout.EAST);
             }
         } catch (Exception e) {
+            // Ignora se il testo non è parsabile come stop
         }
 
         arrowButton.addActionListener(e -> createSubRows(rowPanel, resultText, arrowButton, highlightRouteId));
@@ -346,6 +348,7 @@ public class ResultsHandler {
         try {
             rowPanel.add(favoritesManager.createFavButtonForRoute(route), BorderLayout.EAST);
         } catch (Exception e) {
+            // Gestione eccezione silente per UI
         }
 
         return rowPanel;
@@ -372,7 +375,8 @@ public class ResultsHandler {
         rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         rowPanel.setBackground(Color.WHITE);
 
-        JLabel resultLabel = new JLabel(text);
+        // Utilizzo UIComponentFactory
+        JLabel resultLabel = UIComponentFactory.createLabel(text, JLabel.LEFT);
         rowPanel.add(resultLabel, BorderLayout.CENTER);
 
         return rowPanel;
@@ -391,6 +395,7 @@ public class ResultsHandler {
             try {
                 mapManager.showRouteDirectionOnMap(route, direction);
             } catch (Exception ex) {
+                // Gestione errore visualizzazione mappa
             }
         });
 

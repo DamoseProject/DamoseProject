@@ -8,6 +8,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class BusRowFactory {
@@ -15,6 +16,9 @@ public class BusRowFactory {
     private final Database db;
     private final JLabel errorLabel;
     private final MapHandler mapManager;
+
+
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     public BusRowFactory(Database db, JLabel errorLabel, MapHandler mapManager) {
         this.db = db;
@@ -31,6 +35,7 @@ public class BusRowFactory {
         JLabel label = new JLabel(infoText);
         label.setFont(new Font("SansSerif", Font.PLAIN, 13));
         label.setForeground(new Color(50, 50, 50));
+        label.setHorizontalAlignment(SwingConstants.LEFT);
 
         rowPanel.add(label, BorderLayout.CENTER);
 
@@ -48,6 +53,7 @@ public class BusRowFactory {
         Color baseColor = isHighlighted ? highlightColor : normalColor;
 
         rowPanel.setBackground(baseColor);
+
         rowPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
                 BorderFactory.createEmptyBorder(8, 5, 8, 5)
@@ -60,14 +66,12 @@ public class BusRowFactory {
     }
 
     private String buildBusInfoText(BusInUnaFermataRecord bus) {
-        java.time.format.DateTimeFormatter timeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
-
         if (bus.isRealTime()) {
             return buildRealTimeInfo(bus);
         } else if (bus.getIsSmartPredicted()) {
-            return buildSmartPredictedInfo(bus, timeFormatter);
+            return buildSmartPredictedInfo(bus);
         } else {
-            return buildStaticInfo(bus, timeFormatter);
+            return buildStaticInfo(bus);
         }
     }
 
@@ -97,21 +101,21 @@ public class BusRowFactory {
                 "</nobr></html>";
     }
 
-    private String buildSmartPredictedInfo(BusInUnaFermataRecord bus, java.time.format.DateTimeFormatter timeFormatter) {
+    private String buildSmartPredictedInfo(BusInUnaFermataRecord bus) {
         LocalTime orarioPredetto = bus.getOrarioEffettivo();
         LocalTime orarioProgrammato = bus.getOrarioStatico();
 
         return "<html><nobr><b>🚌 " + bus.getRouteId() + "</b> → " + bus.getTextDestination() +
-                " <span style='color:gray'>| Arrivo programmato: " + orarioProgrammato.format(timeFormatter) + "</span>" +
-                " <span style='color:#0044CC'>| Previsione: " + orarioPredetto.format(timeFormatter) + "</span>" +
+                " <span style='color:gray'>| Arrivo programmato: " + orarioProgrammato.format(TIME_FORMATTER) + "</span>" +
+                " <span style='color:#0044CC'>| Previsione: " + orarioPredetto.format(TIME_FORMATTER) + "</span>" +
                 "</nobr></html>";
     }
 
-    private String buildStaticInfo(BusInUnaFermataRecord bus, java.time.format.DateTimeFormatter timeFormatter) {
+    private String buildStaticInfo(BusInUnaFermataRecord bus) {
         LocalTime orarioStatico = bus.getOrarioStatico();
 
         return "<html><nobr><b>🚌 " + bus.getRouteId() + "</b> → " + bus.getTextDestination() +
-                " <span style='color:gray'>| Arrivo programmato: " + orarioStatico.format(timeFormatter) + "</span>" +
+                " <span style='color:gray'>| Arrivo programmato: " + orarioStatico.format(TIME_FORMATTER) + "</span>" +
                 "</nobr></html>";
     }
 
@@ -164,7 +168,6 @@ public class BusRowFactory {
                 }
             }
         }
-
         return direction;
     }
 }
