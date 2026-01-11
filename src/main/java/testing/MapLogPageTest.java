@@ -1,38 +1,34 @@
-package testing;
+package gui;
 
-import gui.ButtonMapPageConfig;
-import gui.MapLogPage;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MapLogPageTest {
 
     private MapLogPage mapLogPage;
+    private MainFrame mockFrame;
 
     @BeforeEach
     void setUp() {
-        // Nota: se BaseMapPage prova a connettersi al DB nel costruttore,
-        // assicurati che il DB sia attivo o mockato come discusso prima.
-        mapLogPage = new MapLogPage(null);
+        mockFrame = new MainFrame();
+        mapLogPage = new MapLogPage(mockFrame);
     }
 
     @Test
-    @DisplayName("MapLogPage deve restituire la configurazione per utente loggato")
-    void testGetButtonConfigForLoggedUser() {
+    @DisplayName("La pagina deve restituire la configurazione per utente loggato")
+    void testConfigIsForLoggedUser() {
         ButtonMapPageConfig config = mapLogPage.getButtonConfig();
 
-        assertNotNull(config, "La configurazione non deve essere null");
-
-        // Verifichiamo che i permessi siano quelli di un utente loggato
         assertAll("Verifica permessi utente loggato",
-                () -> assertTrue(config.isFavoritesEnabled(),
-                        "In MapLogPage i preferiti dovrebbero essere abilitati"),
-                () -> assertTrue(config.isViewFavoritesEnabled(),
-                        "In MapLogPage la visualizzazione preferiti dovrebbe essere abilitata"),
-                () -> assertFalse(config.isShowRegLoginButton(),
-                        "In MapLogPage il tasto Login non dovrebbe essere mostrato")
+                () -> assertTrue(config.isFavoritesEnabled(), "I preferiti dovrebbero essere abilitati"),
+                () -> assertTrue(config.isViewFavoritesEnabled(), "La visualizzazione preferiti dovrebbe essere abilitata"),
+                () -> assertFalse(config.isShowRegLoginButton(), "Il tasto login non dovrebbe essere mostrato")
         );
+    }
+
+    @Test
+    @DisplayName("Il pannello principale non deve essere nullo")
+    void testPanelPresence() {
+        assertNotNull(mapLogPage.getPanel());
     }
 }

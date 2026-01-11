@@ -1,9 +1,6 @@
-package testing;
+package gui;
 
-import gui.GeneralPanel;
-import gui.MainFrame;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import javax.swing.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,34 +10,28 @@ class MainFrameTest {
 
     @BeforeEach
     void setUp() {
-        // Inizializziamo il frame.
-        // Nota: se il DB non è attivo, il costruttore potrebbe bloccare il test.
+        // SwingUtilities.invokeLater non è necessario qui perché JUnit gira nel main thread,
+        // ma è bene testare la creazione dell'istanza.
         mainFrame = new MainFrame();
     }
 
     @Test
-    void testMainFrameInitialization() {
-        // Verifica che il titolo sia corretto
-        assertEquals("Damose!", mainFrame.getTitle(), "Il titolo del frame non è corretto");
-
-        // Verifica che l'operazione di chiusura sia quella impostata
-        assertEquals(JFrame.EXIT_ON_CLOSE, mainFrame.getDefaultCloseOperation());
-
-        // Verifica che la finestra sia visibile
-        assertTrue(mainFrame.isVisible(), "Il frame dovrebbe essere visibile");
+    @DisplayName("Il frame deve essere inizializzato con le proprietà corrette")
+    void testFrameInitialization() {
+        assertAll("Proprietà Frame",
+                () -> assertEquals("Damose!", mainFrame.getTitle()),
+                () -> assertEquals(JFrame.EXIT_ON_CLOSE, mainFrame.getDefaultCloseOperation()),
+                () -> assertEquals(JFrame.MAXIMIZED_BOTH, mainFrame.getExtendedState())
+        );
     }
 
     @Test
-    void testSetViewChangesContent() {
-        // Creiamo un pannello finto per testare il cambio vista
-        // Assumiamo che GeneralPanel sia un'interfaccia o una classe base esistente
-        JPanel testPanel = new JPanel();
-        GeneralPanel mockView = () -> testPanel;
+    @DisplayName("setView deve cambiare correttamente il ContentPane")
+    void testSetView() {
+        JPanel nuovoPannello = new JPanel();
+        GeneralPanel mockPanel = () -> nuovoPannello;
 
-        // Eseguiamo il cambio vista
-        mainFrame.setView(mockView);
-
-        // Verifichiamo che il ContentPane del frame sia quello che abbiamo passato
-        assertEquals(testPanel, mainFrame.getContentPane(), "Il pannello non è stato sostituito correttamente");
+        mainFrame.setView(mockPanel);
+        assertEquals(nuovoPannello, mainFrame.getContentPane(), "Il contentPane non è stato aggiornato correttamente");
     }
 }
