@@ -59,21 +59,8 @@ public class GtfsRealtimeExample {
 
         List<Stop> stops = db.getStopsByName("Termini");
 
-        for(Stop stop : stops){
-            BusInUnaFermataRecord bus = db.getNextArrival(stop.getId(), true);
 
 
-
-           if(bus == null)
-               continue;
-
-            Trip trip = db.getTrip(bus.getTripId());
-            Optional<PosizioneTrip> posizione = db.getRealTimePosition(trip);
-
-            if(posizione.isEmpty()) continue;
-            System.out.println(posizione.get().getPosition());
-
-        }
 
 
 
@@ -110,19 +97,6 @@ public class GtfsRealtimeExample {
 
 
 
-        //Aggiornamenti fermate
-        for(TripUpdate.StopTimeUpdate aggiornamentoFermata : aggiornamentiFermate){
-            String nextStopId = aggiornamentoFermata.getStopId();
-
-            TripUpdate.StopTimeEvent arrivo = aggiornamentoFermata.getArrival();
-            long arrivoOra = arrivo.getTime();
-
-
-            System.out.println(db.getStop(nextStopId).getName());
-            System.out.println("Arrivo: " + TimeManager.getDate(arrivoOra, "hh:mm"));
-
-        }
-        System.exit(0);
 
     }
 

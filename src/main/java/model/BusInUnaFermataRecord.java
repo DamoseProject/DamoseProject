@@ -14,6 +14,8 @@ public class BusInUnaFermataRecord implements Comparable<BusInUnaFermataRecord> 
     private final String arrivalTimeStr;
     private final String departureTimeStr;
 
+    private String affollamento = "DATO NON DISPONIBILE";
+
     private boolean isRealTime = false;
     private boolean isSmartPredicted = false; // True se è una stima storica
     private long delayInSeconds = 0;
@@ -33,8 +35,7 @@ public class BusInUnaFermataRecord implements Comparable<BusInUnaFermataRecord> 
 
 
     /**
-     * Restituisce l'orario originale programmato (Tabella).
-     * Utile per UI: "10:30"
+     * Restituisce l'orario originale programmato (dati statici).
      */
     public LocalTime getOrarioStatico() {
         return parseGtfsTime(this.arrivalTimeStr);
@@ -42,7 +43,6 @@ public class BusInUnaFermataRecord implements Comparable<BusInUnaFermataRecord> 
 
     /**
      * Calcola l'orario effettivo sommando il ritardo all'orario schedulato.
-     * Utile per UI: "10:35" (se 5 min ritardo)
      */
     public LocalTime getOrarioEffettivo() {
         LocalTime baseTime = getOrarioStatico();
@@ -52,8 +52,6 @@ public class BusInUnaFermataRecord implements Comparable<BusInUnaFermataRecord> 
 
     /**
      * Imposta il ritardo.
-     * NOTA: Non imposta automaticamente isRealTime a true, perché
-     * potremmo impostare un ritardo basato sullo STORICO (Smart).
      */
     public void setRitardoInSecondi(long secondi) {
         this.delayInSeconds = secondi;
@@ -69,20 +67,18 @@ public class BusInUnaFermataRecord implements Comparable<BusInUnaFermataRecord> 
             int minute = Integer.parseInt(parts[1]);
             int second = Integer.parseInt(parts[2]);
 
-            // Gestione orari notturni dopo la mezzanotte (24, 25, 26...)
+            // Gestione orari notturni dopo la mezzanotte
             while (hour >= 24) {
                 hour -= 24;
             }
             return LocalTime.of(hour, minute, second);
         } catch (Exception e) {
-            // Fallback in caso di errori di parsing strani
             return LocalTime.of(0, 0, 0);
         }
     }
 
     @Override
     public int compareTo(BusInUnaFermataRecord other) {
-        // Ordiniamo in base all'orario in cui il bus arriverà VERAMENTE
         return this.getOrarioEffettivo().compareTo(other.getOrarioEffettivo());
     }
 
@@ -100,4 +96,7 @@ public class BusInUnaFermataRecord implements Comparable<BusInUnaFermataRecord> 
 
     public boolean getIsSmartPredicted(){ return isSmartPredicted; }
     public void setIsSmartPredicted(boolean isSmartPredicted) { this.isSmartPredicted = isSmartPredicted; }
+
+    public String getAffollamento() {return affollamento;}
+    public void setAffollamento(String affollamento) {this.affollamento = affollamento;}
 }

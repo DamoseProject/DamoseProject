@@ -56,7 +56,6 @@ public class Database {
     }
 
     private void createNewDatabaseStructure() throws SQLException {
-        // Uso try-with-resources per garantire la chiusura dello Statement
         try (Statement stmt = connection.createStatement()) {
 
             // UTENTE
@@ -94,7 +93,7 @@ public class Database {
                     "FOREIGN KEY(FERMATA_ID) REFERENCES Fermata(ID), " +
                     "FOREIGN KEY(VIAGGIO_ID) REFERENCES Viaggio(ID))");
 
-            // INDICI (Performance)
+            // INDICI
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_fermata_orario_fermata ON FERMATA_ORARIO(FERMATA_ID)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_fermata_orario_viaggio ON FERMATA_ORARIO(VIAGGIO_ID)");
 
@@ -119,7 +118,7 @@ public class Database {
             stmt.execute("CREATE TABLE IF NOT EXISTS STORICO_PERFORMANCE (" +
                     "ROUTE_ID TEXT, " +
                     "STOP_ID TEXT, " +
-                    "RITARDO_RILEVATO INTEGER, " + // in secondi
+                    "RITARDO_RILEVATO INTEGER, " +
                     "CORSA_SALTATA INTEGER, " +    // 0 = passata, 1 = saltata
                     "DATA_OSSERVAZIONE DATE DEFAULT CURRENT_DATE)");
 
@@ -253,7 +252,6 @@ public class Database {
      */
     public List<Stop> getStopsByRoute(String routeId) throws SQLException {
         List<Stop> stops = new ArrayList<>();
-        // Seleziona le fermate distinte collegate ai viaggi di quel percorso
         String sql = "SELECT DISTINCT F.* " +
                 "FROM Fermata F " +
                 "INNER JOIN FERMATA_ORARIO FO ON F.ID = FO.FERMATA_ID " +
@@ -277,10 +275,12 @@ public class Database {
         return stops;
     }
 
-
+    /**
+     * Restituisce tutte le fermate attraversate da una linea, in una specifica direzione.
+     * @param direction Per il parametro Direction si usa 0 per una direzione, 1 per l'altra.
+     */
     public List<Stop> getStopsByRouteByDirection(String routeId, int direction) throws SQLException {
         List<Stop> stops = new ArrayList<>();
-        // Seleziona le fermate distinte collegate ai viaggi di quel percorso
         String sql = "SELECT F.* " +
                 "FROM Fermata F " +
                 "INNER JOIN FERMATA_ORARIO FO ON F.ID = FO.FERMATA_ID " +
@@ -313,7 +313,10 @@ public class Database {
 
 
 
-
+    /**
+     * Restituisce una Route dal suo id
+     * @param id id della Route
+     */
     public Route getRoute(String id) throws SQLException {
         String sql = "SELECT * FROM Percorso WHERE ID = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -327,6 +330,10 @@ public class Database {
         return null;
     }
 
+    /**
+     * Restituisce tutte le linee che contengono il parametro name nel loro nome
+     * @param name nome linea
+     */
     public List<Route> getRoutesByName(String name) throws SQLException {
         List<Route> routes = new ArrayList<>();
         String sql = "SELECT * FROM PERCORSO WHERE NOME_BREVE LIKE ?";
@@ -341,6 +348,10 @@ public class Database {
         return routes;
     }
 
+    /**
+     * Restituisce un Viaggio in base al suo id
+     * @param id TripID
+     */
     public Trip getTrip(String id) throws SQLException {
         String sql = "SELECT * FROM Viaggio WHERE ID = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -381,32 +392,6 @@ public class Database {
     // ==================================================================================
     // 4. QUERY COMPLESSE: GESTIONE SEPARATA STATIC / DYNAMIC / SMART
     // ==================================================================================
-
-    public List<BusInUnaFermataRecord> getArrivals(String stopId, boolean online) throws SQLException {
-        if (online) {
-            return getRealTimeArrivals(stopId);
-        } else {
-            return getStaticArrivals(stopId);
-        }
-    }
-
-    public List<BusInUnaFermataRecord> getArrivalsByRoute(String stopId, String routeId, boolean online) throws SQLException {
-        if (online) {
-            return getRealTimeArrivalsByRoute(stopId, routeId);
-        } else {
-            return getStaticArrivalsByRoute(stopId, routeId);
-        }
-    }
-
-    public BusInUnaFermataRecord getNextArrival(String stopId, boolean online) throws SQLException {
-        List<BusInUnaFermataRecord> list = getArrivals(stopId, online);
-        return list.isEmpty() ? null : list.get(0);
-    }
-
-    public BusInUnaFermataRecord getNextArrivalByRoute(String stopId, String routeId, boolean online) throws SQLException {
-        List<BusInUnaFermataRecord> list = getArrivalsByRoute(stopId, routeId, online);
-        return list.isEmpty() ? null : list.get(0);
-    }
 
     // --- LOGICA STATICA ---
 
@@ -453,7 +438,6 @@ public class Database {
         List<BusInUnaFermataRecord> result = new ArrayList<>();
 
         // Se non c'è internet, questo metodo cattura l'eccezione internamente e non fa nulla
-        // Le mappe di ritardi rimarranno vuote (o vecchie)
         RealTimeHandler.refreshData();
 
         for (BusInUnaFermataRecord bus : list) {
@@ -463,7 +447,7 @@ public class Database {
             // 2. Se ritardo è 0 (o perché bus puntuale, o perché OFFLINE, o perché manca segnale GPS)
             if (bus.getDelayInSeconds() == 0) {
 
-                // Interroghiamo lo storico locale (che funziona anche Offline!)
+                // Interroghiamo lo storico locale
                 double[] stats = getStatisticheStoriche(bus.getRouteId(), stopId);
                 long ritardoStorico = (long) stats[0];
 
@@ -473,12 +457,10 @@ public class Database {
                     bus.setIsSmartPredicted(true); // Flag per indicare che è una stima storica
                 }
             } else {
-                // Se ritardo > 0 dal RealTimeHandler, allora è REAL TIME vero
+                // Se ritardo > 0 dal RealTimeHandler, allora è REAL TIME
                 bus.setRealTime(true);
             }
 
-            // Nota: getOrarioEffettivo calcola "OrarioDB + Ritardo".
-            // L'orario DB (stringa) rimane intatto dentro l'oggetto.
             LocalTime effective = bus.getOrarioEffettivo();
 
             if (effective.isAfter(now.minusSeconds(30))) {
@@ -581,7 +563,6 @@ public class Database {
     }
 
     public List<Route> getFavouriteRoutesByUser(User user) throws SQLException {
-        // NOTA: Ho corretto PREFERITI_PERCORSI in PREFERITI_LINEE
         String sql = "SELECT * FROM PREFERITI_LINEE WHERE UTENTE_ID = ?";
         List<Route> routes = new ArrayList<>();
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -596,7 +577,6 @@ public class Database {
     }
 
     public void removeUserFavouriteRoute(User user, Route route) throws SQLException {
-        // NOTA: Ho corretto PREFERITI_PERCORSI in PREFERITI_LINEE
         String sql = "DELETE FROM PREFERITI_LINEE WHERE UTENTE_ID = ? AND PERCORSO_ID = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, user.getId());

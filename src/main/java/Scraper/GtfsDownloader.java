@@ -23,31 +23,50 @@ public class GtfsDownloader {
      * Controlla se ci sono aggiornamenti.
      * @return true se sono stati scaricati nuovi dati, false se siamo già aggiornati.
      */
+
+
+
+    public static boolean checkForUpdates() {
+
+        try{
+
+
+        System.out.println("=== VERIFICA AGGIORNAMENTI GTFS ===");
+
+        // 1. Scarica l'MD5 remoto (la firma del file online)
+        String remoteMD5 = downloadString(BASE_URL + MD5_FILENAME).trim();
+        System.out.println(">> MD5 Remoto: " + remoteMD5);
+
+        // 2. Leggi l'MD5 locale (la firma dell'ultimo file scaricato)
+        String localMD5 = readLocalMD5();
+        System.out.println(">> MD5 Locale: " + (localMD5.isEmpty() ? "Nessuno (Primo avvio)" : localMD5));
+
+        // 3. Confronta
+        if (remoteMD5.equals(localMD5)) {
+            System.out.println(">> I dati sono già aggiornati. Nessun download necessario.");
+            return false; // Nessun aggiornamento
+        }
+        return true;
+        }
+        catch (Exception e){
+            return false;
+        }
+    }
+
+
     public static boolean downloadIfNew() {
         try {
             createDirIfNotExists();
 
-            System.out.println("=== VERIFICA AGGIORNAMENTI GTFS ===");
-
-            // 1. Scarica l'MD5 remoto (la firma del file online)
-            String remoteMD5 = downloadString(BASE_URL + MD5_FILENAME).trim();
-            System.out.println(">> MD5 Remoto: " + remoteMD5);
-
-            // 2. Leggi l'MD5 locale (la firma dell'ultimo file scaricato)
-            String localMD5 = readLocalMD5();
-            System.out.println(">> MD5 Locale: " + (localMD5.isEmpty() ? "Nessuno (Primo avvio)" : localMD5));
-
-            // 3. Confronta
-            if (remoteMD5.equals(localMD5)) {
-                System.out.println(">> I dati sono già aggiornati. Nessun download necessario.");
-                return false; // Nessun aggiornamento
-            }
+            boolean newUpdate = checkForUpdates();
+            if(!newUpdate) return false;
 
             // 4. Se diverso, scarica il file ZIP
             System.out.println(">> Trovata nuova versione! Avvio download ZIP...");
             downloadZipAndExtract();
 
             // 5. Salva il nuovo MD5 come riferimento per la prossima volta
+            String remoteMD5 = downloadString(BASE_URL + MD5_FILENAME).trim();
             writeLocalMD5(remoteMD5);
 
             System.out.println("=== DOWNLOAD E ESTRAZIONE COMPLETATI ===");
@@ -98,7 +117,6 @@ public class GtfsDownloader {
         // Estrai
         unzip(zipPath.toString(), DOWNLOAD_DIR);
 
-        // Elimina zip per pulizia
         Files.delete(zipPath);
     }
 

@@ -28,6 +28,13 @@ public class RegistrationAuth {
         return email != null && !email.isEmpty();
     }
 
+    public boolean validateEmail() {
+        boolean hasValidSuffix = email.endsWith("@gmail.com") ||
+                email.endsWith("@tiscali.it") ||
+                email.endsWith("@yahoo.com");
+        return hasValidSuffix && email.indexOf('@') > 0;
+    }
+
     public boolean validatePresencePassword() {
         return password != null && !password.isEmpty();
     }
@@ -62,4 +69,6 @@ public class RegistrationAuth {
 
         return hasUppercase && hasDigit && hasSpecialChar;
     }
+
+
 }

@@ -18,7 +18,6 @@ public class DataCollector {
     private final Database db;
 
     // Cache per ricordare cosa abbiamo già salvato in questa sessione
-    // Formato stringa: "TRIP_ID#STOP_ID"
     private final Set<String> datiGiaSalvati = new HashSet<>();
 
     public DataCollector(Database db) {
@@ -27,7 +26,6 @@ public class DataCollector {
 
     /**
      * Avvia il ciclo infinito di raccolta dati.
-     * Blocca il thread corrente, quindi eseguilo in un main separato.
      */
     public void avviaRaccoltaDati() {
         System.out.println("=== DATA COLLECTOR AVVIATO ===");
@@ -54,7 +52,6 @@ public class DataCollector {
             long fine = System.currentTimeMillis();
             System.out.println("[COLLECTOR] Ciclo finito in " + (fine - inizio) + "ms.");
 
-            // Attende 60 secondi prima del prossimo giro
             try {
                 TimeUnit.SECONDS.sleep(60);
             } catch (InterruptedException e) {
@@ -67,7 +64,6 @@ public class DataCollector {
         String tripId = tu.getTrip().getTripId();
         String routeId = tu.getTrip().getRouteId();
 
-        // Se il feed non contiene la RouteID, la cerchiamo nel DB (opzionale, ma più sicuro)
         if (routeId == null || routeId.isEmpty()) {
             try {
                 routeId = db.getTrip(tripId).getRouteId();
@@ -91,7 +87,6 @@ public class DataCollector {
                 continue;
             }
 
-            // Calcoliamo il ritardo (Arrival o Departure)
             long delay = 0;
             if (stu.hasArrival() && stu.getArrival().hasDelay()) {
                 delay = stu.getArrival().getDelay();
@@ -99,8 +94,7 @@ public class DataCollector {
                 delay = stu.getDeparture().getDelay();
             }
 
-            // Logica: Salviamo solo se il ritardo è significativo o se vogliamo tutto
-            // Qui salviamo tutto per avere una statistica completa
+
             try {
                 db.salvaOsservazioneStorica(routeId, stopId, (int) delay, false);
 
@@ -113,13 +107,10 @@ public class DataCollector {
         }
     }
 
-    /**
-     * MAIN DI ESECUZIONE
-     * Esegui questo metodo (tasto destro -> Run) per popolare il DB.
-     */
+
     public static void main(String[] args) {
         Database db = new Database();
-        db.connect(); // Assicurati che il file .db sia raggiungibile
+        db.connect();
 
         DataCollector collector = new DataCollector(db);
         collector.avviaRaccoltaDati();
