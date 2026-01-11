@@ -27,7 +27,7 @@ public class FavoritesManager {
 
     public JButton createFavButtonForStop(Stop stop) {
         String initialIcon = getInitialIconForStop(stop);
-        JButton favButton = createBaseFavButton(initialIcon);
+        JButton favButton = UIComponentFactory.createSymbolButton(initialIcon, 15);
 
         favButton.addActionListener(e -> handleStopFavoriteToggle(favButton, stop));
         return favButton;
@@ -35,20 +35,9 @@ public class FavoritesManager {
 
     public JButton createFavButtonForRoute(Route route) {
         String initialIcon = getInitialIconForRoute(route);
-        JButton favButton = createBaseFavButton(initialIcon);
+        JButton favButton = UIComponentFactory.createSymbolButton(initialIcon, 15);
 
         favButton.addActionListener(e -> handleRouteFavoriteToggle(favButton, route));
-        return favButton;
-    }
-
-    private JButton createBaseFavButton(String initialIcon) {
-        JButton favButton = new JButton(initialIcon);
-        favButton.setPreferredSize(new Dimension(30, 25));
-        favButton.setFont(new Font("SansSerif", Font.PLAIN, 15));
-        favButton.setBorderPainted(false);
-        favButton.setContentAreaFilled(false);
-        favButton.setFocusPainted(false);
-        favButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return favButton;
     }
 

@@ -135,7 +135,7 @@ public class MapHandler {
 
                         if (!labelHtml.isEmpty()) {
                             JLabel info = new JLabel(labelHtml);
-                            info.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+                            info.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
                             popup.add(info);
                             popup.show(mapViewer, e.getX(), e.getY());
                         }
@@ -178,8 +178,18 @@ public class MapHandler {
 
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, 0), "zoomIn");
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, 0), "zoomOut");
-        actionMap.put("zoomIn", new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { mapViewer.setZoom(mapViewer.getZoom() - 1); } });
-        actionMap.put("zoomOut", new AbstractAction() { @Override public void actionPerformed(ActionEvent e) { mapViewer.setZoom(mapViewer.getZoom() + 1); } });
+        actionMap.put("zoomIn", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mapViewer.setZoom(mapViewer.getZoom() - 1);
+            }
+        });
+        actionMap.put("zoomOut", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mapViewer.setZoom(mapViewer.getZoom() + 1);
+            }
+        });
         mapViewer.addMouseWheelListener(e -> mapViewer.setZoom(mapViewer.getZoom() - e.getWheelRotation()));
     }
 
@@ -196,7 +206,7 @@ public class MapHandler {
         waypointPainter.setRenderer((g, map, wp) -> {
             Point2D p = map.getTileFactory().geoToPixel(wp.getPosition(), map.getZoom());
             g.setFont(new Font("SansSerif", Font.PLAIN, 40));
-            g.drawString("📍", (int)p.getX() - 10, (int)p.getY());
+            g.drawString("📍", (int) p.getX() - 10, (int) p.getY());
         });
         mapViewer.setOverlayPainter(waypointPainter);
         mapViewer.repaint();
@@ -246,9 +256,9 @@ public class MapHandler {
             Point2D p = map.getTileFactory().geoToPixel(wp.getPosition(), map.getZoom());
             g.setFont(new Font("SansSerif", Font.PLAIN, 40));
             if (wp instanceof BusWaypoint) {
-                g.drawString("🚌", (int)p.getX() - 15, (int)p.getY());
+                g.drawString("🚌", (int) p.getX() - 15, (int) p.getY());
             } else {
-                g.drawString("📍", (int)p.getX() - 10, (int)p.getY());
+                g.drawString("📍", (int) p.getX() - 10, (int) p.getY());
             }
         });
 
@@ -256,14 +266,14 @@ public class MapHandler {
         mapViewer.setOverlayPainter(compoundPainter);
 
         mapViewer.setAddressLocation(centerPosition);
-        mapViewer.setZoom(3); // Zoom un po' più lontano per vedere il contesto
+        mapViewer.setZoom(3);
         mapViewer.revalidate();
         mapViewer.repaint();
     }
 
     public void showRouteDirectionOnMap(Route route, int direction) throws SQLException {
         Database db = DatabaseConnection.getInstance().getDatabase();
-        if(db == null) return;
+        if (db == null) return;
         List<Stop> fermate = db.getStopsByRouteByDirection(route.getId(), direction);
         if (fermate.isEmpty()) return;
 
@@ -280,7 +290,7 @@ public class MapHandler {
         waypointPainter.setRenderer((g, map, wp) -> {
             Point2D p = map.getTileFactory().geoToPixel(wp.getPosition(), map.getZoom());
             g.setFont(new Font("SansSerif", Font.PLAIN, 40));
-            g.drawString("📍", (int)p.getX() - 10, (int)p.getY());
+            g.drawString("📍", (int) p.getX() - 10, (int) p.getY());
         });
         CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>(Arrays.asList(routePainter, waypointPainter));
         mapViewer.setOverlayPainter(compoundPainter);
@@ -289,5 +299,7 @@ public class MapHandler {
         mapViewer.repaint();
     }
 
-    public JXMapViewer getMapViewer() { return mapViewer; }
+    public JXMapViewer getMapViewer() {
+        return mapViewer;
+    }
 }

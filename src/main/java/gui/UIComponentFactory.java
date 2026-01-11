@@ -2,12 +2,15 @@ package gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class UIComponentFactory {
 
     public static JButton createStyledButton(String text) {
         JButton button = new JButton(text);
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
         return button;
     }
 
@@ -44,15 +47,63 @@ public class UIComponentFactory {
         return arrowButton;
     }
 
-    public static JLabel createClickableLabel(String text, String underlinedText) {
-        JLabel label = new JLabel(text);
+    public static JButton createSymbolButton(String symbol, int fontSize) {
+        JButton button = new JButton(symbol);
+        button.setPreferredSize(new Dimension(30, 25));
+        button.setFont(new Font("SansSerif", Font.PLAIN, fontSize));
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setFocusPainted(false);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return button;
+    }
+
+    public static JLabel createClickableLabel(String text, Color color, Runnable onClick) {
+        JLabel label = new JLabel(text, JLabel.CENTER);
+        label.setForeground(color);
         label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        if (onClick != null) {
+            label.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    onClick.run();
+                }
+
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    label.setText("<html><u>" + text + "</u></html>");
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    label.setText(text);
+                }
+            });
+        }
         return label;
     }
 
+
+    public static JLabel createLabel(String text, int alignment) {
+        JLabel label = new JLabel(text, alignment);
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        return label;
+    }
+
+    public static JLabel createErrorLabel() {
+        JLabel label = new JLabel("");
+        label.setForeground(Color.RED);
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        label.setVisible(false);
+        return label;
+    }
+
+
+
     public static JPanel createHorizontalPanel(int alignment) {
-        JPanel panel = new JPanel(new FlowLayout(alignment));
-        return panel;
+        return new JPanel(new FlowLayout(alignment));
     }
 
     public static JPanel createVerticalPanel() {

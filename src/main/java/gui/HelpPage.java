@@ -16,18 +16,13 @@ public class HelpPage extends BasePage {
     }
 
     private void createTopPanel() {
-        topPanel = new JPanel(new BorderLayout());
-        BackButton backButton = new BackButton(frame, () -> frame.setView(PageFactory.createPage(PageType.LOGIN, frame)));
-        backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        topPanel.add(backButton, BorderLayout.WEST);
+        topPanel = createTopPanelWithBackButton("Q&A", PageType.LOGIN);
     }
 
     private void createCenterPanel() {
-        centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel = UIComponentFactory.createVerticalPanel();
 
-        JLabel helpLabel = new JLabel(getHelpText(), JLabel.CENTER);
-        helpLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JLabel helpLabel = UIComponentFactory.createLabel(getHelpText(), JLabel.CENTER);
 
         centerPanel.add(Box.createVerticalGlue());
         centerPanel.add(helpLabel);

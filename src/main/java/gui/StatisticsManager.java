@@ -24,6 +24,7 @@ public class StatisticsManager {
         textArea.setEditable(false);
         textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         textArea.setMargin(new Insets(10, 10, 10, 10));
+        textArea.setBackground(new Color(250, 250, 250)); // Coerenza estetica
 
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setPreferredSize(new Dimension(400, 300));
@@ -38,12 +39,15 @@ public class StatisticsManager {
 
         try {
             boolean found = false;
+
+            // Cerca prima come Route
             Route route = db.getRoute(searchText);
 
             if (route != null) {
                 found = true;
                 text.append(buildRouteStatistics(route));
             } else {
+                // Altrimenti cerca come Stop
                 List<Stop> fermateTrovate = findStops(searchText);
 
                 if (!fermateTrovate.isEmpty()) {
@@ -123,7 +127,7 @@ public class StatisticsManager {
     private List<Stop> findStops(String searchText) throws SQLException {
         List<Stop> fermateTrovate = new ArrayList<>();
 
-        if (Character.isDigit(searchText.charAt(0)) && searchText.length() == 5) {
+        if (!searchText.isEmpty() && Character.isDigit(searchText.charAt(0)) && searchText.length() == 5) {
             Stop s = db.getStop(searchText);
             if (s != null) fermateTrovate.add(s);
         } else {

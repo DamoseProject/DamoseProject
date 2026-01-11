@@ -5,9 +5,9 @@ import model.User;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.sql.SQLException;
+
+import static gui.UIComponentFactory.*;
 
 public class LoginPage extends BasePage {
     private JPanel topPanel;
@@ -29,14 +29,16 @@ public class LoginPage extends BasePage {
 
     private void createTopPanel() {
         topPanel = new JPanel(new GridLayout(1, 3));
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        JPanel leftPanel = createHorizontalPanel(FlowLayout.LEFT);
 
         JLabel infoLabel = createClickableLabel("Q&A", Color.BLACK,
                 () -> frame.setView(PageFactory.createPage(PageType.HELP, frame))
         );
 
         leftPanel.add(infoLabel);
-        JLabel loginLabel = new JLabel("Login!", SwingConstants.CENTER);
+
+        JLabel loginLabel = createLabel("Login!", JLabel.CENTER);
         JPanel rightPanel = new JPanel();
 
         topPanel.add(leftPanel);
@@ -79,15 +81,17 @@ public class LoginPage extends BasePage {
     }
 
     private JPanel createRegisterPanel() {
-        JPanel registerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        JPanel registerPanel = createHorizontalPanel(FlowLayout.CENTER);
+        ((FlowLayout)registerPanel.getLayout()).setHgap(0);
+        ((FlowLayout)registerPanel.getLayout()).setVgap(0);
 
-        JLabel registerLabel = new JLabel("Non hai un account? Registrati ", JLabel.CENTER);
+        JLabel registerLabel = createLabel("Non hai un account? Registrati ", JLabel.CENTER);
 
         JLabel registerButtonLabel = createClickableLabel("qui ", Color.BLUE,
                 () -> frame.setView(PageFactory.createPage(PageType.REGISTRATION, frame))
         );
 
-        JLabel registerLabel2 = new JLabel("o ", JLabel.CENTER);
+        JLabel registerLabel2 = createLabel("o ", JLabel.CENTER);
 
         JLabel guestButtonLabel = createClickableLabel("entra come Ospite!", Color.BLUE,
                 () -> frame.setView(PageFactory.createPage(PageType.MAP_GUEST, frame))
