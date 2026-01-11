@@ -1,5 +1,7 @@
-package gui;
+package testing;
 
+import gui.ButtonMapPageConfig;
+import gui.MapLogPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;

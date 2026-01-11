@@ -1,5 +1,7 @@
-package gui;
+package testing;
 
+import gui.ButtonMapPageConfig;
+import gui.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,6 +49,6 @@ class ButtonMapPageConfigTest {
         assertNotNull(config.getViewFavoritesErrorMessage());
 
         // Se ErrorMessages è una costante, puoi verificare il valore esatto
-        assertEquals(ErrorMessages.LOGIN_REQUIRED_FAVORITES, config.getFavoritesErrorMessage());
+        assertEquals(Constants.LOGIN_REQUIRED_FAVORITES, config.getFavoritesErrorMessage());
     }
 }

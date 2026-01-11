@@ -1,5 +1,6 @@
-package gui;
+package testing;
 
+import gui.UserAuth;
 import model.Database;
 import model.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,25 +37,25 @@ class UserAuthTest {
 
     @Test
     void testLoginSuccess() throws SQLException {
-        // Setup: creiamo un utente finto che il DB dovrebbe restituire
-        User fakeUser = new User();
-        fakeUser.setId(1);
+        User fakeUser = new User("","","","","");
+
+        setPrivateField(fakeUser, "id", 1);
+
         fakeUser.setUsername("mario");
         fakeUser.setPassword("pass123");
 
         when(mockDb.getUserByUsername("mario")).thenReturn(fakeUser);
 
-        // Esecuzione
         User result = userAuth.login("mario", "pass123");
 
-        // Verifica
         assertNotNull(result);
         assertEquals("mario", result.getUsername());
+        assertEquals(1, result.getId());
     }
 
     @Test
     void testLoginWrongPassword() throws SQLException {
-        User fakeUser = new User();
+        User fakeUser = new User("","","","","");
         fakeUser.setPassword("pass123");
 
         when(mockDb.getUserByUsername("mario")).thenReturn(fakeUser);
@@ -92,6 +93,19 @@ class UserAuthTest {
             return type.cast(field.get(obj));
         } catch (Exception e) {
             throw new RuntimeException("Impossibile accedere al campo: " + fieldName, e);
+        }
+    }
+
+    /**
+     * Utility reflection per settare campi privati (Utile quando non ci sono setter)
+     */
+    private static void setPrivateField(Object obj, String fieldName, Object value) {
+        try {
+            var field = obj.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(obj, value);
+        } catch (Exception e) {
+            throw new RuntimeException("Impossibile settare il campo: " + fieldName, e);
         }
     }
 }

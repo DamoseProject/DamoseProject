@@ -1,5 +1,8 @@
-package gui;
+package testing;
 
+import gui.BackButton;
+import gui.HelpPage;
+import gui.MainFrame;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import javax.swing.*;

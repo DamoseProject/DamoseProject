@@ -1,5 +1,8 @@
-package gui;
+package testing;
 
+import gui.BaseMapPage;
+import gui.ButtonMapPageConfig;
+import gui.MainFrame;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -7,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
+
 
 class BaseMapPageTest {
 

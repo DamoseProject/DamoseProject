@@ -6,7 +6,7 @@ public class MapLogPage extends BaseMapPage {
     }
 
     @Override
-    protected ButtonMapPageConfig getButtonConfig() {
+    public ButtonMapPageConfig getButtonConfig() {
         return ButtonMapPageConfig.forLoggedUser();
     }
 

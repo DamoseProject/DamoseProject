@@ -1,5 +1,8 @@
-package gui;
+package testing;
 
+import gui.ButtonMapPageConfig;
+import gui.Constants;
+import gui.MapNotLogPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +44,7 @@ class MapNotLogPageTest {
     void testGuestErrorMessages() {
         ButtonMapPageConfig config = mapNotLogPage.getButtonConfig();
 
-        assertEquals(ErrorMessages.LOGIN_REQUIRED_FAVORITES, config.getFavoritesErrorMessage(),
+        assertEquals(Constants.LOGIN_REQUIRED_FAVORITES, config.getFavoritesErrorMessage(),
                 "Il messaggio di errore per i preferiti deve essere quello di login richiesto");
     }
 }

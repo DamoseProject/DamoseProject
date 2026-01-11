@@ -39,3 +39,6 @@ build/
 
 # RomeBusDatabase
 RomeBusDatabase.db
+
+# gtfs_data
+gtfs_data/

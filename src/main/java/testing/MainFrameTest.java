@@ -1,5 +1,7 @@
-package gui;
+package testing;
 
+import gui.GeneralPanel;
+import gui.MainFrame;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import javax.swing.*;
