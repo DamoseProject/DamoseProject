@@ -28,6 +28,9 @@ public class RegistrationController {
         if (!auth.validatePasswordStrength()) {
             return RegistrationResult.failure(Constants.PASSWORD_WEAK);
         }
+        if(!auth.validateEmail()){
+            return RegistrationResult.failure(Constants.INVALID_EMAIL);
+        }
 
         try {
             var db = DatabaseConnection.getInstance().getDatabase();

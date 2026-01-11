@@ -11,7 +11,6 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.List;
 
-
 public class ResultsHandler {
 
     private final JPanel resultsPanel;
@@ -32,7 +31,8 @@ public class ResultsHandler {
         return DatabaseConnection.getInstance().getDatabase();
     }
 
-    private void createSubRows(JPanel parentRow, String text, JButton arrowButton) {
+
+    private void createSubRows(JPanel parentRow, String text, JButton arrowButton, String highlightRouteId) {
         boolean isOpen = expandedRows.containsKey(parentRow);
         String stopId = text.split(" ")[0];
 
@@ -57,7 +57,7 @@ public class ResultsHandler {
                 Stop stop = (db != null) ? db.getStop(stopId) : null;
 
                 if (prossimiBus == null || prossimiBus.isEmpty()) {
-                    subList.add(createGeneralRow(Constants.NO_BUS_ARRIVING, false));
+                    subList.add(createGeneralRow(Constants.NO_BUS_ARRIVING, false, null));
                 } else {
                     prossimiBus.sort((b1, b2) -> {
                         int p1 = b1.isRealTime() ? 1 : (b1.getIsSmartPredicted() ? 2 : 3);
@@ -90,7 +90,9 @@ public class ResultsHandler {
 
                             int currentCount = busCountsPerRoute.getOrDefault(routeId, 0);
                             if (currentCount < 3) {
-                                JPanel busRow = createBusRow(prossimoBus, stop);
+                                boolean isHighlighted = highlightRouteId != null && highlightRouteId.equals(routeId);
+
+                                JPanel busRow = createBusRow(prossimoBus, stop, isHighlighted);
                                 if (busRow != null) {
                                     subList.add(busRow);
                                     busCountsPerRoute.put(routeId, currentCount + 1);
@@ -100,12 +102,12 @@ public class ResultsHandler {
                         }
                     }
                     if (subList.getComponentCount() == 0) {
-                        subList.add(createGeneralRow(Constants.NO_BUS_ARRIVING, false));
+                        subList.add(createGeneralRow(Constants.NO_BUS_ARRIVING, false, null));
                     }
                 }
 
             } catch (SQLException e) {
-                subList.add(createGeneralRow(Constants.DATA_RETRIEVAL_ERROR, false));
+                subList.add(createGeneralRow(Constants.DATA_RETRIEVAL_ERROR, false, null));
             }
 
             Container parentContainer = parentRow.getParent();
@@ -133,13 +135,16 @@ public class ResultsHandler {
     }
 
 
-    private JPanel createBusRow(BusInUnaFermataRecord bus, Stop currentStop) {
+    private JPanel createBusRow(BusInUnaFermataRecord bus, Stop currentStop, boolean isHighlighted) {
         JPanel rowPanel = new JPanel(new BorderLayout());
 
+        Color highlightColor = new Color(255, 255, 200);
         Color normalColor = new Color(240, 240, 240);
         Color hoverColor = new Color(225, 225, 225);
 
-        rowPanel.setBackground(normalColor);
+        Color baseColor = isHighlighted ? highlightColor : normalColor;
+
+        rowPanel.setBackground(baseColor);
         rowPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
                 BorderFactory.createEmptyBorder(8, 5, 8, 5)
@@ -147,8 +152,6 @@ public class ResultsHandler {
 
         rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         rowPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-
 
         java.time.format.DateTimeFormatter timeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
         String infoText = "";
@@ -173,7 +176,7 @@ public class ResultsHandler {
             }
             infoText = "<html><nobr><b>🚌 " + bus.getRouteId() + "</b> → " + bus.getTextDestination() +
                     " <span style='color:gray'>| " + labelGrigia + "</span>" +
-                    "<span style='color:green'><b>" + valoreVerde + "</b></span>" +
+                    "<span style='color:green'><b>" + valoreVerde + " <span style='color:gray'>| Posti: "+ bus.getAffollamento() + "</b></span>" +
                     "</nobr></html>";
 
         } else if (bus.getIsSmartPredicted()) {
@@ -231,7 +234,7 @@ public class ResultsHandler {
 
             @Override
             public void mouseExited(MouseEvent e) {
-                rowPanel.setBackground(normalColor);
+                rowPanel.setBackground(baseColor);
             }
         };
 
@@ -264,7 +267,7 @@ public class ResultsHandler {
             }
         }
 
-        if (!foundSomething) resultsPanel.add(createGeneralRow(Constants.NO_RESULTS, false));
+        if (!foundSomething) resultsPanel.add(createGeneralRow(Constants.NO_RESULTS, false, null));
         resultsPanel.add(Box.createVerticalGlue());
         resultsPanel.revalidate();
         resultsPanel.repaint();
@@ -298,14 +301,27 @@ public class ResultsHandler {
                 }
                 hasFavorites = true;
             }
+
+
             if (!favRoutes.isEmpty()) {
+                Set<String> processedRouteIds = new HashSet<>();
+
                 for (Route route : favRoutes) {
-                    JPanel row0 = createRouteDirectionRow(route, 0); if(row0!=null) resultsPanel.add(row0);
-                    JPanel row1 = createRouteDirectionRow(route, 1); if(row1!=null) resultsPanel.add(row1);
+                    if (processedRouteIds.contains(route.getId())) {
+                        continue;
+                    }
+                    processedRouteIds.add(route.getId());
+
+                    JPanel row0 = createRouteDirectionRow(route, 0);
+                    if(row0!=null) resultsPanel.add(row0);
+
+                    JPanel row1 = createRouteDirectionRow(route, 1);
+                    if(row1!=null) resultsPanel.add(row1);
                 }
                 hasFavorites = true;
             }
-            if (!hasFavorites) resultsPanel.add(createGeneralRow(Constants.NO_FAVORITES_SAVED, false));
+
+            if (!hasFavorites) resultsPanel.add(createGeneralRow(Constants.NO_FAVORITES_SAVED, false, null));
         } catch (SQLException ex) {
             errorLabel.setForeground(Color.RED);
             errorLabel.setText(Constants.FAVORITES_RETRIEVAL_ERROR);
@@ -326,10 +342,11 @@ public class ResultsHandler {
         resultsPanel.revalidate(); resultsPanel.repaint();
     }
 
-    private JPanel createGeneralRow(String resultText) { return createGeneralRow(resultText, true); }
+    private JPanel createGeneralRow(String resultText) {
+        return createGeneralRow(resultText, true, null);
+    }
 
-
-    private JPanel createGeneralRow(String resultText, boolean isStopRow) {
+    private JPanel createGeneralRow(String resultText, boolean isStopRow, String highlightRouteId) {
         JPanel rowPanel = new JPanel(new BorderLayout());
         rowPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
@@ -381,7 +398,7 @@ public class ResultsHandler {
             rowPanel.add(favButton, BorderLayout.EAST);
         }
 
-        arrowButton.addActionListener(e -> createSubRows(rowPanel, resultText, arrowButton));
+        arrowButton.addActionListener(e -> createSubRows(rowPanel, resultText, arrowButton, highlightRouteId));
         return rowPanel;
     }
 
@@ -449,10 +466,14 @@ public class ResultsHandler {
                 Database db = getDatabase();
                 if (db != null) {
                     List<Stop> stops = db.getStopsByRouteByDirection(route.getId(), direction);
-                    if (stops.isEmpty()) subList.add(createGeneralRow("Nessuna fermata", false));
-                    else for (Stop stop : stops) subList.add(createGeneralRow(stop.getId() + " " + stop.getName()));
+                    if (stops.isEmpty()) subList.add(createGeneralRow("Nessuna fermata", false, null));
+                    else for (Stop stop : stops) {
+                        subList.add(createGeneralRow(stop.getId() + " " + stop.getName(), true, route.getId()));
+                    }
                 }
-            } catch (Exception e) { subList.add(createGeneralRow("Errore DB", false)); }
+            } catch (Exception e) {
+                subList.add(createGeneralRow("Errore DB", false, null));
+            }
 
             int index = findRowPos(parentRow);
             if (index != -1) resultsPanel.add(subList, index + 1);

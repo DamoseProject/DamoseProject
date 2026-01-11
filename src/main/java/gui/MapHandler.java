@@ -236,7 +236,6 @@ public class MapHandler {
             } else {
                 centerPosition = track.get(0);
             }
-            System.out.println("DEBUG: Posizione GPS non disponibile per il bus " + bus.getRouteId());
         }
 
         RoutePainter routePainter = new RoutePainter(track);
