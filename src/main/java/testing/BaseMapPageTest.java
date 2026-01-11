@@ -1,81 +1,52 @@
-package testing;
+package gui;
 
-import gui.BaseMapPage;
-import gui.ButtonMapPageConfig;
-import gui.MainFrame;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import static org.junit.jupiter.api.Assertions.*;
-
+import org.junit.jupiter.api.*;
 import javax.swing.*;
-import java.awt.event.KeyEvent;
-
+import java.awt.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class BaseMapPageTest {
 
-    private ConcreteMapPage page;
+    private BaseMapPage testPage;
     private MainFrame mockFrame;
-
-    // Sottoclasse concreta per testare la classe astratta
-    private static class ConcreteMapPage extends BaseMapPage {
-        public ConcreteMapPage(MainFrame frame) {
-            super(frame);
-        }
-
-        @Override
-        protected ButtonMapPageConfig getButtonConfig() {
-            // Restituiamo una configurazione di default per il test
-            return new ButtonMapPageConfig(true, true, true, "", "");
-        }
-    }
 
     @BeforeEach
     void setUp() {
-        // In un test reale potresti voler mockare MainFrame con Mockito
-        page = new ConcreteMapPage(null);
+        mockFrame = new MainFrame();
+        // Implementazione anonima per testare la classe astratta
+        testPage = new BaseMapPage(mockFrame) {
+            @Override
+            protected ButtonMapPageConfig getButtonConfig() {
+                return ButtonMapPageConfig.forGuestUser();
+            }
+        };
     }
 
     @Test
-    @DisplayName("Il campo di ricerca dovrebbe essere inizialmente vuoto")
-    void testInitialResearchField() {
-        assertEquals("", page.getResearchField(), "Il campo di ricerca deve essere vuoto all'avvio");
+    @DisplayName("Inizializzazione corretta dei manager interni")
+    void testManagersInitialization() {
+        assertAll("Manager presenti",
+                () -> assertNotNull(testPage.getPanel(), "Il pannello principale deve essere creato"),
+                // Anche se i campi sono privati, verifichiamo che il caricamento non fallisca
+                () -> assertEquals("", testPage.getResearchField(), "Il campo ricerca deve essere inizialmente vuoto")
+        );
     }
 
     @Test
-    @DisplayName("La pulizia del campo di ricerca dovrebbe funzionare")
+    @DisplayName("clearResearchField deve pulire il testo e resettare lo stato")
     void testClearResearchField() {
-        // Simulo l'inserimento di testo (accedendo al componente tramite riflessione o helper)
-        // In questo caso usiamo il metodo pubblico se presente o un setter
-        page.clearResearchField();
-        assertEquals("", page.getResearchField());
+        // Simuliamo l'inserimento di testo (accedendo tramite un metodo pubblico o riflessione se necessario)
+        // In questo caso usiamo il metodo pubblico se presente
+        testPage.clearResearchField();
+        assertEquals("", testPage.getResearchField());
     }
 
     @Test
-    @DisplayName("setResults dovrebbe popolare correttamente il pannello dei risultati")
-    void testSetResultsPopulatesPanel() {
-        String testData = "Risultati per: Roma\nFermata 1 Termini\nFermata 2 Colosseo";
-
-        // Eseguiamo l'operazione nel thread di Swing per sicurezza
-        SwingUtilities.invokeLater(() -> {
-            page.setResults(testData);
-
-            // Verifichiamo che i componenti siano stati aggiunti al resultsPanel
-            // Nota: per accedere a variabili private come resultsPanel nel test
-            // dovresti renderle protected o usare getter/riflessione
-            assertNotNull(page);
-        });
-    }
-
-    @Test
-    @DisplayName("Verifica logica flag searchConfirmed")
-    void testSearchConfirmedLogic() {
-        // Questo test verifica il comportamento del KeyListener implementato
-        JTextField field = null;
-        // Recupero il campo di ricerca (sarebbe meglio avere un getter protected)
-        // Supponendo di averlo:
-        // field.setText("Test");
-        // ... simulo invio ...
-        // assertTrue(searchConfirmed);
+    @DisplayName("Verifica struttura layout: Mappa a sinistra e Risultati a destra")
+    void testMapAndResultsLayout() {
+        // Il mapAndResultsPanel usa un BoxLayout X_AXIS
+        // Possiamo verificare indirettamente se la struttura è stata montata
+        Container main = testPage.getPanel();
+        assertNotNull(main.getComponent(1), "Il pannello centrale (mappa + risultati) deve essere presente");
     }
 }

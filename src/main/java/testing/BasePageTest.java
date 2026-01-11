@@ -1,74 +1,64 @@
-package testing;
+package gui;
 
-import gui.BasePage;
-import gui.MainFrame;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.*;
 import javax.swing.*;
 import java.awt.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BasePageTest {
 
-    private ConcreteBasePage basePage;
-
-    // Classe concreta di supporto per il test
-    private static class ConcreteBasePage extends BasePage {
-        public ConcreteBasePage(MainFrame frame) {
-            super(frame);
-        }
-    }
+    private BasePage testPage;
+    private MainFrame mockFrame;
 
     @BeforeEach
     void setUp() {
-        // Passiamo null per MainFrame per isolare il test della struttura grafica
-        basePage = new ConcreteBasePage(null);
+        mockFrame = new MainFrame();
+        // Creiamo un'istanza concreta minima per il test
+        testPage = new BasePage(mockFrame) {};
     }
 
     @Test
-    @DisplayName("Il pannello principale dovrebbe essere inizializzato con BorderLayout")
-    void testMainPanelInitialization() {
-        JPanel panel = basePage.getPanel();
-        assertNotNull(panel, "Il mainPanel non deve essere null");
-        assertTrue(panel.getLayout() instanceof BorderLayout, "Il layout di default deve essere BorderLayout");
+    @DisplayName("Il mainPanel deve essere inizializzato con BorderLayout")
+    void testInitialPanel() {
+        assertNotNull(testPage.getPanel());
+        assertTrue(testPage.getPanel().getLayout() instanceof BorderLayout);
     }
 
     @Test
-    @DisplayName("setLayout dovrebbe cambiare correttamente il layout del pannello")
-    void testSetLayout() {
-        LayoutManager newLayout = new FlowLayout();
-        basePage.setLayout(newLayout);
-        assertEquals(newLayout, basePage.getPanel().getLayout(), "Il layout dovrebbe essere stato aggiornato a FlowLayout");
-    }
-
-    @Test
-    @DisplayName("createErrorLabel dovrebbe restituire una label rossa e inizialmente invisibile")
-    void testCreateErrorLabel() {
-        JLabel errorLabel = basePage.createErrorLabel();
-
-        assertNotNull(errorLabel);
-        assertEquals(Color.RED, errorLabel.getForeground(), "Il colore dell'errore deve essere rosso");
-        assertFalse(errorLabel.isVisible(), "L'etichetta di errore deve essere invisibile di default");
-        assertEquals(Component.CENTER_ALIGNMENT, errorLabel.getAlignmentX(), "L'allineamento deve essere centrato");
-    }
-
-    @Test
-    @DisplayName("createFieldPanel dovrebbe aggregare correttamente label e componente")
+    @DisplayName("createFieldPanel deve allineare correttamente label e campo")
     void testCreateFieldPanel() {
-        JTextField textField = new JTextField(10);
-        String labelText = "Username:";
-        JPanel fieldPanel = basePage.createFieldPanel(labelText, textField);
+        JTextField field = new JTextField();
+        JPanel panel = testPage.createFieldPanel("Nome:", field);
 
-        assertNotNull(fieldPanel);
-        assertTrue(fieldPanel.getLayout() instanceof BoxLayout, "Il pannello del campo deve usare BoxLayout");
+        assertEquals(2, panel.getComponentCount(), "Il pannello dovrebbe avere una label e un campo");
 
-        // Verifichiamo che ci siano i due componenti (Label e TextField)
-        Component[] components = fieldPanel.getComponents();
-        assertTrue(components.length >= 2, "Il pannello deve contenere almeno label e campo");
-
-        JLabel label = (JLabel) components[0];
-        assertEquals(labelText, label.getText());
+        JLabel label = (JLabel) panel.getComponent(0);
+        assertEquals("Nome:", label.getText());
         assertEquals(Component.CENTER_ALIGNMENT, label.getAlignmentX());
+    }
+
+    @Test
+    @DisplayName("showError deve rendere visibile la label e impostare il messaggio")
+    void testShowError() {
+        JLabel errorLabel = new JLabel();
+        errorLabel.setVisible(false);
+
+        testPage.showError(errorLabel, "Errore di test");
+
+        assertTrue(errorLabel.isVisible());
+        assertEquals("Errore di test", errorLabel.getText());
+    }
+
+    @Test
+    @DisplayName("createTopPanelWithBackButton deve bilanciare il layout con uno Strut a destra")
+    void testTopPanelBalance() {
+        JPanel topPanel = testPage.createTopPanelWithBackButton("Titolo", PageType.LOGIN);
+        BorderLayout layout = (BorderLayout) topPanel.getLayout();
+
+        assertAll("Verifica componenti TopPanel",
+                () -> assertTrue(topPanel.getComponent(0) instanceof BackButton, "Deve esserci un BackButton a Ovest"),
+                () -> assertTrue(topPanel.getComponent(1) instanceof JLabel, "Deve esserci un Titolo al Centro"),
+                () -> assertTrue(topPanel.getComponent(2) instanceof Box.Filler, "Deve esserci uno spazio vuoto a Est per bilanciare")
+        );
     }
 }

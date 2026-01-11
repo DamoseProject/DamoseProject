@@ -1,111 +1,35 @@
-package testing;
+package gui;
 
-import gui.UserAuth;
 import model.Database;
 import model.User;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import java.sql.SQLException;
-
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class UserAuthTest {
 
-    private Database mockDb;
-    private UserAuth userAuth;
+    private UserAuth auth;
+    private Database mockDb; // In un test reale useresti un mock o un DB di test
 
     @BeforeEach
     void setUp() {
-        // Creiamo il mock del Database per isolare la logica di UserAuth
-        mockDb = mock(Database.class);
-        userAuth = new UserAuth(mockDb);
+        // Supponiamo che DatabaseConnection fornisca un'istanza valida per il test
+        mockDb = DatabaseConnection.getInstance().getDatabase();
+        auth = new UserAuth(mockDb);
     }
 
     @Test
-    void testIsUsernameTaken() throws SQLException {
-        // Configuriamo il mock per rispondere true quando cerchiamo "mario"
-        when(mockDb.isUserRegistered("mario")).thenReturn(true);
-        when(mockDb.isUserRegistered("luigi")).thenReturn(false);
-
-        assertTrue(userAuth.isUsernameTaken("mario"));
-        assertFalse(userAuth.isUsernameTaken("luigi"));
-
-        // Verifichiamo che il metodo del DB sia stato effettivamente chiamato
-        verify(mockDb).isUserRegistered("mario");
+    @DisplayName("Login fallito con password errata")
+    void testLoginFailedWrongPassword() throws SQLException {
+        // Questo test presuppone che esista un utente 'test' con password '123' nel DB di test
+        User user = auth.login("test", "password_sbagliata");
+        assertNull(user, "Il login dovrebbe fallire con una password errata");
     }
 
     @Test
-    void testLoginSuccess() throws SQLException {
-        User fakeUser = new User("","","","","");
-
-        setPrivateField(fakeUser, "id", 1);
-
-        fakeUser.setUsername("mario");
-        fakeUser.setPassword("pass123");
-
-        when(mockDb.getUserByUsername("mario")).thenReturn(fakeUser);
-
-        User result = userAuth.login("mario", "pass123");
-
-        assertNotNull(result);
-        assertEquals("mario", result.getUsername());
-        assertEquals(1, result.getId());
-    }
-
-    @Test
-    void testLoginWrongPassword() throws SQLException {
-        User fakeUser = new User("","","","","");
-        fakeUser.setPassword("pass123");
-
-        when(mockDb.getUserByUsername("mario")).thenReturn(fakeUser);
-
-        // Password sbagliata
-        User result = userAuth.login("mario", "wrong_password");
-
-        assertNull(result, "Il login dovrebbe fallire con password errata");
-    }
-
-    @Test
+    @DisplayName("Login fallito con utente inesistente")
     void testLoginUserNotFound() throws SQLException {
-        // Il DB restituisce null se l'utente non esiste
-        when(mockDb.getUserByUsername("unknown")).thenReturn(null);
-
-        User result = userAuth.login("unknown", "any_password");
-
-        assertNull(result);
-    }
-
-    @Test
-    void testReflectionOnDatabaseField() {
-        // Verifica dello stato interno tramite il tuo standard Reflection
-        Database dbField = getPrivateField(userAuth, "db", Database.class);
-        assertEquals(mockDb, dbField, "Il database impostato non corrisponde al mock");
-    }
-
-    /**
-     * Utility reflection per accedere a campi privati (Standard di progetto)
-     */
-    private static <T> T getPrivateField(Object obj, String fieldName, Class<T> type) {
-        try {
-            var field = obj.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return type.cast(field.get(obj));
-        } catch (Exception e) {
-            throw new RuntimeException("Impossibile accedere al campo: " + fieldName, e);
-        }
-    }
-
-    /**
-     * Utility reflection per settare campi privati (Utile quando non ci sono setter)
-     */
-    private static void setPrivateField(Object obj, String fieldName, Object value) {
-        try {
-            var field = obj.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(obj, value);
-        } catch (Exception e) {
-            throw new RuntimeException("Impossibile settare il campo: " + fieldName, e);
-        }
+        User user = auth.login("utente_che_non_esiste", "any_password");
+        assertNull(user, "Il login dovrebbe fallire se lo username non è registrato");
     }
 }

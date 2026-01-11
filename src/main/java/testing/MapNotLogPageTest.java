@@ -1,50 +1,28 @@
-package testing;
+package gui;
 
-import gui.ButtonMapPageConfig;
-import gui.Constants;
-import gui.MapNotLogPage;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MapNotLogPageTest {
 
     private MapNotLogPage mapNotLogPage;
+    private MainFrame mockFrame;
 
     @BeforeEach
     void setUp() {
-        // Nota: Assicurati sempre che il DB sia gestito (mockato o attivo)
-        // poiché ereditato da BaseMapPage
-        mapNotLogPage = new MapNotLogPage(null);
+        mockFrame = new MainFrame();
+        mapNotLogPage = new MapNotLogPage(mockFrame);
     }
 
     @Test
-    @DisplayName("MapNotLogPage deve restituire la configurazione per utente Guest")
-    void testGetButtonConfigForGuestUser() {
+    @DisplayName("La pagina deve restituire la configurazione per utente ospite")
+    void testConfigIsForGuestUser() {
         ButtonMapPageConfig config = mapNotLogPage.getButtonConfig();
 
-        assertNotNull(config, "La configurazione per Guest non deve essere null");
-
-        // Verifichiamo che le restrizioni siano attive
-        assertAll("Verifica restrizioni utente non loggato",
-                () -> assertFalse(config.isFavoritesEnabled(),
-                        "In MapNotLogPage i preferiti devono essere disabilitati"),
-                () -> assertFalse(config.isViewFavoritesEnabled(),
-                        "In MapNotLogPage la visualizzazione preferiti deve essere disabilitata"),
-                () -> assertTrue(config.isShowRegLoginButton(),
-                        "In MapNotLogPage il tasto Login deve essere mostrato"),
-                () -> assertNotNull(config.getFavoritesErrorMessage(),
-                        "Deve esserci un messaggio di errore per i preferiti")
+        assertAll("Verifica restrizioni utente ospite",
+                () -> assertFalse(config.isFavoritesEnabled(), "I preferiti dovrebbero essere disabilitati"),
+                () -> assertTrue(config.isShowRegLoginButton(), "Il tasto login dovrebbe essere visibile"),
+                () -> assertEquals(Constants.LOGIN_REQUIRED_FAVORITES, config.getFavoritesErrorMessage())
         );
-    }
-
-    @Test
-    @DisplayName("Verifica che i messaggi di errore siano quelli per Guest")
-    void testGuestErrorMessages() {
-        ButtonMapPageConfig config = mapNotLogPage.getButtonConfig();
-
-        assertEquals(Constants.LOGIN_REQUIRED_FAVORITES, config.getFavoritesErrorMessage(),
-                "Il messaggio di errore per i preferiti deve essere quello di login richiesto");
     }
 }

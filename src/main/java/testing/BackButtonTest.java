@@ -1,32 +1,30 @@
-package testing;
+package gui;
 
-import gui.BackButton;
-import gui.MainFrame;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+import static org.junit.jupiter.api.Assertions.*;
 
-import javax.swing.*;
-import java.awt.*;
+class BackButtonTest {
 
-public class BackButtonTest extends JFrame {
-    public static void main(String[] args) {
-        // Crea la finestra principale
-        JFrame frame = new JFrame("Test BackButton");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 200);
-        frame.setLayout(new FlowLayout());
+    @Test
+    @DisplayName("Il bottone deve eseguire l'azione passata quando cliccato")
+    void testActionButton() {
+        // Usiamo un array di boolean per "catturare" l'esecuzione della lambda
+        boolean[] actionExecuted = {false};
 
-        // Istanzia un MainFrame "finto" solo per soddisfare il costruttore
-        MainFrame fakeMainFrame = null; // o crea una mock class se serve
+        // Creiamo il bottone passando una lambda che cambia il boolean
+        BackButton backButton = new BackButton(null, () -> actionExecuted[0] = true);
 
-        // Crea il pulsante con un’azione di test
-        BackButton backButton = new BackButton(fakeMainFrame, () -> {
-            System.out.println("Pulsante 'Indietro' cliccato!");
-            JOptionPane.showMessageDialog(frame, "Hai cliccato 'Indietro'!");
-        });
+        // Simuliamo il click
+        backButton.doClick();
 
-        // Aggiungi il pulsante alla finestra
-        frame.add(backButton);
+        assertTrue(actionExecuted[0], "L'azione passata al costruttore non è stata eseguita");
+    }
 
-        // Rendi visibile la finestra
-        frame.setVisible(true);
+    @Test
+    @DisplayName("Il testo del bottone deve essere 'Indietro'")
+    void testButtonText() {
+        BackButton backButton = new BackButton(null, () -> {});
+        assertEquals("Indietro", backButton.getText());
     }
 }
