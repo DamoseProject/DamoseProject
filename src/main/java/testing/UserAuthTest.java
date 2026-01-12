@@ -1,5 +1,7 @@
-package gui;
+package testing;
 
+import gui.DatabaseConnection;
+import gui.UserAuth;
 import model.Database;
 import model.User;
 import org.junit.jupiter.api.*;

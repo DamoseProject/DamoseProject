@@ -1,5 +1,6 @@
-package gui;
+package testing;
 
+import gui.*;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -1,5 +1,6 @@
-package gui;
+package testing;
 
+import gui.UIComponentFactory;
 import org.junit.jupiter.api.*;
 import javax.swing.*;
 import java.awt.*;

@@ -1,5 +1,9 @@
-package gui;
+package testing;
 
+import gui.ButtonMapPageConfig;
+import gui.Constants;
+import gui.FavoritesManager;
+import gui.UserSession;
 import model.*;
 import org.junit.jupiter.api.*;
 import javax.swing.*;
@@ -25,7 +29,13 @@ class FavoritesManagerTest {
     @Test
     @DisplayName("Un utente ospite non deve poter aggiungere preferiti")
     void testGuestCannotAddFavorite() {
-        Stop testStop = new Stop("123", "Fermata Test");
+        Stop testStop = new Stop(
+                "1",
+                "123",
+                "Fermata Test",
+                0.0f,
+                0.0f
+        );
         JButton favButton = favoritesManager.createFavButtonForStop(testStop);
 
         // Simuliamo il click
@@ -39,7 +49,13 @@ class FavoritesManagerTest {
     @Test
     @DisplayName("L'icona iniziale per un ospite deve essere la stella vuota")
     void testInitialIconForGuest() {
-        Stop testStop = new Stop("123", "Fermata Test");
+        Stop testStop = new Stop(
+                "1",
+                "123",
+                "Fermata Test",
+                0.0f,
+                0.0f
+        );
         JButton favButton = favoritesManager.createFavButtonForStop(testStop);
 
         // Il testo contiene l'entità HTML della stella vuota (&#9734;)

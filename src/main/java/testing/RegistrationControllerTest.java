@@ -1,5 +1,8 @@
-package gui;
+package testing;
 
+import gui.Constants;
+import gui.RegistrationController;
+import gui.RegistrationResult;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 

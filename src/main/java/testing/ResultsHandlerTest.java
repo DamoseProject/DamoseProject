@@ -1,5 +1,7 @@
-package gui;
+package testing;
 
+import gui.ButtonMapPageConfig;
+import gui.ResultsHandler;
 import model.Stop;
 import org.junit.jupiter.api.*;
 import javax.swing.*;
@@ -23,7 +25,13 @@ class ResultsHandlerTest {
     @DisplayName("showResults deve popolare il pannello con le fermate trovate")
     void testShowResultsPopulatesPanel() {
         List<Stop> fermate = new ArrayList<>();
-        fermate.add(new Stop("70030", "Piazza Venezia"));
+        fermate.add(new Stop(
+                "1",
+                "70030",
+                "Piazza Venezia",
+                45.434f,
+                12.338f
+        ));
 
         try {
             resultsHandler.showResults("Venezia", fermate, new ArrayList<>());

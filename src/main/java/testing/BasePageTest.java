@@ -1,5 +1,9 @@
-package gui;
+package testing;
 
+import gui.BackButton;
+import gui.BasePage;
+import gui.MainFrame;
+import gui.PageType;
 import org.junit.jupiter.api.*;
 import javax.swing.*;
 import java.awt.*;

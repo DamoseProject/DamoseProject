@@ -1,5 +1,8 @@
-package gui;
+package testing;
 
+import gui.MainFrame;
+import gui.ProfileMenuManager;
+import gui.UserSession;
 import org.junit.jupiter.api.*;
 import javax.swing.*;
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,5 +1,6 @@
-package gui;
+package testing;
 
+import gui.StatisticsManager;
 import model.Stop;
 import org.junit.jupiter.api.*;
 import javax.swing.*;

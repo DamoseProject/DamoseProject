@@ -1,5 +1,7 @@
-package gui;
+package testing;
 
+import gui.MainFrame;
+import gui.RegistrationPage;
 import org.junit.jupiter.api.*;
 import javax.swing.*;
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,5 +1,9 @@
-package gui;
+package testing;
 
+import gui.ButtonMapPageConfig;
+import gui.Constants;
+import gui.MainFrame;
+import gui.MapNotLogPage;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 

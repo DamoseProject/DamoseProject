@@ -1,5 +1,8 @@
-package gui;
+package testing;
 
+import gui.BaseMapPage;
+import gui.ButtonMapPageConfig;
+import gui.MainFrame;
 import org.junit.jupiter.api.*;
 import javax.swing.*;
 import java.awt.*;

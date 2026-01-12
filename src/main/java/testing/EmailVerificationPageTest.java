@@ -1,5 +1,9 @@
-package gui;
+package testing;
 
+import gui.BackButton;
+import gui.Constants;
+import gui.EmailVerificationPage;
+import gui.MainFrame;
 import org.junit.jupiter.api.*;
 import javax.swing.*;
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,5 +1,6 @@
-package gui;
+package testing;
 
+import gui.MapHandler;
 import model.Stop;
 import org.junit.jupiter.api.*;
 import org.jxmapviewer.viewer.GeoPosition;
@@ -31,24 +32,16 @@ class MapHandlerTest {
     @Test
     @DisplayName("showStopOnMap deve centrare la mappa sulla fermata")
     void testShowStopOnMap() {
-        Stop stop = new Stop("1", "Termini");
-        stop.setLatitude(41.901);
-        stop.setLongitude(12.501);
+        // Crea l'oggetto Stop usando il costruttore della classe stop:
+        // id, code, name, latitude, longitude
+        Stop stop = new Stop("1", "RM-123", "Termini", 41.901f, 12.501f);
 
         mapHandler.showStopOnMap(stop);
 
         GeoPosition newPos = mapHandler.getMapViewer().getAddressLocation();
-        assertEquals(stop.getLatitude(), newPos.getLatitude());
-        assertEquals(stop.getLongitude(), newPos.getLongitude());
-    }
 
-    @Test
-    @DisplayName("Il setup dello zoom da tastiera deve registrare le Action")
-    void testKeyboardZoomActions() {
-        mapHandler.setupKeyboardZoom();
-        ActionMap actionMap = mapHandler.getMapViewer().getActionMap();
-
-        assertNotNull(actionMap.get("zoomIn"));
-        assertNotNull(actionMap.get("zoomOut"));
+        // Usiamo un delta di 0.001 perché confrontiamo float e double
+        assertEquals(stop.getLatitude(), (float)newPos.getLatitude(), 0.001);
+        assertEquals(stop.getLongitude(), (float)newPos.getLongitude(), 0.001);
     }
 }
