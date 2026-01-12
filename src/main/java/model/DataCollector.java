@@ -12,14 +12,25 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Questa classe si occupa della raccolta sistematica dei dati sulle performance del trasporto pubblico.
+ * Funziona come un processo in background che scarica periodicamente i feed GTFS-Realtime,
+ * estrae i ritardi dei bus e li salva nel database per alimentare le statistiche storiche.
+ * * <p>Utilizza un set per evitare la duplicazione dei record durante la stessa sessione di raccolta.</p>
+ */
 public class DataCollector {
 
+    /** URL del feed Protocol Buffer fornito dall'agenzia del trasporto pubblico */
     private static final String URL_TRIP_UPDATES = "https://romamobilita.it/sites/default/files/rome_rtgtfs_trip_updates_feed.pb";
     private final Database db;
 
-    // Cache per ricordare cosa abbiamo già salvato in questa sessione
+    /** Cache in-memory per evitare di salvare lo stesso transito più volte nello stesso ciclo di esecuzione */
     private final Set<String> datiGiaSalvati = new HashSet<>();
 
+    /**
+     * Costruttore: inizializza il collector associandolo a un database specifico.
+     * @param db L'istanza del database dove salvare le osservazioni raccolte.
+     */
     public DataCollector(Database db) {
         this.db = db;
     }
@@ -60,6 +71,13 @@ public class DataCollector {
         }
     }
 
+    /**
+     * Analizza un singolo aggiornamento di viaggio (TripUpdate).
+     * Estrae il ritardo rilevato (arrival o departure delay) per ogni fermata del percorso
+     * e invoca il database per il salvataggio storico.
+     * * @param tu L'oggetto TripUpdate ricevuto dal feed.
+     * @throws SQLException In caso di errore durante l'interazione con il database.
+     */
     private void processaTripUpdate(TripUpdate tu) throws SQLException {
         String tripId = tu.getTrip().getTripId();
         String routeId = tu.getTrip().getRouteId();
@@ -107,7 +125,9 @@ public class DataCollector {
         }
     }
 
-
+    /**
+     * Metodo entry-point per avviare il collector come processo indipendente.
+     */
     public static void main(String[] args) {
         Database db = new Database();
         db.connect();

@@ -1,7 +1,12 @@
 package gui;
 
+/**
+ * Questa classe è un raccoglitore di tutti i testi e i valori fissi (costanti) dell'app.
+ * Contiene i messaggi di errore, le scritte delle etichette e i limiti di lunghezza.
+ * Usarla serve a rendere il codice più pulito: se devi cambiare un messaggio,
+ * lo cambi qui una volta sola e si aggiorna in tutta l'applicazione.
+ */
 public class Constants {
-
     public static final String USERNAME_REQUIRED = "Inserire uno username!";
     public static final String USERNAME_TOO_LONG = "Lo username deve contenere al massimo 12 caratteri!";
     public static final String EMAIL_REQUIRED = "Inserire una email per completare la registrazione!";
@@ -40,5 +45,9 @@ public class Constants {
     public static final String SPECIAL_CHARS = "!$&@#";
     public static final int VERIFICATION_CODE_LENGTH = 6;
 
+    /**
+     * Il costruttore è privato perché questa classe non deve essere mai creata con "new".
+     * Si usano direttamente i suoi testi scrivendo "Constants.NOME_COSTANTE".
+     */
     private Constants() {} // Impedisce istanziazione
 }

@@ -11,18 +11,36 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Gestore centralizzato dei dati in tempo reale (GTFS-Realtime).
+ * Questa classe scarica e mantiene in cache le informazioni dinamiche riguardanti
+ * i ritardi dei viaggi (Trip Updates), le posizioni geografiche dei mezzi (Vehicle Positions)
+ * e lo stato di affollamento (Occupancy Status).
+ * * <p>Implementa un meccanismo di aggiornamento automatico con una frequenza di refresh
+ * controllata per ottimizzare le richieste di rete.</p>
+ */
 public class RealTimeHandler {
 
     private static final String URL_TRIP_UPDATES = "https://romamobilita.it/sites/default/files/rome_rtgtfs_trip_updates_feed.pb";
     private static final String URL_VEHICLE_POSITIONS = "https://romamobilita.it/sites/default/files/rome_rtgtfs_vehicle_positions_feed.pb";
 
+    /** Mappa dei ritardi correnti indicizzati per TripId */
     private static final Map<String, Long> ritardiMap = new ConcurrentHashMap<>();
+
+    /** Mappa delle posizioni correnti dei bus indicizzate per TripId */
     private static final Map<String, GtfsRealtime.Position> posizioniMap = new ConcurrentHashMap<>();
+
+    /** Mappa dello stato di affollamento indicizzata per TripId */
     private static final Map<String, VehiclePosition.OccupancyStatus> occupancyMap = new ConcurrentHashMap<>();
 
     private static long lastUpdate = 0;
     private static final long REFRESH_RATE_MS = 30 * 1000; // 30 Secondi
 
+    /**
+     * Coordina l'aggiornamento dei dati dai feed remoti.
+     * Se l'ultimo aggiornamento è avvenuto meno di 30 secondi fa, il metodo termina
+     * immediatamente per evitare spreco di banda e risorse.
+     */
     public static synchronized void refreshData() {
         if (System.currentTimeMillis() - lastUpdate < REFRESH_RATE_MS) {
             return;
@@ -39,6 +57,9 @@ public class RealTimeHandler {
                 ", Affollamento: " + occupancyMap.size());
     }
 
+    /**
+     * Esegue il download e il parsing del feed relativo ai ritardi dei viaggi.
+     */
     private static void updateTripUpdates() {
         try (InputStream stream = new URL(URL_TRIP_UPDATES).openStream()) {
             FeedMessage feed = FeedMessage.parseFrom(stream);
@@ -68,6 +89,9 @@ public class RealTimeHandler {
         }
     }
 
+    /**
+     * Esegue il download e il parsing del feed relativo alle posizioni e all'affollamento dei bus.
+     */
     private static void updateVehiclePositions() {
         try (InputStream stream = new URL(URL_VEHICLE_POSITIONS).openStream()) {
             FeedMessage feed = FeedMessage.parseFrom(stream);

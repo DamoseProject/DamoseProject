@@ -9,8 +9,24 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/**
+ * Orchestratore dell'aggiornamento massivo del database locale.
+ * Questa classe gestisce il ciclo di vita completo dei dati GTFS: dalla pulizia
+ * delle vecchie tabelle al popolamento sequenziale di Fermate, Percorsi, Viaggi e Orari.
+ * * <p>Caratteristiche principali:</p>
+ * <ul>
+ * <li><b>Integrità Transazionale:</b> Utilizza {@code setAutoCommit(false)} per eseguire
+ * l'intero aggiornamento come un'unica transazione. In caso di errore, viene eseguito
+ * un {@code rollback} per non lasciare il database in uno stato inconsistente.</li>
+ * <li><b>Performance I/O:</b> Utilizza {@link BufferedReader} per la lettura efficiente
+ * dei file e {@link PreparedStatement} con batch processing differenziati per entità.</li>
+ * <li><b>Sincronizzazione Intelligente:</b> Tramite {@code updateIfNew()}, l'aggiornamento
+ * parte solo se {@link GtfsDownloader} rileva una firma MD5 differente sui server.</li>
+ * </ul>
+ */
 public class UpdateData {
 
+    /** Percorso base recuperato dal downloader */
     private static final String BASE_PATH = GtfsDownloader.DOWNLOAD_DIR;
 
     private static final String PATH_ROUTES = BASE_PATH + "routes.txt";
@@ -35,6 +51,11 @@ public class UpdateData {
     private static final String SQL_INSERT_STOP_TIME =
             "INSERT INTO FERMATA_ORARIO (FERMATA_ID, VIAGGIO_ID, ORARIO_PARTENZA, ORARIO_ARRIVO, FERMATA_SEQUENZA, TESTO_FERMATA, SHAPE_DIST_TRAVELED) VALUES (?, ?, ?, ?, ?, ? ,?)";
 
+    /**
+     * Esegue l'aggiornamento integrale di tutte le tabelle GTFS.
+     * Il metodo segue un ordine logico rigoroso per rispettare i vincoli di integrità
+     * referenziale del database. Inizia con la pulizia e termina con il commit finale.
+     */
     public static void updateAll() {
         Database db = new Database();
         Connection conn = null;
@@ -69,6 +90,7 @@ public class UpdateData {
         }
     }
 
+    /** Svuota le tabelle esistenti per far posto ai nuovi dati */
     private static void cleanDatabase(Connection conn) throws SQLException {
         System.out.println(">> [1/5] Cancellazione vecchi dati...");
         Statement stmt = conn.createStatement();
@@ -80,6 +102,7 @@ public class UpdateData {
         System.out.println("   -> Database pulito.");
     }
 
+    /** Carica i dati delle fermate dal file stops.txt */
     private static void loadStops(Connection conn) throws IOException, SQLException {
         System.out.println(">> [2/5] Caricamento Fermate...");
         try (BufferedReader br = new BufferedReader(new FileReader(PATH_STOPS));
@@ -106,6 +129,7 @@ public class UpdateData {
         }
     }
 
+    /** Carica i dati delle linee dal file routes.txt */
     private static void loadRoutes(Connection conn) throws IOException, SQLException {
         System.out.println(">> [3/5] Caricamento Percorsi...");
         try (BufferedReader br = new BufferedReader(new FileReader(PATH_ROUTES));
@@ -133,6 +157,7 @@ public class UpdateData {
         }
     }
 
+    /** Carica i dati delle corse dal file trips.txt */
     private static void loadTrips(Connection conn) throws IOException, SQLException {
         System.out.println(">> [4/5] Caricamento Viaggi...");
         try (BufferedReader br = new BufferedReader(new FileReader(PATH_TRIPS));
@@ -168,6 +193,7 @@ public class UpdateData {
         }
     }
 
+    /** Carica l'elevata mole di dati orari dal file stop_times.txt */
     private static void loadStopTimes(Connection conn) throws IOException, SQLException {
         System.out.println(">> [5/5] Caricamento Orari (Attendi...)...");
         try (BufferedReader br = new BufferedReader(new FileReader(PATH_STOP_TIMES));
@@ -207,7 +233,9 @@ public class UpdateData {
     }
 
 
-
+    /**
+     * Verifica la presenza di nuovi dati online e, solo se necessario, avvia l'aggiornamento.
+     */
     public static void updateIfNew(){
         boolean nuoviDatiScaricati = GtfsDownloader.downloadIfNew();
 
@@ -222,7 +250,7 @@ public class UpdateData {
 
 
 
-
+    /** Entry point per il trigger manuale dell'aggiornamento */
     public static void main(String[] args) {
         updateIfNew();
     }

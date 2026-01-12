@@ -9,6 +9,11 @@ import java.sql.SQLException;
 
 import static gui.UIComponentFactory.*;
 
+/**
+ * Questa classe rappresenta la pagina di registrazione dell'applicazione.
+ * Fornisce i campi necessari per creare un nuovo account (Username, Email, Password
+ * e Conferma Password) e gestisce l'interazione con l'utente durante la creazione del profilo.
+ */
 public class RegistrationPage extends BasePage {
     private JPanel topPanel;
     private JPanel centerPanel;
@@ -18,6 +23,11 @@ public class RegistrationPage extends BasePage {
     private JPasswordField passwordField;
     private JPasswordField confirmPasswordField;
 
+    /**
+     * Costruttore della pagina di registrazione.
+     * Inizializza i componenti grafici e li dispone all'interno della finestra.
+     * * @param frame Il frame principale (MainFrame) su cui caricare la pagina.
+     */
     public RegistrationPage(MainFrame frame) {
         super(frame);
         createTopPanel();
@@ -26,10 +36,17 @@ public class RegistrationPage extends BasePage {
         mainPanel.add(centerPanel, BorderLayout.CENTER);
     }
 
+    /**
+     * Crea la barra superiore della pagina con il titolo e il pulsante per tornare al Login.
+     */
     private void createTopPanel() {
         topPanel = createTopPanelWithBackButton("Registrati!", PageType.LOGIN);
     }
 
+    /**
+     * Costruisce il modulo centrale con tutti i campi di input.
+     * Organizza verticalmente etichette, campi di testo e il pulsante di conferma.
+     */
     private void createCenterPanel() {
         centerPanel = UIComponentFactory.createVerticalPanel();
 
@@ -72,6 +89,11 @@ public class RegistrationPage extends BasePage {
         centerPanel.add(Box.createVerticalGlue());
     }
 
+    /**
+     * Gestisce la logica di registrazione quando l'utente preme il tasto o preme invio.
+     * Invia i dati al {@link RegistrationController} e, in caso di successo, esegue
+     * automaticamente il login portando l'utente alla mappa.
+     */
     private void handleRegistration() {
         RegistrationController controller = new RegistrationController();
 
@@ -110,18 +132,22 @@ public class RegistrationPage extends BasePage {
         }
     }
 
+    /** @return Lo username inserito nel campo di testo. */
     public String getUsernameRegistration() {
         return usernameField.getText().trim();
     }
 
+    /** @return L'email inserita nel campo di testo. */
     public String getEmailRegistration() {
         return emailField.getText().trim();
     }
 
+    /** @return La password inserita. */
     public String getPasswordRegistration() {
         return new String(passwordField.getPassword());
     }
 
+    /** @return La conferma della password inserita. */
     public String getConfirmPasswordRegistration() {
         return new String(confirmPasswordField.getPassword());
     }

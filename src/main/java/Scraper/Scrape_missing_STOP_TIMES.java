@@ -11,7 +11,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
+/**
+ * Modulo specializzato nel parsing e nell'importazione incrementale degli orari delle fermate.
+ * La classe analizza il file {@code stop_times.txt} del dataset GTFS, mappando la relazione
+ * temporale tra i viaggi (trips) e le singole fermate (stops).
+ * * <p>Per gestire l'elevata mole di dati (spesso superiore alle centinaia di migliaia di righe),
+ * il sistema utilizza:</p>
+ * <ul>
+ * <li><b>Batch Processing:</b> Inserimenti raggruppati ogni 1000 record per ottimizzare le prestazioni I/O.</li>
+ * <li><b>Deduplicazione in memoria:</b> Utilizzo di un {@link HashSet} per confrontare le chiavi
+ * composite (fermata|viaggio|orario) ed evitare record duplicati.</li>
+ * <li><b>Gestione Transazionale:</b> Disabilitazione dell'AutoCommit per garantire la coerenza atomica dei batch.</li>
+ * </ul>
+ */
 public class Scrape_missing_STOP_TIMES {
+
+    /** Intestazioni GTFS standard per la mappatura delle colonne degli orari */
     final private static ArrayList<String> titles = new ArrayList<>(Arrays.asList("trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "stop_headsign", "pickup_type", "drop_off_type", "shape_dist_traveled", "timepoint"));
     final private static int indexArrivalTime = titles.indexOf("arrival_time");
     final private static int indexDepartureTime = titles.indexOf("departure_time");
@@ -21,8 +36,19 @@ public class Scrape_missing_STOP_TIMES {
     final private static int indexStopHeadsign = titles.indexOf("stop_headsign");
     final private static int indexShapeDistTraveled = titles.indexOf("shape_dist_traveled");
 
+    /** Percorso locale del file sorgente degli orari (Dataset statico) */
     private static String filePath = "C:\\Users\\micko\\Downloads\\rome_static_gtfs (1)\\stop_times.txt";
 
+    /**
+     * Esegue lo scraping del file e popola la tabella FERMATA_ORARIO nel database.
+     * * Il metodo segue le seguenti fasi:
+     * 1. Carica le chiavi esistenti dal DB per evitare duplicati.
+     * 2. Legge il file riga per riga.
+     * 3. Valida e trasforma i dati (es. gestione errori per sequenze o distanze mancanti).
+     * 4. Esegue il commit dei dati in blocchi (batch) predefiniti.
+     * * @throws IOException Se il file sorgente non è reperibile.
+     * @throws SQLException Se si verificano errori durante le operazioni CRUD sul DB.
+     */
     public static void scrapeAndAddToDatabase() throws IOException, SQLException {
         Database db = new Database();
         db.connect();
@@ -106,6 +132,10 @@ public class Scrape_missing_STOP_TIMES {
         pstmtInsert.close();
     }
 
+    /**
+     * Entry point per l'esecuzione manuale dell'aggiornamento orari.
+     * @param args Argomenti riga di comando.
+     */
     public static void main(String[] args) throws IOException, SQLException {
         scrapeAndAddToDatabase();
     }

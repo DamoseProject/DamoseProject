@@ -6,15 +6,35 @@ import org.junit.jupiter.api.*;
 import java.time.LocalTime;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Classe di test unitario per {@link BusArrivalComparator}.
+ * Verifica che la logica di ordinamento dei bus in arrivo rispetti sia i criteri
+ * di orario (cronologici) sia quelli di affidabilità del dato (priorità).
+ * * <p>La gerarchia di ordinamento testata prevede:</p>
+ * <ul>
+ * <li>1. Bus con dati Real-Time (GPS attivo)</li>
+ * <li>2. Bus con Smart Prediction (stima basata su storico)</li>
+ * <li>3. Bus con dati puramente Statici (tabella oraria)</li>
+ * </ul>
+ */
 class BusArrivalComparatorTest {
 
     private BusArrivalComparator comparator;
 
+    /**
+     * Inizializza il comparatore prima di ogni test.
+     */
     @BeforeEach
     void setUp() {
         comparator = new BusArrivalComparator();
     }
 
+    /**
+     * Verifica il principio di precedenza della qualità del dato.
+     * Un bus monitorato via GPS (Real-Time) deve apparire prima in lista rispetto
+     * a uno statico, anche se l'orario di arrivo previsto è temporalmente successivo,
+     * per garantire all'utente l'informazione più affidabile in cima.
+     */
     @Test
     @DisplayName("Il bus Real-Time deve avere la precedenza su quello Statico anche se arriva dopo")
     void testPriorityOverTime() {
@@ -38,6 +58,10 @@ class BusArrivalComparatorTest {
                 "Il bus Real-Time dovrebbe venire prima di quello statico per priorità");
     }
 
+    /**
+     * Verifica che, a parità di affidabilità (es. entrambi Real-Time),
+     * i bus vengano ordinati correttamente in base all'orario di arrivo.
+     */
     @Test
     @DisplayName("A parità di priorità, l'ordine deve essere cronologico")
     void testChronologicalOrder() {
@@ -57,6 +81,11 @@ class BusArrivalComparatorTest {
                 "A parità di Real-Time, il bus delle 09:00 dovrebbe venire prima di quello delle 09:30");
     }
 
+    /**
+     * Verifica l'impatto del ritardo rilevato sull'ordinamento.
+     * Un bus programmato prima ma che accumula ritardo deve "slittare"
+     * correttamente sotto un bus programmato dopo ma che risulta più imminente.
+     */
     @Test
     @DisplayName("Verifica ordinamento con ritardo")
     void testDelayImpact() {

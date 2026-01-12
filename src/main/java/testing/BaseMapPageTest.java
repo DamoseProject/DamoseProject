@@ -8,11 +8,22 @@ import javax.swing.*;
 import java.awt.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Classe di test unitario per {@link BaseMapPage}.
+ * Poiché la classe target è astratta, il test utilizza una classe anonima interna
+ * per concretizzare i metodi astratti e permettere la verifica della logica comune
+ * a tutte le pagine basate su mappa (layout, gestione ricerca e inizializzazione manager).
+ */
 class BaseMapPageTest {
 
     private BaseMapPage testPage;
     private MainFrame mockFrame;
 
+    /**
+     * Configura l'ambiente di test prima di ogni singola esecuzione.
+     * Crea un'istanza concreta di BaseMapPage tramite una classe anonima,
+     * simulando il comportamento di un utente ospite (Guest).
+     */
     @BeforeEach
     void setUp() {
         mockFrame = new MainFrame();
@@ -25,6 +36,10 @@ class BaseMapPageTest {
         };
     }
 
+    /**
+     * Verifica che i componenti fondamentali del pannello siano stati
+     * inizializzati correttamente e che il campo di ricerca sia pronto all'uso.
+     */
     @Test
     @DisplayName("Inizializzazione corretta dei manager interni")
     void testManagersInitialization() {
@@ -35,6 +50,10 @@ class BaseMapPageTest {
         );
     }
 
+    /**
+     * Testa la funzionalità di reset della ricerca.
+     * Assicura che il metodo pulisca correttamente il campo di input testuale.
+     */
     @Test
     @DisplayName("clearResearchField deve pulire il testo e resettare lo stato")
     void testClearResearchField() {
@@ -44,6 +63,11 @@ class BaseMapPageTest {
         assertEquals("", testPage.getResearchField());
     }
 
+    /**
+     * Valida la struttura del layout della pagina.
+     * Verifica che il pannello principale contenga la gerarchia corretta dei componenti
+     * (Mappa e Risultati) rispettando l'organizzazione definita dal BoxLayout.
+     */
     @Test
     @DisplayName("Verifica struttura layout: Mappa a sinistra e Risultati a destra")
     void testMapAndResultsLayout() {

@@ -9,6 +9,13 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.List;
 
+/**
+ * Questa è la classe "madre" di tutte le pagine che mostrano la mappa.
+ * Contiene la struttura principale: la barra di ricerca in alto,
+ * la mappa a sinistra e l'elenco dei risultati a destra.
+ * Essendo "abstract", non viene usata da sola ma viene estesa dalle
+ * pagine per utenti loggati o ospiti.
+ */
 public abstract class BaseMapPage extends BasePage {
 
     private JPanel topPanel;
@@ -26,6 +33,11 @@ public abstract class BaseMapPage extends BasePage {
     private StatisticsManager statisticsManager;
     private ProfileMenuManager profileMenuManager;
 
+    /**
+     * Costruttore: prepara tutta l'interfaccia della mappa.
+     * Recupera la connessione al database e inizializza i vari manager.
+     * * @param frame Il frame principale dove verrà mostrata questa pagina.
+     */
     protected BaseMapPage(MainFrame frame) {
         super(frame);
         this.db = DatabaseConnection.getInstance().getDatabase();
@@ -61,8 +73,17 @@ public abstract class BaseMapPage extends BasePage {
         mainPanel.add(contentPanel, BorderLayout.CENTER);
     }
 
+    /**
+     * Metodo astratto che decide quali pulsanti mostrare (Login o Profilo).
+     * Ogni pagina figlia deve implementarlo in base a chi sta usando l'app.
+     * * @return La configurazione dei pulsanti per quella specifica pagina.
+     */
     protected abstract ButtonMapPageConfig getButtonConfig();
 
+    /**
+     * Crea la barra superiore suddivisa in tre parti: pulsante utente/login,
+     * titolo centrale e pulsante statistiche a destra.
+     */
     private void createTopPanel() {
         topPanel = new JPanel(new GridLayout(1, 3));
 
@@ -80,6 +101,10 @@ public abstract class BaseMapPage extends BasePage {
         topPanel.add(rightPanel);
     }
 
+    /**
+     * Crea il pannello sinistro della barra superiore.
+     * Mostra "Accedi o Registrati" per gli ospiti o il nome utente con menu popup per i loggati.
+     */
     private JPanel createLeftPanel(ButtonMapPageConfig config) {
         JPanel leftPanel = UIComponentFactory.createHorizontalPanel(FlowLayout.LEFT);
 
@@ -102,6 +127,9 @@ public abstract class BaseMapPage extends BasePage {
         return leftPanel;
     }
 
+    /**
+     * Crea il pannello destro della barra superiore contenente il tasto per le statistiche.
+     */
     private JPanel createRightPanel() {
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 5));
         JButton newsButton = new JButton("\u003F\u20DD");
@@ -127,6 +155,9 @@ public abstract class BaseMapPage extends BasePage {
         return rightPanel;
     }
 
+    /**
+     * Crea il pannello centrale che contiene il campo di ricerca e il tasto per i preferiti.
+     */
     private void createCenterPanel() {
         centerPanel = UIComponentFactory.createVerticalPanel();
         centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 10, 10));
@@ -160,6 +191,9 @@ public abstract class BaseMapPage extends BasePage {
         });
     }
 
+    /**
+     * Organizza il pannello principale della mappa e dei risultati affiancandoli orizzontalmente.
+     */
     private void createMapAndResultsPanel() {
         mapAndResultsPanel = new JPanel();
         mapAndResultsPanel.setLayout(new BoxLayout(mapAndResultsPanel, BoxLayout.X_AXIS));
@@ -192,6 +226,9 @@ public abstract class BaseMapPage extends BasePage {
         mapAndResultsPanel.add(resultsScroll);
     }
 
+    /**
+     * Crea il pannello per il pulsante dei preferiti, gestendone l'abilitazione tramite config.
+     */
     protected JPanel createButtonPanel() {
         JPanel buttonsPanel = UIComponentFactory.createHorizontalPanel(FlowLayout.CENTER);
         buttonsPanel = new JPanel();
@@ -212,6 +249,11 @@ public abstract class BaseMapPage extends BasePage {
         return buttonsPanel;
     }
 
+    /**
+     * Gestisce la ricerca di fermate o linee bus.
+     * Viene chiamato quando l'utente preme Invio nel campo di ricerca.
+     * * @param search Il testo (nome linea o numero fermata) inserito dall'utente.
+     */
     protected void performSearch(String search) {
         errorLabel.setVisible(false);
         searchConfirmed = false;
@@ -231,6 +273,13 @@ public abstract class BaseMapPage extends BasePage {
         }
     }
 
+    /**
+     * Cerca le fermate nel database.
+     * Se l'utente scrive 5 numeri, cerca per ID, altrimenti cerca per nome.
+     * * @param search Il testo inserito dall'utente.
+     * @return Una lista di fermate trovate.
+     * @throws SQLException Se c'è un errore nella query.
+     */
     private List<Stop> findStops(String search) throws SQLException {
         List<Stop> fermate = new ArrayList<>();
 
@@ -255,6 +304,10 @@ public abstract class BaseMapPage extends BasePage {
         resultsManager.setResults(text);
     }
 
+    /**
+     * Legge il testo scritto nel campo di ricerca.
+     * * @return Il testo pulito da spazi inutili, all'inizio e alla fine.
+     */
     public String getResearchField() {
         return researchField.getText().trim();
     }
