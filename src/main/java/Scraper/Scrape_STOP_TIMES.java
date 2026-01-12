@@ -12,8 +12,24 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-
+/**
+ * Modulo di scraping e importazione massiva degli orari delle fermate (Stop Times).
+ * La classe processa il file {@code stop_times.txt}, che costituisce il dataset più
+ * voluminoso dello standard GTFS, mappando ogni viaggio (trip) alle fermate
+ * intermedie con i relativi orari di arrivo e partenza.
+ * * <p>Caratteristiche tecniche principali:</p>
+ * <ul>
+ * <li><b>Resume Capability:</b> Include un meccanismo di salto righe per riprendere
+ * l'importazione in caso di interruzione.</li>
+ * <li><b>Batch Processing:</b> Raggruppa gli inserimenti in lotti da 1000 record per
+ * ridurre il numero di transazioni I/O sul disco.</li>
+ * <li><b>Fault Tolerance:</b> Gestisce dati numerici mancanti o malformati assegnando
+ * valori di default (-1) senza interrompere il processo.</li>
+ * </ul>
+ */
 public class Scrape_STOP_TIMES {
+
+    /** Intestazioni GTFS utilizzate per mappare dinamicamente le colonne del file di testo */
     final private static ArrayList<String> titles = new ArrayList<>(Arrays.asList("trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "stop_headsign", "pickup_type", "drop_off_type", "shape_dist_traveled", "timepoint"));
     final private static int indexArrivalTime = titles.indexOf("arrival_time");
     final private static int indexDepartureTime = titles.indexOf("departure_time");
@@ -23,13 +39,21 @@ public class Scrape_STOP_TIMES {
     final private static int indexStopHeadsign = titles.indexOf("stop_headsign");
     final private static int indexShapeDistTraveled = titles.indexOf("shape_dist_traveled");
 
+    /** Percorso del file stop_times.txt all'interno del dataset locale */
     private static String filePath = "/home/carmine/Scaricati/rome_static_gtfs/stop_times.txt";
 
 
 
 
 
-
+    /**
+     * Esegue il parsing del file e popola la tabella FERMATA_ORARIO.
+     * * Il metodo disabilita l'AutoCommit per migliorare le prestazioni e utilizza
+     * {@link PreparedStatement} per l'esecuzione di batch SQL. Include una logica
+     * di skipping per saltare le righe già elaborate in sessioni precedenti.
+     * * @throws IOException In caso di problemi nella lettura del file GTFS.
+     * @throws SQLException In caso di errori nell'esecuzione delle query SQL.
+     */
     public static void scrapeAndAddToDatabase() throws IOException, SQLException {
         Database db = new Database();
         db.connect();
@@ -95,6 +119,10 @@ public class Scrape_STOP_TIMES {
 
     }
 
+    /**
+     * Entry point per l'esecuzione del processo di importazione orari.
+     * @param args Argomenti da riga di comando.
+     */
     public static void main(String[] args) throws IOException, SQLException {
         scrapeAndAddToDatabase();
     }

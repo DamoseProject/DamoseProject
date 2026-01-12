@@ -11,6 +11,11 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Questa classe si occupa di creare graficamente le "righe" che rappresentano i bus in arrivo.
+ * Trasforma i dati che arrivano dal database in piccoli pannelli colorati che l'utente
+ * può vedere e cliccare nella lista dei risultati.
+ */
 public class BusRowFactory {
 
     private final Database db;
@@ -20,12 +25,25 @@ public class BusRowFactory {
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
+    /**
+     * Costruttore della fabbrica.
+     * @param db Il database da cui scaricare i percorsi.
+     * @param errorLabel L'etichetta dove mostrare eventuali messaggi di errore.
+     * @param mapManager Il gestore della mappa per mostrare il percorso al click.
+     */
     public BusRowFactory(Database db, JLabel errorLabel, MapHandler mapManager) {
         this.db = db;
         this.errorLabel = errorLabel;
         this.mapManager = mapManager;
     }
 
+    /**
+     * Crea il pannello grafico (la riga) per un singolo bus.
+     * @param bus I dati del bus da visualizzare.
+     * @param currentStop La fermata selezionata dall'utente.
+     * @param isHighlighted Indica se la riga deve essere evidenziata (es. sfondo giallo).
+     * @return Un JPanel configurato con testo e colori, pronto per la UI.
+     */
     public JPanel createBusRow(BusInUnaFermataRecord bus, Stop currentStop, boolean isHighlighted) {
         JPanel rowPanel = createBaseRowPanel(isHighlighted);
         String infoText = buildBusInfoText(bus);
@@ -45,6 +63,11 @@ public class BusRowFactory {
         return rowPanel;
     }
 
+    /**
+     * Crea lo sfondo e i bordi della riga del bus.
+     * @param isHighlighted Se true, imposta lo sfondo giallino, altrimenti grigio chiaro.
+     * @return Il pannello base con lo stile impostato.
+     */
     private JPanel createBaseRowPanel(boolean isHighlighted) {
         JPanel rowPanel = new JPanel(new BorderLayout());
 
@@ -65,6 +88,11 @@ public class BusRowFactory {
         return rowPanel;
     }
 
+    /**
+     * Sceglie quale tipo di testo mostrare in base alla qualità del dato (Tempo reale, predetto o statico).
+     * @param bus Il record del bus.
+     * @return Una stringa formattata in HTML.
+     */
     private String buildBusInfoText(BusInUnaFermataRecord bus) {
         if (bus.isRealTime()) {
             return buildRealTimeInfo(bus);
@@ -75,6 +103,11 @@ public class BusRowFactory {
         }
     }
 
+    /**
+     * Crea il testo per i bus con dati GPS in tempo reale. Calcola i minuti mancanti.
+     * @param bus Il record del bus.
+     * @return Testo HTML con i minuti mancanti e l'affollamento.
+     */
     private String buildRealTimeInfo(BusInUnaFermataRecord bus) {
         LocalTime orarioEffettivo = bus.getOrarioEffettivo();
         LocalTime now = LocalTime.now();
@@ -101,6 +134,11 @@ public class BusRowFactory {
                 "</nobr></html>";
     }
 
+    /**
+     * Crea il testo per i bus con orario predetto tramite algoritmi.
+     * @param bus Il record del bus.
+     * @return Testo HTML con orario programmato e previsione.
+     */
     private String buildSmartPredictedInfo(BusInUnaFermataRecord bus) {
         LocalTime orarioPredetto = bus.getOrarioEffettivo();
         LocalTime orarioProgrammato = bus.getOrarioStatico();
@@ -111,6 +149,11 @@ public class BusRowFactory {
                 "</nobr></html>";
     }
 
+    /**
+     * Crea il testo base per i bus che hanno solo l'orario da tabella (statico).
+     * @param bus Il record del bus.
+     * @return Testo HTML con l'orario ufficiale.
+     */
     private String buildStaticInfo(BusInUnaFermataRecord bus) {
         LocalTime orarioStatico = bus.getOrarioStatico();
 
@@ -119,6 +162,14 @@ public class BusRowFactory {
                 "</nobr></html>";
     }
 
+    /**
+     * Aggiunge i listener per gestire il click e il cambio colore quando il mouse passa sopra la riga.
+     * @param rowPanel Il pannello della riga.
+     * @param label L'etichetta di testo.
+     * @param bus I dati del bus.
+     * @param currentStop La fermata attuale.
+     * @param baseColor Il colore da ripristinare quando il mouse esce.
+     */
     private void attachMouseListener(JPanel rowPanel, JLabel label, BusInUnaFermataRecord bus, Stop currentStop, Color baseColor) {
         Color hoverColor = new Color(225, 225, 225);
 
@@ -143,6 +194,11 @@ public class BusRowFactory {
         label.addMouseListener(clickListener);
     }
 
+    /**
+     * Gestisce l'azione da compiere quando si preme sulla riga del bus (mostra percorso su mappa).
+     * @param bus Il bus selezionato.
+     * @param currentStop La fermata di riferimento.
+     */
     private void handleBusClick(BusInUnaFermataRecord bus, Stop currentStop) {
         try {
             if (db == null) return;
@@ -156,6 +212,13 @@ public class BusRowFactory {
         }
     }
 
+    /**
+     * Cerca di capire se il bus sta andando nella direzione 0 o 1 in base alla fermata attuale.
+     * @param bus Il bus selezionato.
+     * @param currentStop La fermata dell'utente.
+     * @return 0 se la fermata è nel tragitto di andata, 1 altrimenti.
+     * @throws SQLException In caso di problemi con la query al database.
+     */
     private int determineDirection(BusInUnaFermataRecord bus, Stop currentStop) throws SQLException {
         int direction = 1;
         List<Stop> stopsDir0 = db.getStopsByRouteByDirection(bus.getRouteId(), 0);

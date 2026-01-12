@@ -10,7 +10,12 @@ import java.util.List;
 import java.io.File;
 import java.util.Optional;
 
-
+/**
+ * Classe centrale per la gestione della persistenza e dell'integrità dei dati.
+ * Implementa tutte le operazioni CRUD per utenti e preferiti, oltre a fornire
+ * algoritmi di interrogazione complessi che fondono orari statici (GTFS),
+ * dati in tempo reale e analisi predittiva basata sullo storico.
+ */
 public class Database {
 
     final private static String DATABASE_LINK = "jdbc:sqlite:RomeBusDatabase.db";
@@ -23,6 +28,11 @@ public class Database {
     // 1. GESTIONE CONNESSIONE E CREAZIONE DB
     // ==================================================================================
 
+    /**
+     * Stabilisce la connessione con il database SQLite.
+     * Se il file del database non esiste, avvia la creazione della struttura
+     * e richiama lo scraper per il popolamento iniziale dei dati.
+     */
     public void connect() {
         try {
             Class.forName("org.sqlite.JDBC");
@@ -50,11 +60,21 @@ public class Database {
     }
 
 
-
+    /**
+     * Restituisce la connessione attiva al database.
+     * @return Oggetto {@link Connection} corrente.
+     */
     public Connection getConnection() {
         return connection;
     }
 
+    /**
+     * Inizializza lo schema relazionale del database creando le tabelle necessarie:
+     * UTENTE, Fermata, Percorso, Viaggio, FERMATA_ORARIO e le tabelle di supporto
+     * per preferiti e statistiche storiche. Crea inoltre gli indici per ottimizzare
+     * le query sui tempi di arrivo.
+     * * @throws SQLException Se si verifica un errore durante la creazione dello schema.
+     */
     private void createNewDatabaseStructure() throws SQLException {
         try (Statement stmt = connection.createStatement()) {
 
@@ -130,6 +150,11 @@ public class Database {
     // 2. GESTIONE UTENTI
     // ==================================================================================
 
+    /**
+     * Inserisce un nuovo utente nel database.
+     * @param user L'oggetto {@link User} da salvare.
+     * @return 0 in caso di successo, 1 in caso di errore (es. username duplicato).
+     */
     public int addUser(User user) {
         String sql = "INSERT INTO UTENTE(NOME, COGNOME, USERNAME, EMAIL, PASSWORD) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -208,6 +233,11 @@ public class Database {
     // 3. LETTURA DATI GTFS BASE
     // ==================================================================================
 
+    /**
+     * Restituisce un oggetto Stop dato il suo identificativo ID.
+     * @param id ID univoco della fermata.
+     * @return Oggetto {@link Stop} o null se non trovato.
+     */
     public Stop getStop(String id) throws SQLException {
         String sql = "SELECT * FROM Fermata WHERE ID = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -395,6 +425,7 @@ public class Database {
 
     // --- LOGICA STATICA ---
 
+
     public List<BusInUnaFermataRecord> getStaticArrivals(String stopId) throws SQLException {
         List<BusInUnaFermataRecord> rawList = fetchRawArrivals(stopId, null);
         return filterAndSortStatic(rawList);
@@ -423,6 +454,13 @@ public class Database {
 
     // --- LOGICA DINAMICA ---
 
+    /**
+     * Recupera gli arrivi dei bus presso una fermata integrando dati Real-Time e storici.
+     * Implementa la logica "Smart": se il segnale GPS manca, il sistema stima il ritardo
+     * basandosi sulla media delle performance passate salvate nel database.
+     * * @param stopId ID della fermata.
+     * @return Lista di {@link BusInUnaFermataRecord} ordinata cronologicamente per orario effettivo.
+     */
     public List<BusInUnaFermataRecord> getRealTimeArrivals(String stopId) throws SQLException {
         List<BusInUnaFermataRecord> rawList = fetchRawArrivals(stopId, null);
         return filterAndSortDynamic(rawList, stopId);
@@ -433,6 +471,10 @@ public class Database {
         return filterAndSortDynamic(rawList, stopId);
     }
 
+    /**
+     * Logica di raffinamento dei risultati dinamici. Applica i ritardi GPS tramite RealTimeHandler
+     * e, in caso di assenza di dati live, inietta il ritardo medio storico (Smart Prediction).
+     */
     private List<BusInUnaFermataRecord> filterAndSortDynamic(List<BusInUnaFermataRecord> list, String stopId) throws SQLException {
         LocalTime now = LocalTime.now();
         List<BusInUnaFermataRecord> result = new ArrayList<>();
@@ -480,6 +522,10 @@ public class Database {
 
     // --- CORE QUERY ---
 
+    /**
+     * Interroga il database per ottenere i transiti programmati presso una fermata
+     * nell'ultima ora rispetto al momento attuale.
+     */
     private List<BusInUnaFermataRecord> fetchRawArrivals(String stopId, String routeId) throws SQLException {
         List<BusInUnaFermataRecord> rawList = new ArrayList<>();
         String baseSql = "SELECT VIAGGIO_ID, PERCORSO_ID, SERVIZIO_ID, TESTO_DESTINAZIONE, " +
@@ -656,7 +702,13 @@ public class Database {
     // 7. Gestione qualità del servizio
     // ==================================================================================
 
-
+    /**
+     * Salva i dati di performance osservati per una linea in una fermata.
+     * @param routeId ID della linea.
+     * @param stopId ID della fermata.
+     * @param ritardo Ritardo osservato in secondi.
+     * @param saltata Booleano che indica se la corsa è stata saltata.
+     */
     public void salvaOsservazioneStorica(String routeId, String stopId, int ritardo, boolean saltata) throws SQLException {
         String sql = "INSERT INTO STORICO_PERFORMANCE (ROUTE_ID, STOP_ID, RITARDO_RILEVATO, CORSA_SALTATA) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -668,7 +720,12 @@ public class Database {
         }
     }
 
-
+    /**
+     * Calcola le statistiche aggregate per una specifica combinazione di linea e fermata.
+     * @param routeId ID della linea.
+     * @param stopId ID della fermata.
+     * @return Array di double: [0] media ritardo, [1] percentuale corse saltate.
+     */
     public double[] getStatisticheStoriche(String routeId, String stopId) throws SQLException {
         String sql = "SELECT AVG(RITARDO_RILEVATO) as media_ritardo, " +
                 "AVG(CORSA_SALTATA) * 100 as percentuale_saltate " +

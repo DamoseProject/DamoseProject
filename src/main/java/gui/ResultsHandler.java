@@ -8,17 +8,32 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.List;
 
+/**
+ * Questa classe gestisce la visualizzazione dei risultati di ricerca nel pannello laterale.
+ * Si occupa di creare dinamicamente l'interfaccia per mostrare fermate, linee bus
+ * e i relativi orari di arrivo. Gestisce inoltre l'espansione delle righe
+ * per mostrare i dettagli dei bus o delle fermate intermedie.
+ */
 public class ResultsHandler {
 
     private final JPanel resultsPanel;
     private final JLabel errorLabel;
     private final MapHandler mapManager;
     private final ButtonMapPageConfig config;
+
+    /** Mappa per tenere traccia di quali righe sono attualmente espanse */
     private final Map<JPanel, JPanel> expandedRows = new HashMap<>();
     private JPanel rowSelected = null;
     private final FavoritesManager favoritesManager;
     private final BusRowFactory busRowFactory;
 
+    /**
+     * Costruttore: prepara il gestore dei risultati configurando il layout e inizializzando le factory.
+     * @param resultsPanel Il pannello UI dove verranno aggiunti i risultati.
+     * @param errorLabel Etichetta per mostrare messaggi di errore all'utente.
+     * @param mapManager Gestore della mappa per sincronizzare i click sui risultati con la visualizzazione geografica.
+     * @param config Configurazione dei permessi per la pagina corrente.
+     */
     public ResultsHandler(JPanel resultsPanel, JLabel errorLabel, MapHandler mapManager, ButtonMapPageConfig config) {
         this.resultsPanel = resultsPanel;
         this.resultsPanel.setLayout(new BoxLayout(this.resultsPanel, BoxLayout.Y_AXIS));
@@ -30,10 +45,21 @@ public class ResultsHandler {
         this.busRowFactory = new BusRowFactory(db, errorLabel, mapManager);
     }
 
+    /**
+     * Recupera l'istanza del database.
+     * @return L'oggetto Database attivo.
+     */
     private Database getDatabase() {
         return DatabaseConnection.getInstance().getDatabase();
     }
 
+    /**
+     * Gestisce l'apertura o la chiusura delle sotto-righe (es. gli orari dei bus sotto una fermata).
+     * @param parentRow La riga principale cliccata.
+     * @param text Il testo della riga (contiene l'ID fermata).
+     * @param arrowButton Il pulsante freccia da ruotare.
+     * @param highlightRouteId Eventuale ID linea da evidenziare.
+     */
     private void createSubRows(JPanel parentRow, String text, JButton arrowButton, String highlightRouteId) {
         boolean isOpen = expandedRows.containsKey(parentRow);
         String stopId = text.split(" ")[0];
@@ -48,6 +74,9 @@ public class ResultsHandler {
         resultsPanel.repaint();
     }
 
+    /**
+     * Chiude le sotto-righe rimuovendo il pannello espanso.
+     */
     private void closeSubRows(JPanel parentRow, JButton arrowButton) {
         JPanel subList = expandedRows.remove(parentRow);
         Container parentContainer = subList.getParent();
@@ -57,6 +86,9 @@ public class ResultsHandler {
         arrowButton.setText("<html>▶</html>");
     }
 
+    /**
+     * Espande una fermata mostrando la lista dei bus in arrivo.
+     */
     private void openSubRows(JPanel parentRow, String stopId, JButton arrowButton, String highlightRouteId) {
         JPanel subList = createSubListPanel();
         populateSubList(subList, stopId, highlightRouteId);
@@ -65,6 +97,9 @@ public class ResultsHandler {
         arrowButton.setText("<html>▼</html>");
     }
 
+    /**
+     * Crea graficamente il pannello che mostra la lista dei bus in arrivo.
+     */
     private JPanel createSubListPanel() {
         JPanel subList = new JPanel();
         subList.setLayout(new BoxLayout(subList, BoxLayout.Y_AXIS));
@@ -73,6 +108,9 @@ public class ResultsHandler {
         return subList;
     }
 
+    /**
+     * Riempie il pannello espanso con gli orari dei bus presi dal database (Real-Time o Statici).
+     */
     private void populateSubList(JPanel subList, String stopId, String highlightRouteId) {
         Database db = getDatabase();
 
@@ -91,6 +129,9 @@ public class ResultsHandler {
         }
     }
 
+    /**
+     * Ordina i bus in arrivo e li aggiunge alla lista, limitando i risultati per linea.
+     */
     private void addBusRowsToSubList(JPanel subList, List<BusInUnaFermataRecord> prossimiBus, Stop stop, String highlightRouteId) {
         prossimiBus.sort(new BusArrivalComparator());
 
@@ -110,6 +151,9 @@ public class ResultsHandler {
         }
     }
 
+    /**
+     * Decide se aggiungere o meno un bus alla lista per evitare duplicati o troppi risultati per linea.
+     */
     private boolean shouldAddBusRow(BusInUnaFermataRecord bus, HashMap<String, Integer> busCountsPerRoute,
                                     Set<String> addedBusInfo, String highlightRouteId) {
         String routeId = bus.getRouteId();
@@ -120,6 +164,7 @@ public class ResultsHandler {
         int currentCount = busCountsPerRoute.getOrDefault(routeId, 0);
         return currentCount < 3;
     }
+
 
     private void addBusRowToSubList(JPanel subList, BusInUnaFermataRecord bus, Stop stop, String highlightRouteId,
                                     HashMap<String, Integer> busCountsPerRoute, Set<String> addedBusInfo) {
@@ -135,6 +180,9 @@ public class ResultsHandler {
         }
     }
 
+    /**
+     * Inserisce fisicamente il sotto-pannello nella posizione corretta.
+     */
     private void insertSubList(JPanel parentRow, JPanel subList) {
         Container parentContainer = parentRow.getParent();
 
@@ -157,6 +205,13 @@ public class ResultsHandler {
         }
     }
 
+    /**
+     * Mostra i risultati di una ricerca effettuata dall'utente.
+     * @param search Testo cercato.
+     * @param fermate Lista delle fermate trovate.
+     * @param linee Lista delle linee trovate.
+     * @throws SQLException In caso di errore DB.
+     */
     public void showResults(String search, List<Stop> fermate, List<Route> linee) throws SQLException {
         resultsPanel.removeAll();
         resultsPanel.add(createGeneralRow(Constants.RESULTS_HEADER + search));
@@ -191,6 +246,9 @@ public class ResultsHandler {
         resultsPanel.repaint();
     }
 
+    /**
+     * Mostra la lista dei preferiti dell'utente loggato.
+     */
     public void showFavorites() {
         errorLabel.setVisible(false);
         resultsPanel.removeAll();
@@ -354,6 +412,9 @@ public class ResultsHandler {
         return rowPanel;
     }
 
+    /**
+     * Recupera il nome  dell'ultima fermata di una linea per mostrare il nome della direzione (Capolinea).
+     */
     private String getDirectionName(Route route, int direction) {
         try {
             Database db = getDatabase();
@@ -366,6 +427,9 @@ public class ResultsHandler {
         }
     }
 
+    /**
+     * Genera la struttura base di una riga con testo centrato.
+     */
     private JPanel createBaseRowPanel(String text) {
         JPanel rowPanel = new JPanel(new BorderLayout());
         rowPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -382,6 +446,9 @@ public class ResultsHandler {
         return rowPanel;
     }
 
+    /**
+     * Crea il pannello dei controlli a sinistra (freccia e mappa) specifico per le linee bus.
+     */
     private JPanel createRouteLeftPanel(Route route, int direction, JPanel rowPanel) {
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.X_AXIS));
@@ -395,7 +462,9 @@ public class ResultsHandler {
             try {
                 mapManager.showRouteDirectionOnMap(route, direction);
             } catch (Exception ex) {
-                // Gestione errore visualizzazione mappa
+                errorLabel.setText(ex.getMessage());
+                errorLabel.setForeground(Color.RED);
+                errorLabel.setVisible(true);
             }
         });
 
@@ -406,6 +475,9 @@ public class ResultsHandler {
         return leftPanel;
     }
 
+    /**
+     * Gestisce l'espansione/chiusura delle fermate di una linea bus.
+     */
     private void createSubRowsForRouteDirection(JPanel parentRow, Route route, int direction, JButton arrowButton) {
         boolean isOpen = expandedRows.containsKey(parentRow);
         if (isOpen) {
@@ -417,6 +489,9 @@ public class ResultsHandler {
         resultsPanel.repaint();
     }
 
+    /**
+     * Apre la lista delle fermate per una linea specifica.
+     */
     private void openRouteSubRows(JPanel parentRow, Route route, int direction, JButton arrowButton) {
         JPanel subList = new JPanel();
         subList.setLayout(new BoxLayout(subList, BoxLayout.Y_AXIS));
@@ -431,6 +506,9 @@ public class ResultsHandler {
         arrowButton.setText("<html>▼</html>");
     }
 
+    /**
+     * Recupera le fermate dal DB e le aggiunge alla sottolista della linea.
+     */
     private void populateRouteSubList(JPanel subList, Route route, int direction) {
         try {
             Database db = getDatabase();
@@ -449,12 +527,18 @@ public class ResultsHandler {
         }
     }
 
+    /**
+     * Crea un pulsante mappa che attiva la visualizzazione del waypoint specifico.
+     */
     private JButton createWaypointButton(String resultText, JPanel rowPanel) {
         JButton mapButton = UIComponentFactory.createMapButton();
         mapButton.addActionListener(e -> handleWaypointClick(resultText, rowPanel));
         return mapButton;
     }
 
+    /**
+     * Gestisce l'evento di click sull'icona mappa.
+     */
     private void handleWaypointClick(String resultText, JPanel rowPanel) {
         try {
             String stopId = resultText.split(" ")[0];
@@ -474,6 +558,9 @@ public class ResultsHandler {
         }
     }
 
+    /**
+     * Ripristina i colori di sfondo originali di tutte le righe.
+     */
     private void resetRowHighlights() {
         for (Component comp : resultsPanel.getComponents()) {
             if (comp instanceof JPanel && !expandedRows.containsValue(comp)) {
@@ -490,6 +577,10 @@ public class ResultsHandler {
         }
     }
 
+    /**
+     * Trova la posizione (indice) di una riga all'interno del pannello principale.
+     * @return L'indice della riga o -1 se non trovata.
+     */
     private int findRowPos(JPanel row) {
         Component[] components = resultsPanel.getComponents();
         for (int i = 0; i < components.length; i++) if (components[i] == row) return i;

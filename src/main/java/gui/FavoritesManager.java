@@ -10,21 +10,41 @@ import java.awt.*;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Questa classe si occupa di gestire tutto ciò che riguarda i Preferiti (fermate e linee).
+ * Crea i pulsanti con la stella e decide se la stella deve essere piena (se è già un preferito)
+ * o vuota. Gestisce anche il salvataggio o la rimozione dal database quando l'utente clicca.
+ */
 public class FavoritesManager {
 
+    /** Codice HTML per la stella vuota */
     private static final String EMPTY_STAR = "<html>&#9734;</html>";
+
+    /** Codice HTML per la stella piena */
     private static final String FILLED_STAR = "<html>&#9733;</html>";
 
     private final Database db;
     private final JLabel errorLabel;
     private final ButtonMapPageConfig config;
 
+    /**
+     * Costruttore: prepara il gestore con i riferimenti al DB e alla grafica.
+     * @param db Il database dove salvare le preferenze.
+     * @param errorLabel L'etichetta dove mostrare i messaggi di successo o errore.
+     * @param config La configurazione che dice se i preferiti sono abilitati.
+     */
     public FavoritesManager(Database db, JLabel errorLabel, ButtonMapPageConfig config) {
         this.db = db;
         this.errorLabel = errorLabel;
         this.config = config;
     }
 
+    /**
+     * Crea il pulsante "stella" per una specifica fermata.
+     * Al click, la fermata viene aggiunta o rimossa dai preferiti.
+     * @param stop La fermata da gestire.
+     * @return Il pulsante configurato per la UI.
+     */
     public JButton createFavButtonForStop(Stop stop) {
         String initialIcon = getInitialIconForStop(stop);
         JButton favButton = UIComponentFactory.createSymbolButton(initialIcon, 15);
@@ -33,6 +53,11 @@ public class FavoritesManager {
         return favButton;
     }
 
+    /**
+     * Crea il pulsante "stella" per una specifica linea (Route).
+     * @param route La linea da gestire.
+     * @return Il pulsante configurato per la UI.
+     */
     public JButton createFavButtonForRoute(Route route) {
         String initialIcon = getInitialIconForRoute(route);
         JButton favButton = UIComponentFactory.createSymbolButton(initialIcon, 15);
@@ -41,6 +66,10 @@ public class FavoritesManager {
         return favButton;
     }
 
+    /**
+     * Controlla nel DB se la fermata è già tra i preferiti dell'utente
+     * per decidere quale stella mostrare all'inizio.
+     */
     private String getInitialIconForStop(Stop stop) {
         UserSession session = UserSession.getInstance();
         if (!session.isLogged()) return EMPTY_STAR;
@@ -60,6 +89,9 @@ public class FavoritesManager {
         return EMPTY_STAR;
     }
 
+    /**
+     * Controlla nel DB se la linea è già tra i preferiti dell'utente.
+     */
     private String getInitialIconForRoute(Route route) {
         UserSession session = UserSession.getInstance();
         if (!session.isLogged()) return EMPTY_STAR;
@@ -78,6 +110,10 @@ public class FavoritesManager {
         return EMPTY_STAR;
     }
 
+    /**
+     * Gestisce lo scambio (Toggle) della stella per una fermata:
+     * se è vuota la riempie (salva), se è piena la svuota (rimuove).
+     */
     private void handleStopFavoriteToggle(JButton favButton, Stop stop) {
         UserSession session = UserSession.getInstance();
 
@@ -101,6 +137,9 @@ public class FavoritesManager {
         }
     }
 
+    /**
+     * Gestisce lo scambio (Toggle) della stella per una linea bus.
+     */
     private void handleRouteFavoriteToggle(JButton favButton, Route route) {
         UserSession session = UserSession.getInstance();
 
@@ -124,6 +163,10 @@ public class FavoritesManager {
         }
     }
 
+    /**
+     * Controlla se l'utente ha il permesso di gestire i preferiti (deve essere loggato).
+     * @return true se l'azione è permessa.
+     */
     private boolean validateFavoriteAction(UserSession session) {
         if (!session.isLogged()) {
             showError(Constants.LOGIN_REQUIRED_FAVORITES, Color.RED);
@@ -138,6 +181,11 @@ public class FavoritesManager {
         return true;
     }
 
+    /**
+     * Metodo di comodo per mostrare messaggi colorati nell'interfaccia.
+     * @param message Il testo da mostrare.
+     * @param color Il colore (es. Verde per successo, Rosso per errore).
+     */
     private void showError(String message, Color color) {
         errorLabel.setForeground(color);
         errorLabel.setText(message);

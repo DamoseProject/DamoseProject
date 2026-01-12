@@ -21,12 +21,20 @@ import java.util.*;
 import java.util.List;
 import java.awt.BasicStroke;
 
+/**
+ * Questa classe gestisce tutto ciò che riguarda la mappa interattiva.
+ * Si occupa di caricare i tasselli da OpenStreetMap, gestire lo zoom,
+ * disegnare i percorsi delle linee bus e posizionare le icone.
+ */
 public class MapHandler {
 
     private final JXMapViewer mapViewer;
     private final Set<Waypoint> currentWaypoints = new HashSet<>();
     private final JLabel errorLabel;
 
+    /**
+     * Classe interna per rappresentare una fermata sulla mappa con un'etichetta.
+     */
     private static class LabeledWaypoint extends DefaultWaypoint {
         private final String id;
         private final String name;
@@ -42,6 +50,9 @@ public class MapHandler {
         }
     }
 
+    /**
+     * Classe interna per rappresentare la posizione di un autobus sulla mappa.
+     */
     private static class BusWaypoint extends DefaultWaypoint {
         private final String routeId;
 
@@ -55,6 +66,9 @@ public class MapHandler {
         }
     }
 
+    /**
+     * Classe che si occupa di disegnare fisicamente la linea blu del percorso sulla mappa.
+     */
     private static class RoutePainter implements Painter<JXMapViewer> {
         private final List<GeoPosition> track;
 
@@ -89,11 +103,20 @@ public class MapHandler {
         }
     }
 
+    /**
+     * Costruttore: inizializza il visualizzatore di mappe e imposta i controlli del mouse.
+     * @param errorLabel Etichetta dove mostrare eventuali errori di caricamento.
+     */
     public MapHandler(JLabel errorLabel) {
         this.errorLabel = errorLabel;
         this.mapViewer = createMapViewer();
     }
 
+    /**
+     * Configura il JXMapViewer con OpenStreetMap e imposta la posizione iniziale su Roma.
+     * Gestisce anche i click sulle icone.
+     * @return Il componente mappa pronto per essere aggiunto alla GUI.
+     */
     private JXMapViewer createMapViewer() {
         TileFactoryInfo info = new OSMTileFactoryInfo("OpenStreetMap", "https://tile.openstreetmap.org");
         DefaultTileFactory tileFactory = new DefaultTileFactory(info);
@@ -172,6 +195,9 @@ public class MapHandler {
         return mapViewer;
     }
 
+    /**
+     * Configura i tasti + e - della tastiera e la rotellina del mouse per lo zoom.
+     */
     public void setupKeyboardZoom() {
         InputMap inputMap = mapViewer.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap actionMap = mapViewer.getActionMap();
@@ -193,6 +219,10 @@ public class MapHandler {
         mapViewer.addMouseWheelListener(e -> mapViewer.setZoom(mapViewer.getZoom() - e.getWheelRotation()));
     }
 
+    /**
+     * Centra la mappa su una specifica fermata.
+     * @param stop La fermata da visualizzare.
+     */
     public void showStopOnMap(Stop stop) {
         GeoPosition position = new GeoPosition(stop.getLatitude(), stop.getLongitude());
         mapViewer.setAddressLocation(position);
@@ -212,6 +242,15 @@ public class MapHandler {
         mapViewer.repaint();
     }
 
+    /**
+     * Mostra l'intero percorso di una linea, tutte le sue fermate e,
+     * se disponibile, la posizione GPS attuale del bus.
+     * @param routeId ID della linea (es. "64").
+     * @param direction Direzione (0 o 1).
+     * @param bus Dati del bus per recuperare il TripId.
+     * @param currentStop Fermata di riferimento dell'utente.
+     * @throws SQLException In caso di errore nel recupero dati dal DB.
+     */
     public void showRouteWithBus(String routeId, int direction, BusInUnaFermataRecord bus, Stop currentStop) throws SQLException {
         Database db = DatabaseConnection.getInstance().getDatabase();
         if (db == null) return;
@@ -271,6 +310,12 @@ public class MapHandler {
         mapViewer.repaint();
     }
 
+    /**
+     * Disegna il percorso di una linea sulla mappa senza mostrare bus specifici.
+     * @param route La linea da visualizzare.
+     * @param direction Andata o Ritorno.
+     * @throws SQLException Se il DB non risponde.
+     */
     public void showRouteDirectionOnMap(Route route, int direction) throws SQLException {
         Database db = DatabaseConnection.getInstance().getDatabase();
         if (db == null) return;
@@ -299,6 +344,9 @@ public class MapHandler {
         mapViewer.repaint();
     }
 
+    /**
+     * @return Il componente grafico JXMapViewer gestito da questa classe.
+     */
     public JXMapViewer getMapViewer() {
         return mapViewer;
     }

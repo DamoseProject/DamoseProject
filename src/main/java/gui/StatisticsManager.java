@@ -8,14 +8,29 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.List;
 
+/**
+ * Questa classe gestisce la logica di visualizzazione delle statistiche.
+ * Recupera i dati storici relativi ai ritardi e alle corse saltate dal database
+ * e li mostra all'utente attraverso un'interfaccia testuale contenuta in un menu a comparsa.
+ */
 public class StatisticsManager {
 
     private final Database db;
 
+    /**
+     * Costruttore del manager delle statistiche.
+     * @param db Il database da cui attingere i dati storici e in tempo reale.
+     */
     public StatisticsManager(Database db) {
         this.db = db;
     }
 
+    /**
+     * Crea e mostra un menu popup contenente le statistiche relative alla ricerca effettuata.
+     * Il popup include un'area di testo scorrevole per ospitare elenchi lunghi.
+     * @param invoker Il componente grafico che ha attivato la richiesta (es. un pulsante).
+     * @param searchText Il testo inserito dall'utente (ID linea o nome fermata).
+     */
     public void showStatisticsPopup(Component invoker, String searchText) {
         JPopupMenu popupMenu = new JPopupMenu();
         String text = buildStatisticsText(searchText);
@@ -34,6 +49,12 @@ public class StatisticsManager {
         popupMenu.show(invoker, -200, invoker.getHeight());
     }
 
+    /**
+     * Identifica se il testo cercato corrisponde a una linea (Route) o a una fermata (Stop)
+     * e richiama il metodo di generazione testo appropriato.
+     * @param searchText Stringa di ricerca.
+     * @return Il testo formattato pronto per la visualizzazione.
+     */
     private String buildStatisticsText(String searchText) {
         StringBuilder text = new StringBuilder();
 
@@ -67,6 +88,11 @@ public class StatisticsManager {
         return text.toString();
     }
 
+    /**
+     * Genera il report statistico per tutte le fermate associate a una specifica linea bus.
+     * @param route L'oggetto linea bus da analizzare.
+     * @return Stringa contenente medie ritardi e corse saltate per ogni fermata della linea.
+     */
     private String buildRouteStatistics(Route route) throws SQLException {
         StringBuilder text = new StringBuilder();
         text.append("STATISTICHE PER LINEA: ").append(route.getId()).append("\n\n");
@@ -83,6 +109,12 @@ public class StatisticsManager {
         return text.toString();
     }
 
+    /**
+     * Genera il report statistico per una o più fermate, basandosi sulle linee bus
+     * che vi transitano in tempo reale.
+     * @param fermateTrovate Lista di fermate risultanti dalla ricerca.
+     * @return Stringa contenente i dati storici incrociati con i transiti attuali.
+     */
     private String buildStopStatistics(List<Stop> fermateTrovate) throws SQLException {
         StringBuilder text = new StringBuilder();
         text.append("STATISTICHE PER FERMATA/E TROVATE:\n");
@@ -124,6 +156,12 @@ public class StatisticsManager {
         return text.toString();
     }
 
+    /**
+     * Metodo di supporto per cercare le fermate tramite ID (se il testo è numerico di 5 cifre)
+     * o tramite nome parziale.
+     * @param searchText Il testo da cercare nel database.
+     * @return Una lista di oggetti Stop corrispondenti.
+     */
     private List<Stop> findStops(String searchText) throws SQLException {
         List<Stop> fermateTrovate = new ArrayList<>();
 

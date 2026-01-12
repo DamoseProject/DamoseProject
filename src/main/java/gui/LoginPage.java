@@ -9,6 +9,11 @@ import java.sql.SQLException;
 
 import static gui.UIComponentFactory.*;
 
+/**
+ * Questa classe rappresenta la pagina di Login dell'applicazione.
+ * Permette agli utenti di inserire le proprie credenziali per accedere,
+ * di andare alla pagina di registrazione o di entrare come semplici ospiti.
+ */
 public class LoginPage extends BasePage {
     private JPanel topPanel;
     private JPanel centerPanel;
@@ -16,6 +21,11 @@ public class LoginPage extends BasePage {
     private JTextField usernameField;
     private JPasswordField passwordField;
 
+    /**
+     * Costruttore della pagina di login.
+     * Prepara i pannelli superiore e centrale e imposta il focus per la tastiera.
+     * * @param frame Il frame principale dove viene visualizzata la pagina.
+     */
     public LoginPage(MainFrame frame) {
         super(frame);
         createTopPanel();
@@ -27,6 +37,10 @@ public class LoginPage extends BasePage {
         mainPanel.requestFocusInWindow();
     }
 
+    /**
+     * Crea la barra superiore della pagina.
+     * Contiene il link alla sezione Q&A e il titolo "Login!".
+     */
     private void createTopPanel() {
         topPanel = new JPanel(new GridLayout(1, 3));
 
@@ -46,6 +60,10 @@ public class LoginPage extends BasePage {
         topPanel.add(rightPanel);
     }
 
+    /**
+     * Crea il cuore della pagina di login con i campi Username e Password.
+     * Gestisce anche l'allineamento dei componenti e il tasto di accesso.
+     */
     private void createCenterPanel() {
         centerPanel = createCenteredContentPanel();
         JPanel contentPanel = (JPanel) centerPanel.getComponent(0);
@@ -80,6 +98,10 @@ public class LoginPage extends BasePage {
         contentPanel.add(Box.createVerticalGlue());
     }
 
+    /**
+     * Crea la parte bassa della pagina con i link per chi non ha ancora un account.
+     * * @return Un pannello con le scritte cliccabili per registrazione o modalità ospite.
+     */
     private JPanel createRegisterPanel() {
         JPanel registerPanel = createHorizontalPanel(FlowLayout.CENTER);
         ((FlowLayout)registerPanel.getLayout()).setHgap(0);
@@ -105,6 +127,10 @@ public class LoginPage extends BasePage {
         return registerPanel;
     }
 
+    /**
+     * Gestisce la logica del login quando viene premuto il tasto "Accedi!".
+     * Verifica le credenziali tramite UserAuth e salva la sessione.
+     */
     private void handleLogin() {
         var db = DatabaseConnection.getInstance().getDatabase();
 
@@ -130,10 +156,16 @@ public class LoginPage extends BasePage {
         }
     }
 
+    /**
+     * @return Lo username inserito nel campo di testo.
+     */
     public String getUsernameLogin() {
         return usernameField.getText().trim();
     }
 
+    /**
+     * @return La password inserita (convertita da array di char a Stringa).
+     */
     public String getPasswordLogin() {
         return new String(passwordField.getPassword());
     }
