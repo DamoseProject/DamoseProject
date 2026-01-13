@@ -39,17 +39,17 @@ public class RegistrationController {
         if (!auth.validatePresenceEmail()) {
             return RegistrationResult.failure(Constants.EMAIL_REQUIRED);
         }
+        if(!auth.validateEmail()){
+            return RegistrationResult.failure(Constants.INVALID_EMAIL);
+        }
         if (!auth.validatePresencePassword() || !auth.validatePresenceConfirmPassword()) {
             return RegistrationResult.failure(Constants.PASSWORD_REQUIRED);
-        }
-        if (!auth.validatePasswordMatch()) {
-            return RegistrationResult.failure(Constants.PASSWORD_MISMATCH);
         }
         if (!auth.validatePasswordStrength()) {
             return RegistrationResult.failure(Constants.PASSWORD_WEAK);
         }
-        if(!auth.validateEmail()){
-            return RegistrationResult.failure(Constants.INVALID_EMAIL);
+        if (!auth.validatePasswordMatch()) {
+            return RegistrationResult.failure(Constants.PASSWORD_MISMATCH);
         }
 
         try {

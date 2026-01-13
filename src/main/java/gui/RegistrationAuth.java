@@ -1,5 +1,8 @@
 package gui;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Questa classe si occupa della validazione dei dati inseriti durante la registrazione.
  * Funziona come un "filtro" che controlla se lo username, l'email, la password e la conferma della password
@@ -10,6 +13,7 @@ public class RegistrationAuth {
     private final String email;
     private final String password;
     private final String confirmPassword;
+    public static final Pattern VALID_EMAIL_ADDRESS_REGEX = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 
     /**
      * Costruttore: riceve i dati inseriti dall'utente nei campi della pagina di registrazione.
@@ -53,15 +57,12 @@ public class RegistrationAuth {
     }
 
     /**
-     * Verifica che l'email abbia un formato valido e termini con uno dei domini accettati
-     * (gmail, tiscali o yahoo).
+     * Verifica che l'email abbia un formato valido.
      * @return true se l'email rispetta i criteri di formato.
      */
     public boolean validateEmail() {
-        boolean hasValidSuffix = email.endsWith("@gmail.com") ||
-                email.endsWith("@tiscali.it") ||
-                email.endsWith("@yahoo.com");
-        return hasValidSuffix && email.indexOf('@') > 0;
+        Matcher matcher = VALID_EMAIL_ADDRESS_REGEX.matcher(email);
+        return  matcher.matches();
     }
 
     /**

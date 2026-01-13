@@ -51,7 +51,7 @@ public class Database {
             System.out.println("Connection to SQLite has been established.");
             if (isFirstRun) {
                 System.out.println("Database created.");
-                UpdateData.updateIfNew();
+                // UpdateData.updateIfNew();
             }
 
         } catch (SQLException | ClassNotFoundException e) {
@@ -311,7 +311,7 @@ public class Database {
      */
     public List<Stop> getStopsByRouteByDirection(String routeId, int direction) throws SQLException {
         List<Stop> stops = new ArrayList<>();
-        String sql = "SELECT F.* " +
+        /* String sql = "SELECT F.* " +
                 "FROM Fermata F " +
                 "INNER JOIN FERMATA_ORARIO FO ON F.ID = FO.FERMATA_ID " +
                 "WHERE FO.VIAGGIO_ID = (" +
@@ -321,6 +321,20 @@ public class Database {
                 ") " +
                 "ORDER BY FERMATA_SEQUENZA";
 
+         */
+        String sql = "SELECT F.* " +
+                "FROM Fermata F " +
+                "INNER JOIN FERMATA_ORARIO FO ON F.ID = FO.FERMATA_ID " +
+                "WHERE FO.VIAGGIO_ID = (" +
+                "    SELECT V.ID " +
+                "    FROM Viaggio V " +
+                "    INNER JOIN FERMATA_ORARIO FO_SUB ON V.ID = FO_SUB.VIAGGIO_ID " +
+                "    WHERE V.PERCORSO_ID = ? AND V.DIREZIONE = ? " +
+                "    GROUP BY V.ID " +
+                "    ORDER BY COUNT(FO_SUB.FERMATA_ID) DESC " + // Orders by most stops
+                "    LIMIT 1" +
+                ") " +
+                "ORDER BY FO.FERMATA_SEQUENZA";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, routeId);
